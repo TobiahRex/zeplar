@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Behavior — Event Flow & Protocols</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #22c55e, #3b82f6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            color: #22c55e;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #21262d;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 40px;
+        }
+
+        .diagram-container {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            color: #f0f6fc;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Animated Event Flow */
+        .event-flow-container {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+        }
+
+        .event-flow-svg {
+            width: 100%;
+            height: 400px;
+        }
+
+        /* Event Animation Styles */
+        .event-dot {
+            fill: #3b82f6;
+            filter: drop-shadow(0 0 4px #3b82f6);
+        }
+
+        .event-dot-urgent {
+            fill: #ef4444;
+            filter: drop-shadow(0 0 6px #ef4444);
+        }
+
+        .event-dot-success {
+            fill: #22c55e;
+            filter: drop-shadow(0 0 4px #22c55e);
+        }
+
+        @keyframes flowRight {
+            0% {
+                transform: translateX(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateX(200px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes flowDown {
+            0% {
+                transform: translateY(0);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            90% {
+                opacity: 1;
+            }
+
+            100% {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                r: 8;
+                opacity: 0.8;
+            }
+
+            50% {
+                r: 12;
+                opacity: 1;
+            }
+        }
+
+        .protocol-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .protocol-table th {
+            background: #21262d;
+            color: #f0f6fc;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .protocol-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        .protocol-table tr:hover {
+            background: rgba(56, 139, 253, 0.05);
+        }
+
+        .msg-type {
+            color: #a371f7;
+            font-weight: 600;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .note-box {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .note-box h4 {
+            color: #22c55e;
+            margin-bottom: 10px;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+        }
+
+        .code-comment {
+            color: #8b949e;
+        }
+
+        .code-keyword {
+            color: #ff7b72;
+        }
+
+        .code-string {
+            color: #a5d6ff;
+        }
+
+        .code-type {
+            color: #79c0ff;
+        }
+
+        .code-func {
+            color: #d2a8ff;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-ws {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .badge-db {
+            background: #22c55e;
+            color: white;
+        }
+
+        .badge-bus {
+            background: #f97316;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>⚡ System Behavior — Event Flow & Protocols</h1>
+        <p class="subtitle">Layer 2: Dynamic Behavior — How Data Moves Through the System</p>
+
+        <!-- EVENT FLOW ANIMATION -->
+        <h2>🌊 Event Flow Animation</h2>
+        <div class="event-flow-container">
+            <div class="diagram-title">Real-time Event Propagation: DB → Event Bus → WebSocket → Client</div>
+            <svg class="event-flow-svg" viewBox="0 0 1200 380">
+                <!-- Background Grid -->
+                <defs>
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#21262d" stroke-width="1" />
+                    </pattern>
+                    <linearGradient id="pipeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:#21262d" />
+                        <stop offset="50%" style="stop-color:#30363d" />
+                        <stop offset="100%" style="stop-color:#21262d" />
+                    </linearGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur" />
+                        <feMerge>
+                            <feMergeNode in="coloredBlur" />
+                            <feMergeNode in="SourceGraphic" />
+                        </feMerge>
+                    </filter>
+                </defs>
+                <rect width="1200" height="380" fill="#0d1117" />
+                <rect width="1200" height="380" fill="url(#grid)" />
+
+                <!-- Layer Labels -->
+                <text x="60" y="30" fill="#8b949e" font-size="12" font-weight="600">DATABASE LAYER</text>
+                <text x="320" y="30" fill="#8b949e" font-size="12" font-weight="600">EVENT BUS</text>
+                <text x="560" y="30" fill="#8b949e" font-size="12" font-weight="600">WS BRIDGE</text>
+                <text x="800" y="30" fill="#8b949e" font-size="12" font-weight="600">ROUTER</text>
+                <text x="1020" y="30" fill="#8b949e" font-size="12" font-weight="600">CLIENTS</text>
+
+                <!-- Database -->
+                <rect x="40" y="120" width="120" height="140" rx="10" fill="#161b22" stroke="#22c55e"
+                    stroke-width="2" />
+                <text x="100" y="160" fill="#22c55e" font-size="14" text-anchor="middle"
+                    font-weight="600">PostgreSQL</text>
+                <text x="100" y="180" fill="#8b949e" font-size="11" text-anchor="middle">+ NOTIFY</text>
+                <!-- DB Activity Indicator -->
+                <circle cx="100" cy="220" r="8" fill="#22c55e">
+                    <animate attributeName="r" values="6;10;6" dur="1s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0.5;1;0.5" dur="1s" repeatCount="indefinite" />
+                </circle>
+                <text x="100" y="245" fill="#22c55e" font-size="10" text-anchor="middle">NOTIFY</text>
+
+                <!-- Connection Pipe: DB → Event Bus -->
+                <rect x="160" y="180" width="140" height="20" rx="10" fill="url(#pipeGradient)" />
+                <!-- Flowing Events -->
+                <g>
+                    <circle cx="170" cy="190" r="6" fill="#22c55e" filter="url(#glow)">
+                        <animate attributeName="cx" values="170;290" dur="2s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="2s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="170" cy="190" r="6" fill="#3b82f6" filter="url(#glow)">
+                        <animate attributeName="cx" values="170;290" dur="2s" begin="0.5s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="2s" begin="0.5s"
+                            repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="170" cy="190" r="6" fill="#f97316" filter="url(#glow)">
+                        <animate attributeName="cx" values="170;290" dur="2s" begin="1s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="2s" begin="1s"
+                            repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="170" cy="190" r="6" fill="#ef4444" filter="url(#glow)">
+                        <animate attributeName="cx" values="170;290" dur="2s" begin="1.5s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="2s" begin="1.5s"
+                            repeatCount="indefinite" />
+                    </circle>
+                </g>
+
+                <!-- Event Bus -->
+                <rect x="300" y="100" width="140" height="180" rx="10" fill="#161b22" stroke="#f97316"
+                    stroke-width="2" />
+                <text x="370" y="140" fill="#f97316" font-size="14" text-anchor="middle" font-weight="600">Event
+                    Bus</text>
+                <!-- Topic Channels -->
+                <rect x="315" y="155" width="110" height="25" rx="5" fill="#21262d" stroke="#22c55e" stroke-width="1" />
+                <text x="370" y="172" fill="#22c55e" font-size="10" text-anchor="middle">agent.state.*</text>
+                <rect x="315" y="185" width="110" height="25" rx="5" fill="#21262d" stroke="#3b82f6" stroke-width="1" />
+                <text x="370" y="202" fill="#3b82f6" font-size="10" text-anchor="middle">task.progress.*</text>
+                <rect x="315" y="215" width="110" height="25" rx="5" fill="#21262d" stroke="#a371f7" stroke-width="1" />
+                <text x="370" y="232" fill="#a371f7" font-size="10" text-anchor="middle">org.update.*</text>
+                <rect x="315" y="245" width="110" height="25" rx="5" fill="#21262d" stroke="#ef4444" stroke-width="1" />
+                <text x="370" y="262" fill="#ef4444" font-size="10" text-anchor="middle">system.error.*</text>
+
+                <!-- Connection Pipe: Event Bus → WS Bridge -->
+                <rect x="440" y="180" width="100" height="20" rx="10" fill="url(#pipeGradient)" />
+                <g>
+                    <circle cx="450" cy="190" r="5" fill="#22c55e" filter="url(#glow)">
+                        <animate attributeName="cx" values="450;530" dur="1.5s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="1.5s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="450" cy="190" r="5" fill="#3b82f6" filter="url(#glow)">
+                        <animate attributeName="cx" values="450;530" dur="1.5s" begin="0.4s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="1.5s" begin="0.4s"
+                            repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="450" cy="190" r="5" fill="#a371f7" filter="url(#glow)">
+                        <animate attributeName="cx" values="450;530" dur="1.5s" begin="0.8s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="1.5s" begin="0.8s"
+                            repeatCount="indefinite" />
+                    </circle>
+                </g>
+
+                <!-- WebSocket Bridge -->
+                <rect x="540" y="120" width="140" height="140" rx="10" fill="#161b22" stroke="#3b82f6"
+                    stroke-width="2" />
+                <text x="610" y="160" fill="#3b82f6" font-size="14" text-anchor="middle" font-weight="600">WS
+                    Bridge</text>
+                <text x="610" y="180" fill="#8b949e" font-size="10" text-anchor="middle">Protocol Translation</text>
+                <!-- Transform Icon -->
+                <g transform="translate(580, 195)">
+                    <rect width="60" height="40" rx="5" fill="#21262d" />
+                    <text x="30" y="18" fill="#f97316" font-size="10" text-anchor="middle">Internal</text>
+                    <text x="30" y="32" fill="#3b82f6" font-size="10" text-anchor="middle">→ JSON</text>
+                </g>
+
+                <!-- Connection Pipe: WS Bridge → Router -->
+                <rect x="680" y="180" width="100" height="20" rx="10" fill="url(#pipeGradient)" />
+                <g>
+                    <circle cx="690" cy="190" r="5" fill="#3b82f6" filter="url(#glow)">
+                        <animate attributeName="cx" values="690;770" dur="1s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="1s" repeatCount="indefinite" />
+                    </circle>
+                    <circle cx="690" cy="190" r="5" fill="#3b82f6" filter="url(#glow)">
+                        <animate attributeName="cx" values="690;770" dur="1s" begin="0.3s" repeatCount="indefinite" />
+                        <animate attributeName="opacity" values="0;1;1;0" dur="1s" begin="0.3s"
+                            repeatCount="indefinite" />
+                    </circle>
+                </g>
+
+                <!-- Message Router -->
+                <rect x="780" y="120" width="140" height="140" rx="10" fill="#161b22" stroke="#a371f7"
+                    stroke-width="2" />
+                <text x="850" y="155" fill="#a371f7" font-size="14" text-anchor="middle" font-weight="600">Router</text>
+                <!-- Fan-out visualization -->
+                <line x1="850" y1="175" x2="850" y2="200" stroke="#8b949e" stroke-width="2" />
+                <line x1="820" y1="200" x2="880" y2="200" stroke="#8b949e" stroke-width="2" />
+                <line x1="820" y1="200" x2="820" y2="230" stroke="#8b949e" stroke-width="2" />
+                <line x1="850" y1="200" x2="850" y2="230" stroke="#8b949e" stroke-width="2" />
+                <line x1="880" y1="200" x2="880" y2="230" stroke="#8b949e" stroke-width="2" />
+                <circle cx="820" cy="235" r="5" fill="#22c55e" />
+                <circle cx="850" cy="235" r="5" fill="#3b82f6" />
+                <circle cx="880" cy="235" r="5" fill="#f97316" />
+
+                <!-- Fan-out Pipes to Clients -->
+                <line x1="920" y1="150" x2="990" y2="80" stroke="#30363d" stroke-width="3" />
+                <line x1="920" y1="190" x2="990" y2="190" stroke="#30363d" stroke-width="3" />
+                <line x1="920" y1="230" x2="990" y2="300" stroke="#30363d" stroke-width="3" />
+
+                <!-- Events flowing to clients -->
+                <circle cx="920" cy="150" r="4" fill="#22c55e" filter="url(#glow)">
+                    <animate attributeName="cx" values="920;990" dur="0.8s" repeatCount="indefinite" />
+                    <animate attributeName="cy" values="150;80" dur="0.8s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0;1;1;0" dur="0.8s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="920" cy="190" r="4" fill="#3b82f6" filter="url(#glow)">
+                    <animate attributeName="cx" values="920;990" dur="0.8s" begin="0.2s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0;1;1;0" dur="0.8s" begin="0.2s"
+                        repeatCount="indefinite" />
+                </circle>
+                <circle cx="920" cy="230" r="4" fill="#f97316" filter="url(#glow)">
+                    <animate attributeName="cx" values="920;990" dur="0.8s" begin="0.4s" repeatCount="indefinite" />
+                    <animate attributeName="cy" values="230;300" dur="0.8s" begin="0.4s" repeatCount="indefinite" />
+                    <animate attributeName="opacity" values="0;1;1;0" dur="0.8s" begin="0.4s"
+                        repeatCount="indefinite" />
+                </circle>
+
+                <!-- Client WebSockets -->
+                <rect x="990" y="50" width="100" height="60" rx="8" fill="#161b22" stroke="#22c55e" stroke-width="2" />
+                <text x="1040" y="75" fill="#22c55e" font-size="11" text-anchor="middle" font-weight="600">Client
+                    A</text>
+                <text x="1040" y="95" fill="#8b949e" font-size="9" text-anchor="middle">OCI #1, #2</text>
+
+                <rect x="990" y="160" width="100" height="60" rx="8" fill="#161b22" stroke="#3b82f6" stroke-width="2" />
+                <text x="1040" y="185" fill="#3b82f6" font-size="11" text-anchor="middle" font-weight="600">Client
+                    B</text>
+                <text x="1040" y="205" fill="#8b949e" font-size="9" text-anchor="middle">OCI #1</text>
+
+                <rect x="990" y="270" width="100" height="60" rx="8" fill="#161b22" stroke="#f97316" stroke-width="2" />
+                <text x="1040" y="295" fill="#f97316" font-size="11" text-anchor="middle" font-weight="600">Client
+                    C</text>
+                <text x="1040" y="315" fill="#8b949e" font-size="9" text-anchor="middle">OCI #3</text>
+
+                <!-- Legend -->
+                <g transform="translate(40, 320)">
+                    <text x="0" y="15" fill="#8b949e" font-size="11" font-weight="600">EVENT TYPES:</text>
+                    <circle cx="120" cy="11" r="6" fill="#22c55e" />
+                    <text x="135" y="15" fill="#8b949e" font-size="10">State Change</text>
+                    <circle cx="230" cy="11" r="6" fill="#3b82f6" />
+                    <text x="245" y="15" fill="#8b949e" font-size="10">Task Progress</text>
+                    <circle cx="350" cy="11" r="6" fill="#f97316" />
+                    <text x="365" y="15" fill="#8b949e" font-size="10">Org Update</text>
+                    <circle cx="455" cy="11" r="6" fill="#ef4444" />
+                    <text x="470" y="15" fill="#8b949e" font-size="10">Error</text>
+                </g>
+            </svg>
+        </div>
+
+        <!-- WEBSOCKET PROTOCOL -->
+        <h2>📡 WebSocket Protocol Specification</h2>
+        <div class="grid-2">
+            <div class="diagram-container">
+                <div class="diagram-title">
+                    <span class="badge badge-ws">WS</span>
+                    Client → Server Messages
+                </div>
+                <table class="protocol-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Payload</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="msg-type">SUBSCRIBE</span></td>
+                            <td>{ oci_ids: string[] }</td>
+                            <td>Join org instance streams</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">UNSUBSCRIBE</span></td>
+                            <td>{ oci_ids: string[] }</td>
+                            <td>Leave org instance streams</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">TASK_SUBMIT</span></td>
+                            <td>{ oci_id, task: TaskDef }</td>
+                            <td>Submit new task to org</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">TASK_CANCEL</span></td>
+                            <td>{ task_id: string }</td>
+                            <td>Cancel running task</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">AGENT_OVERRIDE</span></td>
+                            <td>{ agent_id, action }</td>
+                            <td>Human intervention</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">PING</span></td>
+                            <td>{ ts: number }</td>
+                            <td>Keep-alive heartbeat</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">
+                    <span class="badge badge-ws">WS</span>
+                    Server → Client Messages
+                </div>
+                <table class="protocol-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Payload</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><span class="msg-type">AGENT_STATE</span></td>
+                            <td>{ agent_id, state, ts }</td>
+                            <td>Agent lifecycle update</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">TASK_PROGRESS</span></td>
+                            <td>{ task_id, pct, msg }</td>
+                            <td>Task execution progress</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">TASK_COMPLETE</span></td>
+                            <td>{ task_id, result }</td>
+                            <td>Task finished</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">ORG_STRUCTURE</span></td>
+                            <td>{ oci_id, graph }</td>
+                            <td>Full org snapshot</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">LLM_STREAM</span></td>
+                            <td>{ agent_id, chunk }</td>
+                            <td>Token stream relay</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">ERROR</span></td>
+                            <td>{ code, msg, ctx }</td>
+                            <td>Error notification</td>
+                        </tr>
+                        <tr>
+                            <td><span class="msg-type">PONG</span></td>
+                            <td>{ ts, latency }</td>
+                            <td>Heartbeat response</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- EVENT BUS INTERNAL FLOW -->
+        <h2>📬 Event Bus Internal Architecture</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="badge badge-bus">EVENT BUS</span>
+                PostgreSQL NOTIFY → Internal Pub/Sub → WebSocket Bridge
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#f97316', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e', 'secondaryColor': '#161b22'}}}%%
+                sequenceDiagram
+                participant DB as PostgreSQL
+                participant LISTENER as DB Listener
+                participant DESERIAL as Deserializer
+                participant ROUTER as Topic Router
+                participant Q1 as agent.state Queue
+                participant Q2 as task.progress Queue
+                participant SUB1 as WS Bridge Subscriber
+                participant SUB2 as Metrics Subscriber
+
+                Note over DB,SUB2: Event Bus Processing Pipeline
+
+                DB->>LISTENER: NOTIFY channel, payload
+                activate LISTENER
+                LISTENER->>LISTENER: Parse notification
+                LISTENER->>DESERIAL: Raw JSON payload
+                deactivate LISTENER
+
+                activate DESERIAL
+                DESERIAL->>DESERIAL: Validate schema
+                DESERIAL->>DESERIAL: Enrich metadata (tenant_id, ts)
+                DESERIAL->>ROUTER: Typed Event object
+                deactivate DESERIAL
+
+                activate ROUTER
+                ROUTER->>ROUTER: Match topic pattern
+
+                alt agent.state.* event
+                ROUTER->>Q1: Enqueue
+                Q1->>SUB1: Broadcast to subscribers
+                Q1->>SUB2: Broadcast to subscribers
+                else task.progress.* event
+                ROUTER->>Q2: Enqueue
+                Q2->>SUB1: Broadcast to subscribers
+                end
+                deactivate ROUTER
+
+                activate SUB1
+                SUB1->>SUB1: Filter by client subscriptions
+                SUB1->>SUB1: Coalesce high-freq events
+                SUB1->>SUB1: Transform to WS protocol
+                deactivate SUB1
+            </div>
+        </div>
+
+        <!-- TASK DELEGATION FLOW -->
+        <h2>📋 Task Delegation Sequence</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">Hierarchical Task Flow: CEO → Architect → Engineers</div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#3b82f6', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                sequenceDiagram
+                participant U as User
+                participant WS as WebSocket
+                participant CEO as CEO Agent
+                participant ARCH as Architect Agent
+                participant FE as FE Engineer
+                participant BE as BE Engineer
+                participant DB as Database
+
+                U->>WS: TASK_SUBMIT: "Build login page"
+                WS->>CEO: Route to root agent
+
+                activate CEO
+                CEO->>CEO: Analyze & decompose
+                CEO->>DB: Checkpoint: task_assigned
+                CEO->>ARCH: Delegate: "Design login system"
+                deactivate CEO
+
+                activate ARCH
+                ARCH->>ARCH: Create design spec
+                ARCH->>DB: Checkpoint: design_complete
+
+                par Frontend Work
+                ARCH->>FE: "Implement login UI"
+                activate FE
+                FE->>DB: Checkpoint: fe_started
+                FE->>FE: Generate React components
+                FE->>WS: LLM_STREAM (token chunks)
+                FE->>DB: Checkpoint: fe_complete
+                FE->>ARCH: Submit: LoginForm.tsx
+                deactivate FE
+                and Backend Work
+                ARCH->>BE: "Implement auth API"
+                activate BE
+                BE->>DB: Checkpoint: be_started
+                BE->>BE: Generate API handlers
+                BE->>WS: LLM_STREAM (token chunks)
+                BE->>DB: Checkpoint: be_complete
+                BE->>ARCH: Submit: auth_routes.go
+                deactivate BE
+                end
+
+                ARCH->>ARCH: Review & integrate
+                ARCH->>DB: Checkpoint: integration_complete
+                ARCH->>CEO: Submit: integrated_solution
+                deactivate ARCH
+
+                activate CEO
+                CEO->>CEO: Final verification
+                CEO->>DB: Checkpoint: task_complete
+                CEO->>WS: TASK_COMPLETE
+                deactivate CEO
+
+                WS->>U: Result + artifacts
+            </div>
+        </div>
+
+        <div class="note-box">
+            <h4>⚡ Behavioral Insights</h4>
+            <p>
+                <strong>1. Checkpoint Density:</strong> Every state transition writes to DB — enables replay from any
+                point.<br><br>
+                <strong>2. Parallel Execution:</strong> Sibling agents (FE/BE) execute concurrently; parent waits for
+                all children.<br><br>
+                <strong>3. Stream Relay:</strong> LLM token streams pass through to WebSocket for real-time UI
+                updates.<br><br>
+                <strong>4. Event Coalescing:</strong> High-frequency events (tokens) are batched before WS transmission.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            sequence: {
+                useMaxWidth: true,
+                showSequenceNumbers: false,
+                actorMargin: 50,
+                messageMargin: 40
+            }
+        });
+    </script>
+</body>
+
+</html>

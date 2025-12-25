@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implementation Layer — Code Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #a371f7, #58a6ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            color: #a371f7;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #21262d;
+        }
+
+        h3 {
+            color: #58a6ff;
+            margin: 25px 0 15px 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 40px;
+        }
+
+        .diagram-container {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            color: #f0f6fc;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(550px, 1fr));
+            gap: 20px;
+        }
+
+        .code-container {
+            background: #161b22;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: #21262d;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .code-header .lang {
+            color: #58a6ff;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .code-header .file {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .code-block {
+            padding: 20px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.82rem;
+            overflow-x: auto;
+            background: #0d1117;
+            line-height: 1.5;
+        }
+
+        .code-comment {
+            color: #8b949e;
+        }
+
+        .code-keyword {
+            color: #ff7b72;
+        }
+
+        .code-string {
+            color: #a5d6ff;
+        }
+
+        .code-type {
+            color: #79c0ff;
+        }
+
+        .code-func {
+            color: #d2a8ff;
+        }
+
+        .code-const {
+            color: #ffa657;
+        }
+
+        .code-decorator {
+            color: #f0883e;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-ts {
+            background: #3178c6;
+            color: white;
+        }
+
+        .badge-go {
+            background: #00add8;
+            color: white;
+        }
+
+        .badge-sql {
+            background: #336791;
+            color: white;
+        }
+
+        .note-box {
+            background: rgba(163, 113, 247, 0.1);
+            border: 1px solid #a371f7;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .note-box h4 {
+            color: #a371f7;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>⚙️ Implementation Layer</h1>
+        <p class="subtitle">Layer 4: Code Architecture — Domain Models & Service Contracts</p>
+
+        <!-- CLASS DIAGRAM -->
+        <h2>🏛️ Domain Model — Class Hierarchy</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="badge badge-ts">TypeScript</span>
+                Core Domain Classes
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#3178c6', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                classDiagram
+                class Tenant {
+                +string id
+                +string name
+                +TenantConfig config
+                +getOrgInstances() OrgChartInstance[]
+                +createOrgInstance(template) OrgChartInstance
+                }
+
+                class OrgChartInstance {
+                +string id
+                +string tenantId
+                +AgentNode rootAgent
+                +Map~string,AgentNode~ agents
+                +TaskGraph taskGraph
+                +start()
+                +pause()
+                +resume()
+                +getState() OrgState
+                }
+
+                class AgentNode {
+                +string id
+                +AgentRole role
+                +AgentState state
+                +AgentNode? parent
+                +AgentNode[] children
+                +Task? currentTask
+                +executeTask(task)
+                +delegateToChild(task, child)
+                +escalateToParent(issue)
+                +checkpoint()
+                }
+
+                class AgentRole {
+                <<enumeration>>
+                    CEO
+                    CTO
+                    ARCHITECT
+                    LEAD_ENGINEER
+                    SENIOR_DEV
+                    JUNIOR_DEV
+                    INTERN
+                    }
+
+                    class AgentState {
+                    <<enumeration>>
+                        IDLE
+                        ASSIGNED
+                        PLANNING
+                        EXECUTING
+                        DELEGATING
+                        SUPERVISING
+                        AWAITING_REVIEW
+                        BLOCKED
+                        COMPLETE
+                        }
+
+                        class Task {
+                        +string id
+                        +string description
+                        +TaskType type
+                        +TaskStatus status
+                        +string? parentTaskId
+                        +string[] subtaskIds
+                        +any result
+                        +Checkpoint[] checkpoints
+                        }
+
+                        class TaskGraph {
+                        +Map~string,Task~ tasks
+                        +addTask(task)
+                        +getTask(id) Task
+                        +getDependencies(taskId) Task[]
+                        +getReadyTasks() Task[]
+                        }
+
+                        class Checkpoint {
+                        +string id
+                        +string agentId
+                        +string taskId
+                        +any stateSnapshot
+                        +Date timestamp
+                        +number sequenceNum
+                        }
+
+                        class EventBus {
+                        +subscribe(topic, handler)
+                        +publish(topic, event)
+                        +unsubscribe(topic, handler)
+                        }
+
+                        class WebSocketBridge {
+                        +Map~string,Connection~ connections
+                        +handleConnect(conn)
+                        +handleDisconnect(conn)
+                        +broadcastToOrg(ociId, event)
+                        +sendToClient(connId, event)
+                        }
+
+                        Tenant "1" --> "*" OrgChartInstance : owns
+                        OrgChartInstance "1" --> "1" AgentNode : rootAgent
+                        OrgChartInstance "1" --> "1" TaskGraph : manages
+                        AgentNode "1" --> "*" AgentNode : children
+                        AgentNode --> AgentRole : has
+                        AgentNode --> AgentState : has
+                        AgentNode "1" --> "*" Task : executes
+                        Task "1" --> "*" Checkpoint : creates
+                        TaskGraph "1" --> "*" Task : contains
+                        EventBus --> WebSocketBridge : feeds
+            </div>
+        </div>
+
+        <!-- TYPESCRIPT IMPLEMENTATIONS -->
+        <h2>📝 TypeScript Implementations</h2>
+
+        <h3>Agent Node — Core Agent Logic</h3>
+        <div class="code-container">
+            <div class="code-header">
+                <span class="badge badge-ts">TypeScript</span>
+                <span class="file">src/domain/agent-node.ts</span>
+            </div>
+            <div class="code-block">
+                <span class="code-keyword">import</span> { EventEmitter } <span class="code-keyword">from</span> <span
+                    class="code-string">'events'</span>;
+                <span class="code-keyword">import</span> { <span class="code-type">AgentRole</span>, <span
+                    class="code-type">AgentState</span>, <span class="code-type">Task</span>, <span
+                    class="code-type">Checkpoint</span> } <span class="code-keyword">from</span> <span
+                    class="code-string">'./types'</span>;
+
+                <span class="code-keyword">export class</span> <span class="code-type">AgentNode</span> <span
+                    class="code-keyword">extends</span> <span class="code-type">EventEmitter</span> {
+                <span class="code-keyword">readonly</span> id: <span class="code-type">string</span>;
+                <span class="code-keyword">readonly</span> role: <span class="code-type">AgentRole</span>;
+                <span class="code-keyword">private</span> _state: <span class="code-type">AgentState</span> = <span
+                    class="code-type">AgentState</span>.<span class="code-const">IDLE</span>;
+                <span class="code-keyword">private</span> parent?: <span class="code-type">AgentNode</span>;
+                <span class="code-keyword">private</span> children: <span class="code-type">AgentNode</span>[] = [];
+                <span class="code-keyword">private</span> currentTask?: <span class="code-type">Task</span>;
+
+                <span class="code-keyword">constructor</span>(
+                id: <span class="code-type">string</span>,
+                role: <span class="code-type">AgentRole</span>,
+                <span class="code-keyword">private</span> checkpointService: <span
+                    class="code-type">CheckpointService</span>,
+                <span class="code-keyword">private</span> llmClient: <span class="code-type">LLMClient</span>
+                ) {
+                <span class="code-keyword">super</span>();
+                <span class="code-keyword">this</span>.id = id;
+                <span class="code-keyword">this</span>.role = role;
+                }
+
+                <span class="code-comment">// State machine transition with checkpoint</span>
+                <span class="code-keyword">private async</span> <span class="code-func">transition</span>(newState:
+                <span class="code-type">AgentState</span>): <span class="code-type">Promise</span>&lt;<span
+                    class="code-type">void</span>&gt; {
+                <span class="code-keyword">const</span> prevState = <span class="code-keyword">this</span>._state;
+                <span class="code-keyword">this</span>._state = newState;
+
+                <span class="code-comment">// Persist before emitting — failure here means no state change</span>
+                <span class="code-keyword">await this</span>.checkpointService.<span class="code-func">save</span>({
+                agentId: <span class="code-keyword">this</span>.id,
+                taskId: <span class="code-keyword">this</span>.currentTask?.id,
+                state: newState,
+                context: <span class="code-keyword">this</span>.<span class="code-func">getContext</span>(),
+                timestamp: <span class="code-keyword">new</span> <span class="code-type">Date</span>(),
+                });
+
+                <span class="code-keyword">this</span>.<span class="code-func">emit</span>(<span
+                    class="code-string">'stateChange'</span>, { prevState, newState, agentId: <span
+                    class="code-keyword">this</span>.id });
+                }
+
+                <span class="code-comment">// Execute task with full lifecycle management</span>
+                <span class="code-keyword">async</span> <span class="code-func">executeTask</span>(task: <span
+                    class="code-type">Task</span>): <span class="code-type">Promise</span>&lt;<span
+                    class="code-type">TaskResult</span>&gt; {
+                <span class="code-keyword">this</span>.currentTask = task;
+
+                <span class="code-keyword">try</span> {
+                <span class="code-keyword">await this</span>.<span class="code-func">transition</span>(<span
+                    class="code-type">AgentState</span>.<span class="code-const">ASSIGNED</span>);
+
+                <span class="code-comment">// Planning phase — decompose task</span>
+                <span class="code-keyword">await this</span>.<span class="code-func">transition</span>(<span
+                    class="code-type">AgentState</span>.<span class="code-const">PLANNING</span>);
+                <span class="code-keyword">const</span> plan = <span class="code-keyword">await this</span>.<span
+                    class="code-func">createPlan</span>(task);
+
+                <span class="code-comment">// Delegate subtasks if needed</span>
+                <span class="code-keyword">if</span> (plan.subtasks.length > <span class="code-const">0</span>) {
+                <span class="code-keyword">await this</span>.<span class="code-func">transition</span>(<span
+                    class="code-type">AgentState</span>.<span class="code-const">DELEGATING</span>);
+                <span class="code-keyword">const</span> subtaskResults = <span class="code-keyword">await
+                    this</span>.<span class="code-func">delegateSubtasks</span>(plan.subtasks);
+
+                <span class="code-keyword">await this</span>.<span class="code-func">transition</span>(<span
+                    class="code-type">AgentState</span>.<span class="code-const">SUPERVISING</span>);
+                <span class="code-keyword">await this</span>.<span
+                    class="code-func">waitForChildren</span>(subtaskResults);
+                }
+
+                <span class="code-comment">// Execute own work</span>
+                <span class="code-keyword">await this</span>.<span class="code-func">transition</span>(<span
+                    class="code-type">AgentState</span>.<span class="code-const">EXECUTING</span>);
+                <span class="code-keyword">const</span> result = <span class="code-keyword">await this</span>.<span
+                    class="code-func">doWork</span>(task, plan);
+
+                <span class="code-comment">// Await parent review if not root</span>
+                <span class="code-keyword">if</span> (<span class="code-keyword">this</span>.parent) {
+                <span class="code-keyword">await this</span>.<span class="code-func">transition</span>(<span
+                    class="code-type">AgentState</span>.<span class="code-const">AWAITING_REVIEW</span>);
+                }
+
+                <span class="code-keyword">await this</span>.<span class="code-func">transition</span>(<span
+                    class="code-type">AgentState</span>.<span class="code-const">COMPLETE</span>);
+                <span class="code-keyword">return</span> result;
+
+                } <span class="code-keyword">catch</span> (error) {
+                <span class="code-keyword">await this</span>.<span class="code-func">handleError</span>(error);
+                <span class="code-keyword">throw</span> error;
+                } <span class="code-keyword">finally</span> {
+                <span class="code-keyword">await this</span>.<span class="code-func">transition</span>(<span
+                    class="code-type">AgentState</span>.<span class="code-const">IDLE</span>);
+                <span class="code-keyword">this</span>.currentTask = <span class="code-keyword">undefined</span>;
+                }
+                }
+
+                <span class="code-comment">// Stream LLM output while executing</span>
+                <span class="code-keyword">private async</span> <span class="code-func">doWork</span>(task: <span
+                    class="code-type">Task</span>, plan: <span class="code-type">Plan</span>): <span
+                    class="code-type">Promise</span>&lt;<span class="code-type">TaskResult</span>&gt; {
+                <span class="code-keyword">const</span> stream = <span class="code-keyword">this</span>.llmClient.<span
+                    class="code-func">streamCompletion</span>({
+                role: <span class="code-keyword">this</span>.role,
+                task: task.description,
+                context: <span class="code-keyword">this</span>.<span class="code-func">getContext</span>(),
+                });
+
+                <span class="code-keyword">let</span> fullResponse = <span class="code-string">''</span>;
+                <span class="code-keyword">for await</span> (<span class="code-keyword">const</span> chunk <span
+                    class="code-keyword">of</span> stream) {
+                fullResponse += chunk;
+                <span class="code-keyword">this</span>.<span class="code-func">emit</span>(<span
+                    class="code-string">'llmStream'</span>, { agentId: <span class="code-keyword">this</span>.id, chunk
+                });
+                }
+
+                <span class="code-keyword">return</span> { output: fullResponse, artifacts: [] };
+                }
+                }
+            </div>
+        </div>
+
+        <h3>Event Bus — PostgreSQL NOTIFY Bridge</h3>
+        <div class="grid-2">
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="badge badge-go">Go</span>
+                    <span class="file">internal/eventbus/listener.go</span>
+                </div>
+                <div class="code-block">
+                    <span class="code-keyword">package</span> eventbus
+
+                    <span class="code-keyword">import</span> (
+                    <span class="code-string">"context"</span>
+                    <span class="code-string">"encoding/json"</span>
+                    <span class="code-string">"github.com/jackc/pgx/v5/pgxpool"</span>
+                    )
+
+                    <span class="code-keyword">type</span> <span class="code-type">Listener</span> <span
+                        class="code-keyword">struct</span> {
+                    pool *<span class="code-type">pgxpool.Pool</span>
+                    router *<span class="code-type">TopicRouter</span>
+                    tenantID <span class="code-type">string</span>
+                    }
+
+                    <span class="code-comment">// Start listening to PostgreSQL NOTIFY channels</span>
+                    <span class="code-keyword">func</span> (l *<span class="code-type">Listener</span>) <span
+                        class="code-func">Start</span>(ctx <span class="code-type">context.Context</span>) <span
+                        class="code-type">error</span> {
+                    conn, err := l.pool.<span class="code-func">Acquire</span>(ctx)
+                    <span class="code-keyword">if</span> err != <span class="code-const">nil</span> {
+                    <span class="code-keyword">return</span> err
+                    }
+                    <span class="code-keyword">defer</span> conn.<span class="code-func">Release</span>()
+
+                    <span class="code-comment">// Subscribe to tenant-specific channel</span>
+                    channel := <span class="code-string">"events_"</span> + l.tenantID
+                    _, err = conn.<span class="code-func">Exec</span>(ctx, <span class="code-string">"LISTEN
+                        "</span>+channel)
+                    <span class="code-keyword">if</span> err != <span class="code-const">nil</span> {
+                    <span class="code-keyword">return</span> err
+                    }
+
+                    <span class="code-keyword">for</span> {
+                    <span class="code-keyword">select</span> {
+                    <span class="code-keyword">case</span> &lt;-ctx.<span class="code-func">Done</span>():
+                    <span class="code-keyword">return</span> ctx.<span class="code-func">Err</span>()
+                    <span class="code-keyword">default</span>:
+                    notif, err := conn.<span class="code-func">Conn</span>().<span
+                        class="code-func">WaitForNotification</span>(ctx)
+                    <span class="code-keyword">if</span> err != <span class="code-const">nil</span> {
+                    <span class="code-keyword">continue</span>
+                    }
+
+                    <span class="code-keyword">go</span> l.<span class="code-func">handleNotification</span>(notif)
+                    }
+                    }
+                    }
+
+                    <span class="code-keyword">func</span> (l *<span class="code-type">Listener</span>) <span
+                        class="code-func">handleNotification</span>(n *<span
+                        class="code-type">pgconn.Notification</span>) {
+                    <span class="code-keyword">var</span> event <span class="code-type">Event</span>
+                    <span class="code-keyword">if</span> err := json.<span class="code-func">Unmarshal</span>([]<span
+                        class="code-type">byte</span>(n.Payload), &event); err != <span class="code-const">nil</span> {
+                    <span class="code-keyword">return</span> <span class="code-comment">// Log error in
+                        production</span>
+                    }
+
+                    <span class="code-comment">// Route to appropriate topic handlers</span>
+                    l.router.<span class="code-func">Route</span>(event)
+                    }
+                </div>
+            </div>
+
+            <div class="code-container">
+                <div class="code-header">
+                    <span class="badge badge-go">Go</span>
+                    <span class="file">internal/eventbus/router.go</span>
+                </div>
+                <div class="code-block">
+                    <span class="code-keyword">package</span> eventbus
+
+                    <span class="code-keyword">import</span> (
+                    <span class="code-string">"strings"</span>
+                    <span class="code-string">"sync"</span>
+                    )
+
+                    <span class="code-keyword">type</span> <span class="code-type">TopicRouter</span> <span
+                        class="code-keyword">struct</span> {
+                    mu <span class="code-type">sync.RWMutex</span>
+                    handlers <span class="code-keyword">map</span>[<span class="code-type">string</span>][]<span
+                        class="code-type">Handler</span>
+                    }
+
+                    <span class="code-keyword">type</span> <span class="code-type">Handler</span> <span
+                        class="code-keyword">func</span>(<span class="code-type">Event</span>)
+
+                    <span class="code-comment">// Subscribe to a topic pattern (supports wildcards)</span>
+                    <span class="code-keyword">func</span> (r *<span class="code-type">TopicRouter</span>) <span
+                        class="code-func">Subscribe</span>(pattern <span class="code-type">string</span>, h <span
+                        class="code-type">Handler</span>) {
+                    r.mu.<span class="code-func">Lock</span>()
+                    <span class="code-keyword">defer</span> r.mu.<span class="code-func">Unlock</span>()
+                    r.handlers[pattern] = <span class="code-func">append</span>(r.handlers[pattern], h)
+                    }
+
+                    <span class="code-comment">// Route event to matching handlers</span>
+                    <span class="code-keyword">func</span> (r *<span class="code-type">TopicRouter</span>) <span
+                        class="code-func">Route</span>(e <span class="code-type">Event</span>) {
+                    r.mu.<span class="code-func">RLock</span>()
+                    <span class="code-keyword">defer</span> r.mu.<span class="code-func">RUnlock</span>()
+
+                    <span class="code-keyword">for</span> pattern, handlers := <span class="code-keyword">range</span>
+                    r.handlers {
+                    <span class="code-keyword">if</span> <span class="code-func">matchTopic</span>(pattern, e.Topic) {
+                    <span class="code-keyword">for</span> _, h := <span class="code-keyword">range</span> handlers {
+                    <span class="code-keyword">go</span> h(e) <span class="code-comment">// Async dispatch</span>
+                    }
+                    }
+                    }
+                    }
+
+                    <span class="code-comment">// Pattern matching: "agent.state.*" matches "agent.state.changed"</span>
+                    <span class="code-keyword">func</span> <span class="code-func">matchTopic</span>(pattern, topic
+                    <span class="code-type">string</span>) <span class="code-type">bool</span> {
+                    <span class="code-keyword">if</span> pattern == <span class="code-string">"*"</span> {
+                    <span class="code-keyword">return</span> <span class="code-const">true</span>
+                    }
+                    <span class="code-keyword">if</span> strings.<span class="code-func">HasSuffix</span>(pattern, <span
+                        class="code-string">".*"</span>) {
+                    prefix := strings.<span class="code-func">TrimSuffix</span>(pattern, <span
+                        class="code-string">".*"</span>)
+                    <span class="code-keyword">return</span> strings.<span class="code-func">HasPrefix</span>(topic,
+                    prefix)
+                    }
+                    <span class="code-keyword">return</span> pattern == topic
+                    }
+                </div>
+            </div>
+        </div>
+
+        <h3>WebSocket Bridge — Client Protocol Handler</h3>
+        <div class="code-container">
+            <div class="code-header">
+                <span class="badge badge-ts">TypeScript</span>
+                <span class="file">src/ws/bridge.ts</span>
+            </div>
+            <div class="code-block">
+                <span class="code-keyword">import</span> { <span class="code-type">WebSocket</span>, <span
+                    class="code-type">WebSocketServer</span> } <span class="code-keyword">from</span> <span
+                    class="code-string">'ws'</span>;
+                <span class="code-keyword">import</span> { <span class="code-type">EventBus</span> } <span
+                    class="code-keyword">from</span> <span class="code-string">'../eventbus'</span>;
+
+                <span class="code-keyword">interface</span> <span class="code-type">ClientConnection</span> {
+                ws: <span class="code-type">WebSocket</span>;
+                tenantId: <span class="code-type">string</span>;
+                subscriptions: <span class="code-type">Set</span>&lt;<span class="code-type">string</span>&gt;; <span
+                    class="code-comment">// OCI IDs</span>
+                lastSeq: <span class="code-type">number</span>;
+                }
+
+                <span class="code-keyword">export class</span> <span class="code-type">WebSocketBridge</span> {
+                <span class="code-keyword">private</span> connections = <span class="code-keyword">new</span> <span
+                    class="code-type">Map</span>&lt;<span class="code-type">string</span>, <span
+                    class="code-type">ClientConnection</span>&gt;();
+                <span class="code-keyword">private</span> eventBuffer = <span class="code-keyword">new</span> <span
+                    class="code-type">Map</span>&lt;<span class="code-type">string</span>, <span
+                    class="code-type">Event</span>[]&gt;(); <span class="code-comment">// Reconnection buffer</span>
+
+                <span class="code-keyword">constructor</span>(
+                <span class="code-keyword">private</span> wss: <span class="code-type">WebSocketServer</span>,
+                <span class="code-keyword">private</span> eventBus: <span class="code-type">EventBus</span>,
+                <span class="code-keyword">private</span> coalescer: <span class="code-type">EventCoalescer</span>
+                ) {
+                <span class="code-keyword">this</span>.<span class="code-func">setupEventBusSubscription</span>();
+                <span class="code-keyword">this</span>.<span class="code-func">setupWebSocketHandlers</span>();
+                }
+
+                <span class="code-keyword">private</span> <span class="code-func">setupEventBusSubscription</span>() {
+                <span class="code-comment">// Subscribe to all agent/task events</span>
+                <span class="code-keyword">this</span>.eventBus.<span class="code-func">subscribe</span>(<span
+                    class="code-string">'agent.*'</span>, (e) => <span class="code-keyword">this</span>.<span
+                    class="code-func">handleInternalEvent</span>(e));
+                <span class="code-keyword">this</span>.eventBus.<span class="code-func">subscribe</span>(<span
+                    class="code-string">'task.*'</span>, (e) => <span class="code-keyword">this</span>.<span
+                    class="code-func">handleInternalEvent</span>(e));
+                <span class="code-keyword">this</span>.eventBus.<span class="code-func">subscribe</span>(<span
+                    class="code-string">'org.*'</span>, (e) => <span class="code-keyword">this</span>.<span
+                    class="code-func">handleInternalEvent</span>(e));
+                }
+
+                <span class="code-keyword">private</span> <span class="code-func">handleInternalEvent</span>(event:
+                <span class="code-type">InternalEvent</span>) {
+                <span class="code-comment">// Transform internal event to client protocol</span>
+                <span class="code-keyword">const</span> wsMessage = <span class="code-keyword">this</span>.<span
+                    class="code-func">transformToClientMessage</span>(event);
+
+                <span class="code-comment">// Find all clients subscribed to this OCI</span>
+                <span class="code-keyword">for</span> (<span class="code-keyword">const</span> [connId, conn] <span
+                    class="code-keyword">of</span> <span class="code-keyword">this</span>.connections) {
+                <span class="code-keyword">if</span> (conn.subscriptions.<span
+                    class="code-func">has</span>(event.ociId)) {
+                <span class="code-comment">// Coalesce high-frequency events (LLM tokens)</span>
+                <span class="code-keyword">if</span> (event.type === <span class="code-string">'llm.token'</span>) {
+                <span class="code-keyword">this</span>.coalescer.<span class="code-func">add</span>(connId, wsMessage);
+                } <span class="code-keyword">else</span> {
+                <span class="code-keyword">this</span>.<span class="code-func">sendToClient</span>(conn, wsMessage);
+                }
+                }
+                }
+
+                <span class="code-comment">// Buffer for potential reconnections</span>
+                <span class="code-keyword">this</span>.<span class="code-func">bufferEvent</span>(event.ociId,
+                wsMessage);
+                }
+
+                <span class="code-keyword">private</span> <span class="code-func">handleClientMessage</span>(conn: <span
+                    class="code-type">ClientConnection</span>, data: <span class="code-type">string</span>) {
+                <span class="code-keyword">const</span> msg = <span class="code-type">JSON</span>.<span
+                    class="code-func">parse</span>(data) <span class="code-keyword">as</span> <span
+                    class="code-type">ClientMessage</span>;
+
+                <span class="code-keyword">switch</span> (msg.type) {
+                <span class="code-keyword">case</span> <span class="code-string">'SUBSCRIBE'</span>:
+                msg.ociIds.<span class="code-func">forEach</span>(id => conn.subscriptions.<span
+                    class="code-func">add</span>(id));
+                <span class="code-keyword">break</span>;
+
+                <span class="code-keyword">case</span> <span class="code-string">'UNSUBSCRIBE'</span>:
+                msg.ociIds.<span class="code-func">forEach</span>(id => conn.subscriptions.<span
+                    class="code-func">delete</span>(id));
+                <span class="code-keyword">break</span>;
+
+                <span class="code-keyword">case</span> <span class="code-string">'TASK_SUBMIT'</span>:
+                <span class="code-keyword">this</span>.eventBus.<span class="code-func">publish</span>(<span
+                    class="code-string">'task.submitted'</span>, {
+                ociId: msg.ociId,
+                task: msg.task,
+                tenantId: conn.tenantId,
+                });
+                <span class="code-keyword">break</span>;
+
+                <span class="code-keyword">case</span> <span class="code-string">'RECONNECT'</span>:
+                <span class="code-keyword">this</span>.<span class="code-func">handleReconnect</span>(conn,
+                msg.lastSeq);
+                <span class="code-keyword">break</span>;
+
+                <span class="code-keyword">case</span> <span class="code-string">'PING'</span>:
+                <span class="code-keyword">this</span>.<span class="code-func">sendToClient</span>(conn, { type: <span
+                    class="code-string">'PONG'</span>, ts: <span class="code-type">Date</span>.<span
+                    class="code-func">now</span>() });
+                <span class="code-keyword">break</span>;
+                }
+                }
+
+                <span class="code-comment">// Replay missed events on reconnection</span>
+                <span class="code-keyword">private</span> <span class="code-func">handleReconnect</span>(conn: <span
+                    class="code-type">ClientConnection</span>, lastSeq: <span class="code-type">number</span>) {
+                <span class="code-keyword">for</span> (<span class="code-keyword">const</span> ociId <span
+                    class="code-keyword">of</span> conn.subscriptions) {
+                <span class="code-keyword">const</span> buffer = <span
+                    class="code-keyword">this</span>.eventBuffer.<span class="code-func">get</span>(ociId) ?? [];
+                <span class="code-keyword">const</span> missed = buffer.<span class="code-func">filter</span>(e => e.seq
+                > lastSeq);
+                missed.<span class="code-func">forEach</span>(e => <span class="code-keyword">this</span>.<span
+                    class="code-func">sendToClient</span>(conn, e));
+                }
+                }
+                }
+            </div>
+        </div>
+
+        <!-- DATABASE SCHEMA -->
+        <h2>🗄️ Database Schema</h2>
+        <div class="code-container">
+            <div class="code-header">
+                <span class="badge badge-sql">PostgreSQL</span>
+                <span class="file">migrations/001_core_schema.sql</span>
+            </div>
+            <div class="code-block">
+                <span class="code-comment">-- Enable required extensions</span>
+                <span class="code-keyword">CREATE EXTENSION IF NOT EXISTS</span> <span
+                    class="code-string">"uuid-ossp"</span>;
+                <span class="code-keyword">CREATE EXTENSION IF NOT EXISTS</span> <span
+                    class="code-string">"pg_trgm"</span>;
+
+                <span class="code-comment">-- Tenants table with RLS</span>
+                <span class="code-keyword">CREATE TABLE</span> tenants (
+                id <span class="code-type">UUID</span> <span class="code-keyword">PRIMARY KEY DEFAULT</span> <span
+                    class="code-func">uuid_generate_v4</span>(),
+                name <span class="code-type">TEXT</span> <span class="code-keyword">NOT NULL</span>,
+                config <span class="code-type">JSONB</span> <span class="code-keyword">DEFAULT</span> <span
+                    class="code-string">'{}'</span>,
+                created_at <span class="code-type">TIMESTAMPTZ</span> <span class="code-keyword">DEFAULT</span> <span
+                    class="code-func">now</span>()
+                );
+
+                <span class="code-comment">-- Org chart instances</span>
+                <span class="code-keyword">CREATE TABLE</span> org_chart_instances (
+                id <span class="code-type">UUID</span> <span class="code-keyword">PRIMARY KEY DEFAULT</span> <span
+                    class="code-func">uuid_generate_v4</span>(),
+                tenant_id <span class="code-type">UUID</span> <span class="code-keyword">REFERENCES</span> tenants(id)
+                <span class="code-keyword">ON DELETE CASCADE</span>,
+                name <span class="code-type">TEXT</span> <span class="code-keyword">NOT NULL</span>,
+                status <span class="code-type">TEXT</span> <span class="code-keyword">CHECK</span> (status <span
+                    class="code-keyword">IN</span> (<span class="code-string">'active'</span>, <span
+                    class="code-string">'paused'</span>, <span class="code-string">'completed'</span>, <span
+                    class="code-string">'failed'</span>)),
+                config <span class="code-type">JSONB</span> <span class="code-keyword">DEFAULT</span> <span
+                    class="code-string">'{}'</span>,
+                created_at <span class="code-type">TIMESTAMPTZ</span> <span class="code-keyword">DEFAULT</span> <span
+                    class="code-func">now</span>()
+                );
+
+                <span class="code-comment">-- Agent instances with hierarchical structure</span>
+                <span class="code-keyword">CREATE TABLE</span> agents (
+                id <span class="code-type">UUID</span> <span class="code-keyword">PRIMARY KEY DEFAULT</span> <span
+                    class="code-func">uuid_generate_v4</span>(),
+                oci_id <span class="code-type">UUID</span> <span class="code-keyword">REFERENCES</span>
+                org_chart_instances(id) <span class="code-keyword">ON DELETE CASCADE</span>,
+                parent_id <span class="code-type">UUID</span> <span class="code-keyword">REFERENCES</span> agents(id),
+                role <span class="code-type">TEXT</span> <span class="code-keyword">NOT NULL</span>,
+                state <span class="code-type">TEXT</span> <span class="code-keyword">NOT NULL DEFAULT</span> <span
+                    class="code-string">'idle'</span>,
+                context <span class="code-type">JSONB</span> <span class="code-keyword">DEFAULT</span> <span
+                    class="code-string">'{}'</span>,
+                created_at <span class="code-type">TIMESTAMPTZ</span> <span class="code-keyword">DEFAULT</span> <span
+                    class="code-func">now</span>()
+                );
+
+                <span class="code-comment">-- Checkpoints for recovery</span>
+                <span class="code-keyword">CREATE TABLE</span> checkpoints (
+                id <span class="code-type">UUID</span> <span class="code-keyword">PRIMARY KEY DEFAULT</span> <span
+                    class="code-func">uuid_generate_v4</span>(),
+                tenant_id <span class="code-type">UUID</span> <span class="code-keyword">NOT NULL</span>,
+                oci_id <span class="code-type">UUID</span> <span class="code-keyword">REFERENCES</span>
+                org_chart_instances(id),
+                agent_id <span class="code-type">UUID</span> <span class="code-keyword">REFERENCES</span> agents(id),
+                task_id <span class="code-type">UUID</span>,
+                state_type <span class="code-type">TEXT</span> <span class="code-keyword">NOT NULL</span>,
+                state_data <span class="code-type">JSONB</span> <span class="code-keyword">NOT NULL</span>,
+                sequence_num <span class="code-type">BIGINT</span> <span class="code-keyword">NOT NULL</span>,
+                checksum <span class="code-type">TEXT</span>,
+                created_at <span class="code-type">TIMESTAMPTZ</span> <span class="code-keyword">DEFAULT</span> <span
+                    class="code-func">now</span>()
+                );
+
+                <span class="code-comment">-- Index for fast checkpoint recovery</span>
+                <span class="code-keyword">CREATE INDEX</span> idx_checkpoints_recovery
+                <span class="code-keyword">ON</span> checkpoints(oci_id, sequence_num <span
+                    class="code-keyword">DESC</span>);
+
+                <span class="code-comment">-- Event notification trigger</span>
+                <span class="code-keyword">CREATE OR REPLACE FUNCTION</span> <span
+                    class="code-func">notify_event</span>() <span class="code-keyword">RETURNS TRIGGER AS</span> $$
+                <span class="code-keyword">DECLARE</span>
+                channel <span class="code-type">TEXT</span>;
+                payload <span class="code-type">JSONB</span>;
+                <span class="code-keyword">BEGIN</span>
+                channel := <span class="code-string">'events_'</span> || <span class="code-type">NEW</span>.tenant_id;
+                payload := <span class="code-func">jsonb_build_object</span>(
+                <span class="code-string">'table'</span>, <span class="code-type">TG_TABLE_NAME</span>,
+                <span class="code-string">'action'</span>, <span class="code-type">TG_OP</span>,
+                <span class="code-string">'data'</span>, <span class="code-func">row_to_json</span>(<span
+                    class="code-type">NEW</span>)
+                );
+                <span class="code-keyword">PERFORM</span> <span class="code-func">pg_notify</span>(channel,
+                payload::<span class="code-type">TEXT</span>);
+                <span class="code-keyword">RETURN NEW</span>;
+                <span class="code-keyword">END</span>;
+                $$ <span class="code-keyword">LANGUAGE</span> plpgsql;
+
+                <span class="code-comment">-- Attach trigger to checkpoint table</span>
+                <span class="code-keyword">CREATE TRIGGER</span> checkpoint_notify
+                <span class="code-keyword">AFTER INSERT ON</span> checkpoints
+                <span class="code-keyword">FOR EACH ROW EXECUTE FUNCTION</span> <span
+                    class="code-func">notify_event</span>();
+
+                <span class="code-comment">-- Row-level security for tenant isolation</span>
+                <span class="code-keyword">ALTER TABLE</span> checkpoints <span class="code-keyword">ENABLE ROW LEVEL
+                    SECURITY</span>;
+                <span class="code-keyword">CREATE POLICY</span> tenant_isolation <span class="code-keyword">ON</span>
+                checkpoints
+                <span class="code-keyword">USING</span> (tenant_id = <span
+                    class="code-func">current_setting</span>(<span class="code-string">'app.tenant_id'</span>)::<span
+                    class="code-type">UUID</span>);
+            </div>
+        </div>
+
+        <div class="note-box">
+            <h4>🎯 Implementation Patterns Summary</h4>
+            <p style="color: #c9d1d9;">
+                <strong>1. Event Sourcing Lite:</strong> Checkpoints capture state snapshots, not full event streams —
+                balances durability with storage efficiency.<br><br>
+                <strong>2. Hierarchical State Machines:</strong> Each agent independently manages its own state machine;
+                parent agents orchestrate child lifecycle.<br><br>
+                <strong>3. Protocol Translation:</strong> WebSocket Bridge decouples internal event format from client
+                protocol — enables evolution without breaking clients.<br><br>
+                <strong>4. Tenant-Scoped NOTIFY:</strong> PostgreSQL channels are tenant-isolated by naming convention,
+                eliminating cross-tenant event leakage.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

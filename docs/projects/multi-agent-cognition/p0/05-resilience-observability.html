@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resilience & Observability Patterns</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #ef4444, #f97316);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            color: #ef4444;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #21262d;
+        }
+
+        h3 {
+            color: #f97316;
+            margin: 25px 0 15px 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 40px;
+        }
+
+        .diagram-container {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            color: #f0f6fc;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .pattern-card {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #30363d;
+        }
+
+        .pattern-card h4 {
+            color: #58a6ff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pattern-card p {
+            color: #8b949e;
+            font-size: 0.95rem;
+            margin-bottom: 15px;
+        }
+
+        .pattern-card ul {
+            color: #c9d1d9;
+            padding-left: 20px;
+        }
+
+        .pattern-card li {
+            margin-bottom: 8px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-critical {
+            background: #ef4444;
+            color: white;
+        }
+
+        .badge-warn {
+            background: #f97316;
+            color: white;
+        }
+
+        .badge-info {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .badge-success {
+            background: #22c55e;
+            color: white;
+        }
+
+        .checkpoint-timeline {
+            position: relative;
+            padding: 20px 0;
+        }
+
+        .checkpoint-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(to bottom, #22c55e, #3b82f6, #f97316, #ef4444);
+            transform: translateX(-50%);
+        }
+
+        .checkpoint-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .checkpoint-item:nth-child(odd) {
+            flex-direction: row;
+        }
+
+        .checkpoint-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        .checkpoint-content {
+            width: 45%;
+            padding: 15px 20px;
+            background: #21262d;
+            border-radius: 8px;
+            border-left: 3px solid #22c55e;
+        }
+
+        .checkpoint-item:nth-child(even) .checkpoint-content {
+            border-left: none;
+            border-right: 3px solid #3b82f6;
+        }
+
+        .checkpoint-dot {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 16px;
+            height: 16px;
+            background: #22c55e;
+            border-radius: 50%;
+            border: 3px solid #0d1117;
+            z-index: 1;
+        }
+
+        .checkpoint-title {
+            color: #f0f6fc;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .checkpoint-desc {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .metric-card {
+            background: #21262d;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid #30363d;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #8b949e;
+            font-size: 0.85rem;
+        }
+
+        .metric-trend {
+            font-size: 0.8rem;
+            margin-top: 8px;
+        }
+
+        .trend-up {
+            color: #22c55e;
+        }
+
+        .trend-down {
+            color: #ef4444;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+            margin: 15px 0;
+        }
+
+        .code-comment {
+            color: #8b949e;
+        }
+
+        .code-keyword {
+            color: #ff7b72;
+        }
+
+        .code-string {
+            color: #a5d6ff;
+        }
+
+        .code-type {
+            color: #79c0ff;
+        }
+
+        .code-func {
+            color: #d2a8ff;
+        }
+
+        .code-const {
+            color: #ffa657;
+        }
+
+        .alert-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .alert-box h4 {
+            color: #ef4444;
+            margin-bottom: 10px;
+        }
+
+        .success-box {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid #22c55e;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .success-box h4 {
+            color: #22c55e;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🛡️ Resilience & Observability</h1>
+        <p class="subtitle">Layer 3: Fault Tolerance, Recovery Patterns, and System Visibility</p>
+
+        <!-- CHECKPOINT RECOVERY PATTERN -->
+        <h2>💾 Checkpoint Recovery Pattern</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="badge badge-critical">CRITICAL</span>
+                Workflow Interruption Recovery via Checkpoints
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#ef4444', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                stateDiagram-v2
+                [*] --> RUNNING: Start Workflow
+
+                state RUNNING {
+                [*] --> AGENT_EXEC
+                AGENT_EXEC --> CHECKPOINT: State Change
+                CHECKPOINT --> AGENT_EXEC: Continue
+                AGENT_EXEC --> DELEGATION: Subtask
+                DELEGATION --> CHECKPOINT
+                CHECKPOINT --> DELEGATION
+                }
+
+                RUNNING --> INTERRUPTED: Crash/Timeout/Cancel
+
+                state RECOVERY {
+                [*] --> LOAD_CHECKPOINT
+                LOAD_CHECKPOINT --> RESTORE_STATE: Valid Checkpoint
+                LOAD_CHECKPOINT --> ROLLBACK: Corrupted
+                ROLLBACK --> FIND_LAST_VALID
+                FIND_LAST_VALID --> RESTORE_STATE
+                RESTORE_STATE --> REPLAY_EVENTS
+                REPLAY_EVENTS --> RESUME_AGENTS
+                }
+
+                INTERRUPTED --> RECOVERY: Recovery Initiated
+                RECOVERY --> RUNNING: Resume from Checkpoint
+
+                RUNNING --> COMPLETED: All Tasks Done
+                COMPLETED --> [*]
+
+                note right of CHECKPOINT
+                Every state mutation
+                persists to PostgreSQL
+                before acknowledgment
+                end note
+
+                note left of RECOVERY
+                Deterministic replay
+                from last valid state
+                end note
+            </div>
+        </div>
+
+        <!-- CHECKPOINT DATA MODEL -->
+        <h3>📊 Checkpoint Data Model</h3>
+        <div class="diagram-container">
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#22c55e', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                erDiagram
+                CHECKPOINT {
+                uuid id PK
+                uuid workflow_id FK
+                uuid agent_id FK
+                string state_type
+                jsonb state_data
+                int sequence_num
+                timestamp created_at
+                string checksum
+                }
+
+                WORKFLOW {
+                uuid id PK
+                uuid tenant_id FK
+                uuid oci_id FK
+                string status
+                timestamp started_at
+                timestamp last_checkpoint_at
+                }
+
+                AGENT_STATE {
+                uuid id PK
+                uuid checkpoint_id FK
+                string agent_role
+                string lifecycle_state
+                jsonb context
+                jsonb pending_tasks
+                }
+
+                EVENT_LOG {
+                uuid id PK
+                uuid checkpoint_id FK
+                string event_type
+                jsonb payload
+                int order_idx
+                boolean replayed
+                }
+
+                WORKFLOW ||--o{ CHECKPOINT : "has many"
+                CHECKPOINT ||--|| AGENT_STATE : "captures"
+                CHECKPOINT ||--o{ EVENT_LOG : "includes"
+            </div>
+        </div>
+
+        <!-- FAILURE SCENARIOS -->
+        <h2>⚠️ Failure Scenarios & Recovery Strategies</h2>
+        <div class="grid-3">
+            <div class="pattern-card">
+                <h4>🔌 Connection Drop</h4>
+                <p>WebSocket disconnection during active workflow</p>
+                <ul>
+                    <li>Workflow continues server-side</li>
+                    <li>Events buffered in memory (5min TTL)</li>
+                    <li>Reconnect replays missed events</li>
+                    <li>Client syncs from last known sequence</li>
+                </ul>
+                <div class="code-block">
+                    <span class="code-comment">// Reconnection protocol</span><br>
+                    <span class="code-type">RECONNECT</span> {<br>
+                    &nbsp;&nbsp;session_id: <span class="code-string">"..."</span>,<br>
+                    &nbsp;&nbsp;last_seq: <span class="code-const">42</span><br>
+                    }
+                </div>
+            </div>
+
+            <div class="pattern-card">
+                <h4>💥 Agent Crash</h4>
+                <p>Agent process dies mid-execution</p>
+                <ul>
+                    <li>Supervisor detects heartbeat loss</li>
+                    <li>Load last checkpoint for agent</li>
+                    <li>Spawn replacement agent</li>
+                    <li>Restore state + replay pending</li>
+                </ul>
+                <div class="code-block">
+                    <span class="code-comment">// Heartbeat config</span><br>
+                    <span class="code-const">HEARTBEAT_INTERVAL</span>: <span class="code-string">5s</span><br>
+                    <span class="code-const">HEARTBEAT_TIMEOUT</span>: <span class="code-string">15s</span><br>
+                    <span class="code-const">MAX_RESTARTS</span>: <span class="code-const">3</span>
+                </div>
+            </div>
+
+            <div class="pattern-card">
+                <h4>🗄️ Database Failover</h4>
+                <p>Primary PostgreSQL becomes unavailable</p>
+                <ul>
+                    <li>Connection pool retry with backoff</li>
+                    <li>Read replica promotion</li>
+                    <li>Queued writes replayed on recovery</li>
+                    <li>Idempotent operations ensure safety</li>
+                </ul>
+                <div class="code-block">
+                    <span class="code-comment">// Retry policy</span><br>
+                    <span class="code-const">INITIAL_BACKOFF</span>: <span class="code-string">100ms</span><br>
+                    <span class="code-const">MAX_BACKOFF</span>: <span class="code-string">30s</span><br>
+                    <span class="code-const">MULTIPLIER</span>: <span class="code-const">2.0</span>
+                </div>
+            </div>
+
+            <div class="pattern-card">
+                <h4>🤖 LLM Timeout</h4>
+                <p>LLM API call exceeds timeout threshold</p>
+                <ul>
+                    <li>Circuit breaker opens after N failures</li>
+                    <li>Fallback to cached/default response</li>
+                    <li>Agent enters BLOCKED state</li>
+                    <li>Escalate to parent for decision</li>
+                </ul>
+                <div class="code-block">
+                    <span class="code-comment">// Circuit breaker</span><br>
+                    <span class="code-const">FAILURE_THRESHOLD</span>: <span class="code-const">5</span><br>
+                    <span class="code-const">RESET_TIMEOUT</span>: <span class="code-string">60s</span><br>
+                    <span class="code-const">HALF_OPEN_REQUESTS</span>: <span class="code-const">3</span>
+                </div>
+            </div>
+
+            <div class="pattern-card">
+                <h4>🔄 Infinite Loop</h4>
+                <p>Agent stuck in delegation/retry cycle</p>
+                <ul>
+                    <li>Max iteration guard per task</li>
+                    <li>Cycle detection in task graph</li>
+                    <li>Timeout kills and escalates</li>
+                    <li>Dead letter queue for analysis</li>
+                </ul>
+                <div class="code-block">
+                    <span class="code-comment">// Loop protection</span><br>
+                    <span class="code-const">MAX_ITERATIONS</span>: <span class="code-const">100</span><br>
+                    <span class="code-const">TASK_TIMEOUT</span>: <span class="code-string">5m</span><br>
+                    <span class="code-const">WORKFLOW_TIMEOUT</span>: <span class="code-string">1h</span>
+                </div>
+            </div>
+
+            <div class="pattern-card">
+                <h4>🏢 Tenant Isolation Breach</h4>
+                <p>Cross-tenant data access attempt</p>
+                <ul>
+                    <li>Row-level security in PostgreSQL</li>
+                    <li>Tenant ID in all queries (enforced)</li>
+                    <li>Connection pool per tenant</li>
+                    <li>Audit log + immediate alert</li>
+                </ul>
+                <div class="code-block">
+                    <span class="code-comment">-- RLS policy</span><br>
+                    <span class="code-keyword">CREATE POLICY</span> tenant_iso<br>
+                    <span class="code-keyword">ON</span> checkpoints<br>
+                    <span class="code-keyword">USING</span> (tenant_id = <span
+                        class="code-func">current_tenant</span>())
+                </div>
+            </div>
+        </div>
+
+        <!-- OBSERVABILITY STACK -->
+        <h2>📊 Observability Architecture</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="badge badge-info">MONITORING</span>
+                Full-Stack Observability Pipeline
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#3b82f6', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                flowchart TB
+                subgraph SOURCES["📡 Telemetry Sources"]
+                direction LR
+                AGENTS["Agent Runtime"]
+                WS["WebSocket Service"]
+                DB["Database"]
+                BUS["Event Bus"]
+                end
+
+                subgraph COLLECTION["📥 Collection Layer"]
+                direction LR
+                OTEL["OpenTelemetry<br />Collector"]
+                PROM["Prometheus<br />Scraper"]
+                FLUENT["Fluentbit<br />Log Forwarder"]
+                end
+
+                subgraph STORAGE["💾 Storage Layer"]
+                direction LR
+                TEMPO["Tempo<br />(Traces)"]
+                MIMIR["Mimir<br />(Metrics)"]
+                LOKI["Loki<br />(Logs)"]
+                end
+
+                subgraph ANALYSIS["🔍 Analysis Layer"]
+                direction LR
+                GRAFANA["Grafana<br />Dashboards"]
+                ALERT["Alert<br />Manager"]
+                TRACE["Trace<br />Explorer"]
+                end
+
+                subgraph ACTIONS["⚡ Response Layer"]
+                direction LR
+                PD["PagerDuty"]
+                SLACK["Slack"]
+                AUTO["Auto-Remediation"]
+                end
+
+                AGENTS --> OTEL
+                WS --> OTEL
+                DB --> PROM
+                BUS --> FLUENT
+
+                AGENTS --> PROM
+                WS --> PROM
+
+                AGENTS --> FLUENT
+                WS --> FLUENT
+                DB --> FLUENT
+
+                OTEL --> TEMPO
+                PROM --> MIMIR
+                FLUENT --> LOKI
+
+                TEMPO --> GRAFANA
+                MIMIR --> GRAFANA
+                LOKI --> GRAFANA
+
+                MIMIR --> ALERT
+                LOKI --> ALERT
+
+                TEMPO --> TRACE
+
+                ALERT --> PD
+                ALERT --> SLACK
+                ALERT --> AUTO
+
+                style SOURCES fill:#21262d,stroke:#3b82f6,stroke-width:2px
+                style COLLECTION fill:#21262d,stroke:#22c55e,stroke-width:2px
+                style STORAGE fill:#21262d,stroke:#f97316,stroke-width:2px
+                style ANALYSIS fill:#21262d,stroke:#a371f7,stroke-width:2px
+                style ACTIONS fill:#21262d,stroke:#ef4444,stroke-width:2px
+            </div>
+        </div>
+
+        <!-- KEY METRICS -->
+        <h3>📈 Key Performance Indicators</h3>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-value" style="color: #22c55e;">99.9%</div>
+                <div class="metric-label">Workflow Success Rate</div>
+                <div class="metric-trend trend-up">↑ 0.2% from last week</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: #3b82f6;">2.3s</div>
+                <div class="metric-label">Avg Checkpoint Latency</div>
+                <div class="metric-trend trend-down">↓ 0.5s improved</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: #f97316;">847</div>
+                <div class="metric-label">Active Agent Instances</div>
+                <div class="metric-trend trend-up">↑ 12% growth</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: #a371f7;">1.2M</div>
+                <div class="metric-label">Events/Hour</div>
+                <div class="metric-trend trend-up">↑ Normal load</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: #ef4444;">0.03%</div>
+                <div class="metric-label">Error Rate</div>
+                <div class="metric-trend trend-down">↓ Within SLA</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" style="color: #22c55e;">45ms</div>
+                <div class="metric-label">P99 WS Latency</div>
+                <div class="metric-trend trend-down">↓ Healthy</div>
+            </div>
+        </div>
+
+        <!-- DISTRIBUTED TRACING -->
+        <h3>🔗 Distributed Tracing Spans</h3>
+        <div class="diagram-container">
+            <div class="diagram-title">Trace Propagation Through Agent Hierarchy</div>
+            <svg viewBox="0 0 1100 350" style="width: 100%; height: 350px;">
+                <!-- Background -->
+                <rect width="1100" height="350" fill="#0d1117" />
+
+                <!-- Trace Header -->
+                <text x="50" y="30" fill="#8b949e" font-size="12" font-weight="600">TRACE ID:
+                    abc123-def456-ghi789</text>
+                <text x="400" y="30" fill="#58a6ff" font-size="12">Duration: 4.2s</text>
+
+                <!-- Time axis -->
+                <line x1="50" y1="320" x2="1050" y2="320" stroke="#30363d" stroke-width="2" />
+                <text x="50" y="340" fill="#8b949e" font-size="10">0ms</text>
+                <text x="300" y="340" fill="#8b949e" font-size="10">1000ms</text>
+                <text x="550" y="340" fill="#8b949e" font-size="10">2000ms</text>
+                <text x="800" y="340" fill="#8b949e" font-size="10">3000ms</text>
+                <text x="1020" y="340" fill="#8b949e" font-size="10">4200ms</text>
+
+                <!-- Service labels -->
+                <text x="10" y="75" fill="#ef4444" font-size="11" font-weight="600">WS</text>
+                <text x="10" y="125" fill="#f97316" font-size="11" font-weight="600">CEO</text>
+                <text x="10" y="175" fill="#22c55e" font-size="11" font-weight="600">ARCH</text>
+                <text x="10" y="225" fill="#3b82f6" font-size="11" font-weight="600">FE</text>
+                <text x="10" y="275" fill="#a371f7" font-size="11" font-weight="600">BE</text>
+
+                <!-- Spans -->
+                <!-- WS Span -->
+                <rect x="50" y="60" width="1000" height="25" rx="4" fill="#ef4444" opacity="0.3" />
+                <rect x="50" y="60" width="1000" height="25" rx="4" fill="none" stroke="#ef4444" stroke-width="2" />
+                <text x="60" y="77" fill="#fff" font-size="10">ws.request.handle</text>
+
+                <!-- CEO Span -->
+                <rect x="70" y="110" width="950" height="25" rx="4" fill="#f97316" opacity="0.3" />
+                <rect x="70" y="110" width="950" height="25" rx="4" fill="none" stroke="#f97316" stroke-width="2" />
+                <text x="80" y="127" fill="#fff" font-size="10">ceo.task.process</text>
+
+                <!-- Architect Span -->
+                <rect x="120" y="160" width="850" height="25" rx="4" fill="#22c55e" opacity="0.3" />
+                <rect x="120" y="160" width="850" height="25" rx="4" fill="none" stroke="#22c55e" stroke-width="2" />
+                <text x="130" y="177" fill="#fff" font-size="10">architect.design.create</text>
+
+                <!-- FE Span (parallel) -->
+                <rect x="300" y="210" width="400" height="25" rx="4" fill="#3b82f6" opacity="0.3" />
+                <rect x="300" y="210" width="400" height="25" rx="4" fill="none" stroke="#3b82f6" stroke-width="2" />
+                <text x="310" y="227" fill="#fff" font-size="10">fe.component.generate</text>
+
+                <!-- BE Span (parallel) -->
+                <rect x="300" y="260" width="500" height="25" rx="4" fill="#a371f7" opacity="0.3" />
+                <rect x="300" y="260" width="500" height="25" rx="4" fill="none" stroke="#a371f7" stroke-width="2" />
+                <text x="310" y="277" fill="#fff" font-size="10">be.api.generate</text>
+
+                <!-- LLM Call markers -->
+                <circle cx="400" cy="222" r="5" fill="#fff">
+                    <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite" />
+                </circle>
+                <text x="410" y="226" fill="#8b949e" font-size="9">LLM:1.2s</text>
+
+                <circle cx="500" cy="272" r="5" fill="#fff">
+                    <animate attributeName="opacity" values="1;0.3;1" dur="1s" repeatCount="indefinite" begin="0.5s" />
+                </circle>
+                <text x="510" y="276" fill="#8b949e" font-size="9">LLM:2.1s</text>
+
+                <!-- Checkpoint markers -->
+                <g transform="translate(120, 135)">
+                    <rect width="12" height="12" rx="2" fill="#22c55e" />
+                    <text x="16" y="10" fill="#8b949e" font-size="8">CP</text>
+                </g>
+                <g transform="translate(700, 185)">
+                    <rect width="12" height="12" rx="2" fill="#22c55e" />
+                    <text x="16" y="10" fill="#8b949e" font-size="8">CP</text>
+                </g>
+                <g transform="translate(800, 235)">
+                    <rect width="12" height="12" rx="2" fill="#22c55e" />
+                    <text x="16" y="10" fill="#8b949e" font-size="8">CP</text>
+                </g>
+
+                <!-- Legend -->
+                <g transform="translate(700, 50)">
+                    <rect width="12" height="12" rx="2" fill="#22c55e" />
+                    <text x="18" y="10" fill="#8b949e" font-size="10">Checkpoint</text>
+                    <circle cx="106" cy="6" r="5" fill="#fff" />
+                    <text x="116" y="10" fill="#8b949e" font-size="10">LLM Call</text>
+                </g>
+            </svg>
+        </div>
+
+        <!-- ALERT DEFINITIONS -->
+        <h3>🚨 Critical Alert Definitions</h3>
+        <div class="grid-2">
+            <div class="alert-box">
+                <h4>🔴 Agent Stuck Alert</h4>
+                <p style="color: #c9d1d9;">
+                    <strong>Condition:</strong> Agent in same state > 5 minutes<br>
+                    <strong>Severity:</strong> Critical<br>
+                    <strong>Action:</strong> Force checkpoint + restart agent
+                </p>
+                <div class="code-block">
+                    <span class="code-keyword">alert</span>: AgentStuck<br>
+                    <span class="code-keyword">expr</span>: <span class="code-func">agent_state_duration_seconds</span>
+                    > <span class="code-const">300</span><br>
+                    <span class="code-keyword">for</span>: <span class="code-string">1m</span><br>
+                    <span class="code-keyword">labels</span>:<br>
+                    &nbsp;&nbsp;severity: <span class="code-string">critical</span>
+                </div>
+            </div>
+
+            <div class="alert-box">
+                <h4>🔴 Checkpoint Lag Alert</h4>
+                <p style="color: #c9d1d9;">
+                    <strong>Condition:</strong> No checkpoint in workflow > 30 seconds<br>
+                    <strong>Severity:</strong> Warning → Critical<br>
+                    <strong>Action:</strong> Investigate DB connection
+                </p>
+                <div class="code-block">
+                    <span class="code-keyword">alert</span>: CheckpointLag<br>
+                    <span class="code-keyword">expr</span>: <span class="code-func">time</span>() - <span
+                        class="code-func">last_checkpoint_ts</span> > <span class="code-const">30</span><br>
+                    <span class="code-keyword">for</span>: <span class="code-string">30s</span><br>
+                    <span class="code-keyword">labels</span>:<br>
+                    &nbsp;&nbsp;severity: <span class="code-string">warning</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="success-box">
+            <h4>✅ Resilience Guarantees</h4>
+            <p style="color: #c9d1d9;">
+                <strong>1. At-least-once delivery:</strong> Events may replay on recovery, operations must be
+                idempotent.<br><br>
+                <strong>2. Bounded data loss:</strong> Maximum 1 checkpoint interval (~2s) of work can be lost.<br><br>
+                <strong>3. Automatic recovery:</strong> System self-heals within 30s of most failure types.<br><br>
+                <strong>4. Full auditability:</strong> Every state change logged with correlation IDs for
+                reconstruction.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

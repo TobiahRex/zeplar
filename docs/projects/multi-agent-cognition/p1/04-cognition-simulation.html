@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Agent Cognition Simulation</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            color: #e0e0e0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 30px;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            height: calc(100vh - 150px);
+        }
+
+        /* Agent Panel */
+        .agent-panel {
+            background: #161b22;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .agent-panel-header {
+            background: #21262d;
+            padding: 15px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .agent-panel-header h3 {
+            color: #f0f6fc;
+            font-size: 1rem;
+            margin-bottom: 5px;
+        }
+
+        .agent-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .agent-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+        }
+
+        .agent-item:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .agent-item.selected {
+            background: rgba(168, 85, 247, 0.2);
+            border: 1px solid #a855f7;
+        }
+
+        .agent-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+        }
+
+        .agent-info {
+            flex: 1;
+        }
+
+        .agent-name {
+            color: #f0f6fc;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .agent-state {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .state-thinking {
+            background: #a855f7;
+            color: white;
+        }
+
+        .state-conversing {
+            background: #ec4899;
+            color: white;
+        }
+
+        .state-executing {
+            background: #22c55e;
+            color: white;
+        }
+
+        .state-blocked {
+            background: #ef4444;
+            color: white;
+        }
+
+        .state-idle {
+            background: #21262d;
+            color: #8b949e;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Internal Narrative */
+        .narrative-panel {
+            background: #161b22;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .narrative-header {
+            background: linear-gradient(90deg, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.1));
+            padding: 15px 20px;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .narrative-header h3 {
+            color: #a855f7;
+        }
+
+        .narrative-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .narrative-entry {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #21262d;
+        }
+
+        .narrative-entry:last-child {
+            border-bottom: none;
+        }
+
+        .narrative-timestamp {
+            color: #8b949e;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
+        }
+
+        .narrative-thought {
+            color: #c9d1d9;
+            line-height: 1.7;
+            font-style: italic;
+            margin-bottom: 10px;
+        }
+
+        .narrative-action {
+            color: #22c55e;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .memory-tag {
+            display: inline-block;
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-right: 5px;
+        }
+
+        /* Conversation Thread */
+        .conversation-panel {
+            background: #161b22;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .conversation-header {
+            background: linear-gradient(90deg, rgba(236, 72, 153, 0.2), rgba(168, 85, 247, 0.1));
+            padding: 15px 20px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .conversation-header h3 {
+            color: #ec4899;
+        }
+
+        .conversation-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .conv-msg {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .conv-msg-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .conv-msg-content {
+            flex: 1;
+            background: #21262d;
+            border-radius: 12px;
+            padding: 12px 15px;
+        }
+
+        .conv-msg-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+
+        .conv-msg-name {
+            font-weight: 600;
+            color: #f0f6fc;
+            font-size: 0.9rem;
+        }
+
+        .conv-msg-type {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        .type-blocked {
+            background: #ef4444;
+            color: white;
+        }
+
+        .type-question {
+            background: #f97316;
+            color: white;
+        }
+
+        .type-answer {
+            background: #22c55e;
+            color: white;
+        }
+
+        .type-decision {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .conv-msg-text {
+            color: #c9d1d9;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .conv-msg-internal {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(168, 85, 247, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #a855f7;
+            font-size: 0.8rem;
+            color: #a5a5a5;
+            font-style: italic;
+        }
+
+        /* Priority Queue Panel */
+        .queue-panel {
+            background: #161b22;
+            border-radius: 12px;
+            border: 1px solid #30363d;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .queue-header {
+            background: #21262d;
+            padding: 15px;
+            border-bottom: 1px solid #30363d;
+        }
+
+        .queue-header h3 {
+            color: #f0f6fc;
+            font-size: 1rem;
+        }
+
+        .queue-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .queue-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: #21262d;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+        }
+
+        .queue-item.processing {
+            animation: pulse-border 1s infinite;
+        }
+
+        @keyframes pulse-border {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.5);
+            }
+
+            50% {
+                box-shadow: 0 0 0 5px rgba(168, 85, 247, 0);
+            }
+        }
+
+        .queue-item.urgent {
+            border-color: #ef4444;
+        }
+
+        .queue-item.high {
+            border-color: #f97316;
+        }
+
+        .queue-item.medium {
+            border-color: #eab308;
+        }
+
+        .queue-item.low {
+            border-color: #22c55e;
+        }
+
+        .queue-score {
+            font-weight: 700;
+            font-size: 1rem;
+            min-width: 40px;
+        }
+
+        .queue-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .queue-info {
+            flex: 1;
+        }
+
+        .queue-sender {
+            font-weight: 600;
+            color: #f0f6fc;
+            font-size: 0.85rem;
+        }
+
+        .queue-preview {
+            color: #8b949e;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-secondary {
+            background: #21262d;
+            color: #c9d1d9;
+            border: 1px solid #30363d;
+        }
+
+        .btn-secondary:hover {
+            background: #30363d;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 10px 15px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #a855f7;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+                opacity: 0.5;
+            }
+
+            30% {
+                transform: translateY(-5px);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🧠 Agent Cognition Simulation</h1>
+        <p class="subtitle">Watch agents think, converse, and resolve blockages collaboratively</p>
+
+        <div class="controls">
+            <button class="btn btn-primary" onclick="startSimulation()">▶️ Start Simulation</button>
+            <button class="btn btn-secondary" onclick="pauseSimulation()">⏸️ Pause</button>
+            <button class="btn btn-secondary" onclick="triggerBlockage()">🚧 Trigger Blockage</button>
+            <button class="btn btn-secondary" onclick="resetSimulation()">🔄 Reset</button>
+        </div>
+
+        <div class="main-grid">
+            <!-- Agent List -->
+            <div class="agent-panel">
+                <div class="agent-panel-header">
+                    <h3>🤖 Agent Roster</h3>
+                    <span style="color: #8b949e; font-size: 0.85rem;">Click to view agent's mind</span>
+                </div>
+                <div class="agent-list" id="agent-list">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="main-content">
+                <div class="narrative-panel">
+                    <div class="narrative-header">
+                        <span style="font-size: 1.3rem;">💭</span>
+                        <h3>Internal Narrative</h3>
+                        <span style="color: #8b949e; margin-left: auto;" id="selected-agent-name">Select an agent</span>
+                    </div>
+                    <div class="narrative-content" id="narrative-content">
+                        <div style="color: #8b949e; text-align: center; padding: 40px;">
+                            Select an agent to view their internal narrative
+                        </div>
+                    </div>
+                </div>
+
+                <div class="conversation-panel">
+                    <div class="conversation-header">
+                        <h3>💬 Active Conversation</h3>
+                    </div>
+                    <div class="conversation-content" id="conversation-content">
+                        <div style="color: #8b949e; text-align: center; padding: 40px;">
+                            No active conversation
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Priority Queue -->
+            <div class="queue-panel">
+                <div class="queue-header">
+                    <h3>📊 Conversation Queue</h3>
+                    <span style="color: #8b949e; font-size: 0.8rem;">Who to talk to next?</span>
+                </div>
+                <div class="queue-content" id="queue-content">
+                    <div style="color: #8b949e; text-align: center; padding: 20px;">
+                        Queue empty
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Agent definitions
+        const agents = [
+            { id: 'architect', name: 'Architect', icon: '🏗️', color: '#22c55e', state: 'idle' },
+            { id: 'fe-lead', name: 'FE Lead', icon: '💻', color: '#3b82f6', state: 'idle' },
+            { id: 'be-lead', name: 'BE Lead', icon: '⚙️', color: '#f97316', state: 'idle' },
+            { id: 'fe-sr', name: 'Sr FE Dev', icon: '👩‍💻', color: '#8b5cf6', state: 'idle' },
+            { id: 'be-sr', name: 'Sr BE Dev', icon: '👨‍💻', color: '#ec4899', state: 'idle' },
+            { id: 'qa-lead', name: 'QA Lead', icon: '🔍', color: '#06b6d4', state: 'idle' },
+        ];
+
+        let selectedAgentId = null;
+        let isRunning = false;
+        let simulationStep = 0;
+        let narratives = {};
+        let conversationQueue = {};
+
+        // Initialize narratives and queues for each agent
+        agents.forEach(a => {
+            narratives[a.id] = [];
+            conversationQueue[a.id] = [];
+        });
+
+        // Simulation script - the story of agents collaborating
+        const simulationScript = [
+            // Scene 1: Architect receives task and thinks
+            {
+                action: 'narrative',
+                agent: 'architect',
+                thought: "I've received the authentication system design task from CTO. Let me analyze what's needed...\n\n[Memory retrieval: 3 relevant items found]\n- Previous project used JWT with refresh tokens\n- Security audit recommended shorter token lifetimes\n- Mobile team prefers biometric auth\n\nThis is a complex task. I'll need to coordinate with both FE and BE leads.",
+                decision: "Begin task decomposition and queue conversations with leads",
+                state: 'thinking'
+            },
+            {
+                action: 'queue_add',
+                agent: 'architect',
+                item: { sender: 'be-lead', icon: '⚙️', score: 0.85, preview: 'Need to discuss token storage strategy', priority: 'high' }
+            },
+            {
+                action: 'queue_add',
+                agent: 'architect',
+                item: { sender: 'fe-lead', icon: '💻', score: 0.72, preview: 'Coordinate on auth UI components', priority: 'medium' }
+            },
+            // Scene 2: Architect initiates conversation with BE Lead
+            {
+                action: 'state',
+                agent: 'architect',
+                state: 'conversing'
+            },
+            {
+                action: 'state',
+                agent: 'be-lead',
+                state: 'conversing'
+            },
+            {
+                action: 'conversation',
+                messages: [
+                    {
+                        sender: 'architect',
+                        icon: '🏗️',
+                        color: '#22c55e',
+                        type: 'question',
+                        text: "I'm designing the auth system and need your input on token storage. Should we use Redis (faster, built-in TTL) or PostgreSQL (transactional, easier backup)?",
+                        internal: "I've identified two viable approaches. Redis is faster but PostgreSQL aligns with our 'single source of truth' principle. I need BE Lead's operational perspective."
+                    }
+                ]
+            },
+            {
+                action: 'narrative',
+                agent: 'be-lead',
+                thought: "Architect is asking about token storage. Let me think through this...\n\n[Memory retrieval: Redis cluster incident from Q2]\n\nWe had Redis cluster issues during scaling. PostgreSQL with proper indexing should handle our load (estimated 10K validations/min).\n\nBut wait - what if we use both? PostgreSQL as source of truth, Redis as cache layer.",
+                decision: "Propose hybrid approach: PostgreSQL + Redis cache",
+                state: 'thinking'
+            },
+            {
+                action: 'conversation',
+                messages: [
+                    {
+                        sender: 'be-lead',
+                        icon: '⚙️',
+                        color: '#f97316',
+                        type: 'answer',
+                        text: "Good question. We had Redis issues last quarter during scaling. PostgreSQL can handle our load. I'd recommend PostgreSQL with a Redis cache layer - best of both worlds.",
+                        internal: "Retrieved memory of Redis incident. The hybrid approach addresses reliability concerns while maintaining performance."
+                    }
+                ]
+            },
+            // Scene 3: Sr BE Dev joins (surfaced by relevance)
+            {
+                action: 'queue_add',
+                agent: 'be-lead',
+                item: { sender: 'be-sr', icon: '👨‍💻', score: 0.78, preview: 'Can implement write-through cache', priority: 'high' }
+            },
+            {
+                action: 'state',
+                agent: 'be-sr',
+                state: 'conversing'
+            },
+            {
+                action: 'narrative',
+                agent: 'be-sr',
+                thought: "I'm seeing a conversation about token caching in my queue. This is relevant to my JWT implementation task.\n\n[Memory retrieval: payment service caching, 8 months ago]\n\nI implemented a similar write-through cache pattern before. I should offer to help - this will unblock the team faster.",
+                decision: "Offer to implement write-through cache pattern",
+                state: 'thinking'
+            },
+            {
+                action: 'conversation',
+                messages: [
+                    {
+                        sender: 'be-sr',
+                        icon: '👨‍💻',
+                        color: '#ec4899',
+                        type: 'answer',
+                        text: "+1 on hybrid approach. I can implement a write-through cache pattern - write to PostgreSQL, populate Redis. On read: check Redis first, fallback to PostgreSQL. Want me to draft the implementation?",
+                        internal: "This pattern worked well in the payment service. Offering proactively will speed up the whole team."
+                    }
+                ]
+            },
+            // Scene 4: Resolution
+            {
+                action: 'conversation',
+                messages: [
+                    {
+                        sender: 'architect',
+                        icon: '🏗️',
+                        color: '#22c55e',
+                        type: 'decision',
+                        text: "Perfect, that unblocks me. Decision recorded: PostgreSQL as source of truth, Redis cache with write-through. @Sr_BE_Dev please draft the implementation. I'll update the design doc.",
+                        internal: "Blockage resolved through peer collaboration. Recording this decision with high importance - it affects multiple downstream components."
+                    }
+                ]
+            },
+            {
+                action: 'narrative',
+                agent: 'architect',
+                thought: "Excellent! The token storage decision is made through collaborative discussion.\n\nDecision: PostgreSQL + Redis write-through cache\n\nNow I can proceed with the schema design and delegate remaining subtasks:\n- BE Lead: Token generation and validation\n- FE Lead: Login UI components\n- QA Lead: Security test plan",
+                decision: "Proceed with delegation to FE Lead and QA Lead",
+                state: 'executing'
+            },
+            {
+                action: 'queue_remove',
+                agent: 'architect',
+                index: 0
+            },
+            {
+                action: 'state',
+                agent: 'be-lead',
+                state: 'executing'
+            },
+            {
+                action: 'state',
+                agent: 'be-sr',
+                state: 'executing'
+            },
+            // Scene 5: FE Lead gets blocked
+            {
+                action: 'state',
+                agent: 'fe-lead',
+                state: 'blocked'
+            },
+            {
+                action: 'narrative',
+                agent: 'fe-lead',
+                thought: "I'm trying to build the login form but I'm blocked - I don't know the expected response format from /auth/login.\n\n[No relevant memories found]\n\nI need to ask BE Lead directly. This is blocking my progress.",
+                decision: "Send BLOCKED message to BE Lead",
+                state: 'blocked'
+            },
+            {
+                action: 'queue_add',
+                agent: 'be-lead',
+                item: { sender: 'fe-lead', icon: '💻', score: 0.92, preview: '🚧 BLOCKED: Need /auth/login response schema', priority: 'urgent' }
+            },
+            {
+                action: 'conversation',
+                messages: [
+                    {
+                        sender: 'fe-lead',
+                        icon: '💻',
+                        color: '#3b82f6',
+                        type: 'blocked',
+                        text: "🚧 BLOCKED: I can't proceed with the login form without knowing the /auth/login response format. What fields will be returned?",
+                        internal: "I've checked my memories but don't have this information. Marking as BLOCKED to get priority attention."
+                    }
+                ]
+            },
+            {
+                action: 'narrative',
+                agent: 'be-lead',
+                thought: "FE Lead is blocked waiting on me. This is high priority in my queue (0.92).\n\nLet me define the response schema now:\n- token: JWT access token\n- refreshToken: for token renewal\n- expiresAt: timestamp\n- user: { id, email, name }\n\nThis aligns with our hybrid storage decision.",
+                decision: "Provide response schema immediately to unblock FE Lead",
+                state: 'conversing'
+            },
+            {
+                action: 'conversation',
+                messages: [
+                    {
+                        sender: 'be-lead',
+                        icon: '⚙️',
+                        color: '#f97316',
+                        type: 'answer',
+                        text: "Here's the schema:\n{ token: string, refreshToken: string, expiresAt: number, user: { id, email, name } }\n\ntoken is JWT, expiresAt is Unix timestamp. You unblocked?",
+                        internal: "Responding immediately to blocked message. Clear schema definition should let FE Lead proceed."
+                    }
+                ]
+            },
+            {
+                action: 'state',
+                agent: 'fe-lead',
+                state: 'executing'
+            },
+            {
+                action: 'conversation',
+                messages: [
+                    {
+                        sender: 'fe-lead',
+                        icon: '💻',
+                        color: '#3b82f6',
+                        type: 'answer',
+                        text: "✅ Unblocked! Thanks for the quick response. Proceeding with login form implementation.",
+                        internal: "Blockage resolved at peer level without needing to escalate to Architect. Recording schema in memory."
+                    }
+                ]
+            },
+            {
+                action: 'queue_remove',
+                agent: 'be-lead',
+                index: 0
+            },
+        ];
+
+        // Render agent list
+        function renderAgents() {
+            const list = document.getElementById('agent-list');
+            list.innerHTML = agents.map(a => `
+                <div class="agent-item ${selectedAgentId === a.id ? 'selected' : ''}" 
+                     onclick="selectAgent('${a.id}')"
+                     id="agent-item-${a.id}">
+                    <div class="agent-avatar" style="background: ${a.color};">${a.icon}</div>
+                    <div class="agent-info">
+                        <div class="agent-name">${a.name}</div>
+                        <span class="agent-state state-${a.state}" id="agent-state-${a.id}">${a.state.toUpperCase()}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Select agent
+        function selectAgent(agentId) {
+            selectedAgentId = agentId;
+            renderAgents();
+            renderNarrative();
+            renderQueue();
+
+            const agent = agents.find(a => a.id === agentId);
+            document.getElementById('selected-agent-name').textContent = agent ? agent.name : 'Select an agent';
+        }
+
+        // Render narrative
+        function renderNarrative() {
+            const content = document.getElementById('narrative-content');
+            if (!selectedAgentId || narratives[selectedAgentId].length === 0) {
+                content.innerHTML = '<div style="color: #8b949e; text-align: center; padding: 40px;">No narrative entries yet</div>';
+                return;
+            }
+
+            content.innerHTML = narratives[selectedAgentId].map(n => `
+                <div class="narrative-entry">
+                    <div class="narrative-timestamp">${n.timestamp}</div>
+                    <div class="narrative-thought">${n.thought.replace(/\n/g, '<br>')}</div>
+                    <div class="narrative-action">→ ${n.decision}</div>
+                </div>
+            `).join('');
+
+            content.scrollTop = content.scrollHeight;
+        }
+
+        // Render conversation
+        function renderConversation(messages) {
+            const content = document.getElementById('conversation-content');
+            if (!messages || messages.length === 0) {
+                content.innerHTML = '<div style="color: #8b949e; text-align: center; padding: 40px;">No active conversation</div>';
+                return;
+            }
+
+            // Append new messages
+            messages.forEach(m => {
+                const msgHtml = `
+                    <div class="conv-msg">
+                        <div class="conv-msg-avatar" style="background: ${m.color};">${m.icon}</div>
+                        <div class="conv-msg-content">
+                            <div class="conv-msg-header">
+                                <span class="conv-msg-name">${agents.find(a => a.id === m.sender)?.name || m.sender}</span>
+                                <span class="conv-msg-type type-${m.type}">${m.type.toUpperCase()}</span>
+                            </div>
+                            <div class="conv-msg-text">${m.text.replace(/\n/g, '<br>')}</div>
+                            ${m.internal ? `<div class="conv-msg-internal">💭 ${m.internal}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+                content.innerHTML += msgHtml;
+            });
+
+            content.scrollTop = content.scrollHeight;
+        }
+
+        // Render queue
+        function renderQueue() {
+            const content = document.getElementById('queue-content');
+            if (!selectedAgentId || conversationQueue[selectedAgentId].length === 0) {
+                content.innerHTML = '<div style="color: #8b949e; text-align: center; padding: 20px;">Queue empty</div>';
+                return;
+            }
+
+            content.innerHTML = conversationQueue[selectedAgentId].map((item, idx) => `
+                <div class="queue-item ${item.priority} ${idx === 0 ? 'processing' : ''}">
+                    <span class="queue-score" style="color: ${item.priority === 'urgent' ? '#ef4444' : item.priority === 'high' ? '#f97316' : item.priority === 'medium' ? '#eab308' : '#22c55e'};">${item.score.toFixed(2)}</span>
+                    <div class="queue-avatar" style="background: ${agents.find(a => a.id === item.sender)?.color || '#666'};">${item.icon}</div>
+                    <div class="queue-info">
+                        <div class="queue-sender">${agents.find(a => a.id === item.sender)?.name || item.sender}</div>
+                        <div class="queue-preview">${item.preview}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update agent state
+        function updateAgentState(agentId, state) {
+            const agent = agents.find(a => a.id === agentId);
+            if (agent) {
+                agent.state = state;
+                const stateEl = document.getElementById(`agent-state-${agentId}`);
+                if (stateEl) {
+                    stateEl.className = `agent-state state-${state}`;
+                    stateEl.textContent = state.toUpperCase();
+                }
+            }
+        }
+
+        // Run simulation step
+        function runStep() {
+            if (!isRunning || simulationStep >= simulationScript.length) {
+                isRunning = false;
+                return;
+            }
+
+            const step = simulationScript[simulationStep];
+
+            switch (step.action) {
+                case 'narrative':
+                    narratives[step.agent].push({
+                        timestamp: new Date().toLocaleTimeString(),
+                        thought: step.thought,
+                        decision: step.decision
+                    });
+                    updateAgentState(step.agent, step.state);
+                    if (selectedAgentId === step.agent) {
+                        renderNarrative();
+                    }
+                    break;
+
+                case 'conversation':
+                    renderConversation(step.messages);
+                    break;
+
+                case 'queue_add':
+                    conversationQueue[step.agent].push(step.item);
+                    conversationQueue[step.agent].sort((a, b) => b.score - a.score);
+                    if (selectedAgentId === step.agent) {
+                        renderQueue();
+                    }
+                    break;
+
+                case 'queue_remove':
+                    conversationQueue[step.agent].splice(step.index, 1);
+                    if (selectedAgentId === step.agent) {
+                        renderQueue();
+                    }
+                    break;
+
+                case 'state':
+                    updateAgentState(step.agent, step.state);
+                    break;
+            }
+
+            simulationStep++;
+            setTimeout(runStep, 2000 + Math.random() * 1000);
+        }
+
+        // Control functions
+        function startSimulation() {
+            if (isRunning) return;
+            isRunning = true;
+            if (!selectedAgentId) selectAgent('architect');
+            runStep();
+        }
+
+        function pauseSimulation() {
+            isRunning = false;
+        }
+
+        function resetSimulation() {
+            isRunning = false;
+            simulationStep = 0;
+            agents.forEach(a => {
+                a.state = 'idle';
+                narratives[a.id] = [];
+                conversationQueue[a.id] = [];
+            });
+            renderAgents();
+            renderNarrative();
+            renderQueue();
+            document.getElementById('conversation-content').innerHTML = '<div style="color: #8b949e; text-align: center; padding: 40px;">No active conversation</div>';
+        }
+
+        function triggerBlockage() {
+            // Add a blockage to the simulation
+            if (selectedAgentId) {
+                narratives[selectedAgentId].push({
+                    timestamp: new Date().toLocaleTimeString(),
+                    thought: "🚧 BLOCKED!\n\nI've encountered an obstacle I can't resolve alone. I don't have the information or authority to proceed.\n\nScanning my conversation queue for relevant peers who might help...",
+                    decision: "Initiate blockage resolution with peers before escalating"
+                });
+                updateAgentState(selectedAgentId, 'blocked');
+                renderNarrative();
+            }
+        }
+
+        // Initialize
+        renderAgents();
+    </script>
+</body>
+
+</html>

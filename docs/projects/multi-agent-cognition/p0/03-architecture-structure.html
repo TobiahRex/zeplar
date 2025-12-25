@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent System Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #58a6ff, #a371f7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            color: #58a6ff;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #21262d;
+        }
+
+        h3 {
+            color: #a371f7;
+            margin: 25px 0 15px 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 40px;
+        }
+
+        .diagram-container {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            color: #f0f6fc;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .lexicon {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #30363d;
+        }
+
+        .lexicon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .lexicon-item {
+            background: #0d1117;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 3px solid #58a6ff;
+        }
+
+        .lexicon-term {
+            color: #58a6ff;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .lexicon-abbr {
+            color: #a371f7;
+            font-size: 0.8rem;
+            margin-left: 8px;
+        }
+
+        .lexicon-def {
+            color: #8b949e;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .layer-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .layer-cloud {
+            background: #238636;
+            color: white;
+        }
+
+        .layer-tenant {
+            background: #f97316;
+            color: white;
+        }
+
+        .layer-instance {
+            background: #22c55e;
+            color: white;
+        }
+
+        .layer-agent {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .note-box {
+            background: rgba(56, 139, 253, 0.1);
+            border: 1px solid #388bfd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .note-box h4 {
+            color: #58a6ff;
+            margin-bottom: 10px;
+        }
+
+        .state-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .state-table th {
+            background: #21262d;
+            color: #f0f6fc;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .state-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+
+        .state-table tr:hover {
+            background: rgba(56, 139, 253, 0.05);
+        }
+
+        .state-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .state-idle {
+            background: #21262d;
+            color: #8b949e;
+        }
+
+        .state-active {
+            background: #238636;
+            color: white;
+        }
+
+        .state-waiting {
+            background: #9e6a03;
+            color: white;
+        }
+
+        .state-error {
+            background: #da3633;
+            color: white;
+        }
+
+        .state-complete {
+            background: #1f6feb;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🏗️ Multi-Agent Composition System</h1>
+        <p class="subtitle">Layer 1: Structural Architecture — The Static Topology</p>
+
+        <!-- LEXICON SECTION -->
+        <h2>📖 Lexicon — Core Terminology</h2>
+        <div class="lexicon">
+            <div class="lexicon-grid">
+                <div class="lexicon-item">
+                    <span class="lexicon-term">Tenant</span>
+                    <span class="lexicon-abbr">(T)</span>
+                    <div class="lexicon-def">An isolated customer environment with dedicated resources, data, and
+                        configuration boundaries.</div>
+                </div>
+                <div class="lexicon-item">
+                    <span class="lexicon-term">Org Chart Instance</span>
+                    <span class="lexicon-abbr">(OCI)</span>
+                    <div class="lexicon-def">A single hierarchical agent graph representing one workflow execution unit.
+                    </div>
+                </div>
+                <div class="lexicon-item">
+                    <span class="lexicon-term">Agent Role</span>
+                    <span class="lexicon-abbr">(AR)</span>
+                    <div class="lexicon-def">Human-proxy archetype (CEO, Architect, Engineer, Intern) defining
+                        capabilities and authority.</div>
+                </div>
+                <div class="lexicon-item">
+                    <span class="lexicon-term">Agent Instance</span>
+                    <span class="lexicon-abbr">(AI)</span>
+                    <div class="lexicon-def">A runtime instantiation of an Agent Role with state, context, and active
+                        tasks.</div>
+                </div>
+                <div class="lexicon-item">
+                    <span class="lexicon-term">Task Graph</span>
+                    <span class="lexicon-abbr">(TG)</span>
+                    <div class="lexicon-def">DAG of work items flowing through agent hierarchy with dependencies.</div>
+                </div>
+                <div class="lexicon-item">
+                    <span class="lexicon-term">Event Bus</span>
+                    <span class="lexicon-abbr">(EB)</span>
+                    <div class="lexicon-def">Internal pub/sub backbone for DB notifications and system events.</div>
+                </div>
+                <div class="lexicon-item">
+                    <span class="lexicon-term">WebSocket Bridge</span>
+                    <span class="lexicon-abbr">(WSB)</span>
+                    <div class="lexicon-def">Protocol adapter translating internal events to client-consumable streams.
+                    </div>
+                </div>
+                <div class="lexicon-item">
+                    <span class="lexicon-term">Checkpoint</span>
+                    <span class="lexicon-abbr">(CP)</span>
+                    <div class="lexicon-def">Durable state snapshot enabling workflow resumption after interruption.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLOUD TOPOLOGY -->
+        <h2>☁️ Cloud Topology — Multi-Tenant Structure</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="layer-badge layer-cloud">CLOUD</span>
+                Infrastructure Layer — Tenant Isolation & Resource Boundaries
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#238636', 'primaryTextColor': '#fff',
+                'primaryBorderColor': '#3fb950', 'lineColor': '#8b949e', 'secondaryColor': '#161b22', 'tertiaryColor':
+                '#21262d', 'background': '#0d1117', 'mainBkg': '#161b22', 'nodeBorder': '#30363d', 'clusterBkg':
+                '#161b22', 'clusterBorder': '#30363d', 'titleColor': '#f0f6fc', 'edgeLabelBackground': '#21262d'}}}%%
+                graph TB
+                subgraph CLOUD["☁️ CLOUD PLATFORM"]
+                direction TB
+
+                subgraph LB["Load Balancer Layer"]
+                GLB[("🌐 Global LB")]
+                WSG[("⚡ WebSocket Gateway")]
+                end
+
+                subgraph SHARED["Shared Services"]
+                AUTH[("🔐 Auth Service")]
+                METRICS[("📊 Metrics Aggregator")]
+                LOGS[("📝 Log Collector")]
+                end
+
+                subgraph T1["🏢 TENANT A"]
+                direction TB
+                T1_DB[(PostgreSQL)]
+                T1_EB[Event Bus]
+                T1_WS[WS Bridge]
+                T1_AGENT[Agent Pool]
+                end
+
+                subgraph T2["🏢 TENANT B"]
+                direction TB
+                T2_DB[(PostgreSQL)]
+                T2_EB[Event Bus]
+                T2_WS[WS Bridge]
+                T2_AGENT[Agent Pool]
+                end
+
+                subgraph T3["🏢 TENANT C"]
+                direction TB
+                T3_DB[(PostgreSQL)]
+                T3_EB[Event Bus]
+                T3_WS[WS Bridge]
+                T3_AGENT[Agent Pool]
+                end
+                end
+
+                GLB --> AUTH
+                GLB --> T1
+                GLB --> T2
+                GLB --> T3
+
+                WSG --> T1_WS
+                WSG --> T2_WS
+                WSG --> T3_WS
+
+                T1_DB --> T1_EB
+                T2_DB --> T2_EB
+                T3_DB --> T3_EB
+
+                T1_EB --> T1_WS
+                T2_EB --> T2_WS
+                T3_EB --> T3_WS
+
+                T1_AGENT --> T1_DB
+                T2_AGENT --> T2_DB
+                T3_AGENT --> T3_DB
+
+                T1 --> METRICS
+                T2 --> METRICS
+                T3 --> METRICS
+
+                T1 --> LOGS
+                T2 --> LOGS
+                T3 --> LOGS
+
+                style CLOUD fill:#0d1117,stroke:#30363d,stroke-width:2px
+                style T1 fill:#21262d,stroke:#f97316,stroke-width:2px
+                style T2 fill:#21262d,stroke:#22c55e,stroke-width:2px
+                style T3 fill:#21262d,stroke:#3b82f6,stroke-width:2px
+                style LB fill:#161b22,stroke:#58a6ff,stroke-width:1px
+                style SHARED fill:#161b22,stroke:#a371f7,stroke-width:1px
+            </div>
+        </div>
+
+        <!-- TENANT INTERNAL STRUCTURE -->
+        <h2>🏢 Tenant Internal Structure — Instance Multiplexing</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="layer-badge layer-tenant">TENANT</span>
+                Single Tenant with Multiple Org Chart Instances
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#f97316', 'primaryTextColor': '#fff',
+                'primaryBorderColor': '#fb923c', 'lineColor': '#8b949e', 'secondaryColor': '#161b22', 'tertiaryColor':
+                '#21262d'}}}%%
+                graph TB
+                subgraph TENANT["🏢 TENANT BOUNDARY"]
+                direction TB
+
+                subgraph CONN["Connection Layer"]
+                WS1["🔌 WebSocket 1<br />(User Session A)"]
+                WS2["🔌 WebSocket 2<br />(User Session B)"]
+                WS3["🔌 WebSocket 3<br />(User Session C)"]
+                end
+
+                subgraph MUX["Multiplexer"]
+                ROUTER["📡 Message Router"]
+                end
+
+                subgraph INSTANCES["Org Chart Instances"]
+                direction LR
+
+                subgraph OCI1["📊 OCI #1: Feature Build"]
+                CEO1["👔 CEO"]
+                ARCH1["🏗️ Architect"]
+                FE1["💻 FE Engineer"]
+                BE1["⚙️ BE Engineer"]
+                end
+
+                subgraph OCI2["📊 OCI #2: Bug Triage"]
+                CEO2["👔 CEO"]
+                QA2["🔍 QA Lead"]
+                DEV2["💻 Developer"]
+                end
+
+                subgraph OCI3["📊 OCI #3: Code Review"]
+                LEAD3["👔 Tech Lead"]
+                REV3["📝 Reviewer"]
+                INT3["🎓 Intern"]
+                end
+                end
+
+                subgraph PERSIST["Persistence Layer"]
+                DB[(PostgreSQL<br />+ NOTIFY)]
+                EVENTBUS["📬 Event Bus"]
+                end
+                end
+
+                WS1 --> ROUTER
+                WS2 --> ROUTER
+                WS3 --> ROUTER
+
+                ROUTER --> OCI1
+                ROUTER --> OCI2
+                ROUTER --> OCI3
+
+                CEO1 --> ARCH1
+                ARCH1 --> FE1
+                ARCH1 --> BE1
+
+                CEO2 --> QA2
+                QA2 --> DEV2
+
+                LEAD3 --> REV3
+                REV3 --> INT3
+
+                OCI1 --> DB
+                OCI2 --> DB
+                OCI3 --> DB
+
+                DB --> EVENTBUS
+                EVENTBUS --> ROUTER
+
+                style TENANT fill:#0d1117,stroke:#f97316,stroke-width:3px
+                style OCI1 fill:#21262d,stroke:#22c55e,stroke-width:2px
+                style OCI2 fill:#21262d,stroke:#3b82f6,stroke-width:2px
+                style OCI3 fill:#21262d,stroke:#a371f7,stroke-width:2px
+                style CONN fill:#161b22,stroke:#58a6ff,stroke-width:1px
+                style MUX fill:#161b22,stroke:#fb923c,stroke-width:1px
+                style PERSIST fill:#161b22,stroke:#da3633,stroke-width:1px
+            </div>
+        </div>
+
+        <!-- ORG CHART HIERARCHY -->
+        <h2>📊 Org Chart Hierarchy — Agent Role Graph</h2>
+        <div class="grid-2">
+            <div class="diagram-container">
+                <div class="diagram-title">
+                    <span class="layer-badge layer-instance">INSTANCE</span>
+                    Full-Stack Feature Development Org
+                </div>
+                <div class="mermaid">
+                    %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#22c55e', 'primaryTextColor':
+                    '#fff', 'lineColor': '#8b949e'}}}%%
+                    graph TB
+                    CEO["👔 CEO<br /><small>Strategic Direction</small>"]
+
+                    CTO["🎯 CTO<br /><small>Technical Vision</small>"]
+                    CPO["📋 CPO<br /><small>Product Strategy</small>"]
+
+                    ARCH["🏗️ System Architect<br /><small>Design Authority</small>"]
+                    PM["📊 Product Manager<br /><small>Requirements</small>"]
+
+                    FE_LEAD["💻 FE Lead<br /><small>UI/UX Implementation</small>"]
+                    BE_LEAD["⚙️ BE Lead<br /><small>API/Services</small>"]
+                    QA_LEAD["🔍 QA Lead<br /><small>Quality Gates</small>"]
+
+                    FE_SR["👩‍💻 Sr FE Dev"]
+                    FE_JR["🎓 Jr FE Dev"]
+                    BE_SR["👨‍💻 Sr BE Dev"]
+                    BE_JR["🎓 Jr BE Dev"]
+                    QA_ENG["🧪 QA Engineer"]
+
+                    CEO --> CTO
+                    CEO --> CPO
+
+                    CTO --> ARCH
+                    CPO --> PM
+
+                    ARCH --> FE_LEAD
+                    ARCH --> BE_LEAD
+                    PM --> QA_LEAD
+
+                    FE_LEAD --> FE_SR
+                    FE_LEAD --> FE_JR
+                    BE_LEAD --> BE_SR
+                    BE_LEAD --> BE_JR
+                    QA_LEAD --> QA_ENG
+
+                    style CEO fill:#ef4444,stroke:#fca5a5,stroke-width:2px,color:#fff
+                    style CTO fill:#f97316,stroke:#fdba74,stroke-width:2px,color:#fff
+                    style CPO fill:#f97316,stroke:#fdba74,stroke-width:2px,color:#fff
+                    style ARCH fill:#22c55e,stroke:#86efac,stroke-width:2px,color:#fff
+                    style PM fill:#22c55e,stroke:#86efac,stroke-width:2px,color:#fff
+                    style FE_LEAD fill:#3b82f6,stroke:#93c5fd,stroke-width:2px,color:#fff
+                    style BE_LEAD fill:#3b82f6,stroke:#93c5fd,stroke-width:2px,color:#fff
+                    style QA_LEAD fill:#3b82f6,stroke:#93c5fd,stroke-width:2px,color:#fff
+                    style FE_SR fill:#8b5cf6,stroke:#c4b5fd,stroke-width:2px,color:#fff
+                    style FE_JR fill:#a855f7,stroke:#d8b4fe,stroke-width:2px,color:#fff
+                    style BE_SR fill:#8b5cf6,stroke:#c4b5fd,stroke-width:2px,color:#fff
+                    style BE_JR fill:#a855f7,stroke:#d8b4fe,stroke-width:2px,color:#fff
+                    style QA_ENG fill:#8b5cf6,stroke:#c4b5fd,stroke-width:2px,color:#fff
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">
+                    <span class="layer-badge layer-agent">ROLES</span>
+                    Role Capability Matrix
+                </div>
+                <table class="state-table">
+                    <thead>
+                        <tr>
+                            <th>Role</th>
+                            <th>Authority Level</th>
+                            <th>Can Task</th>
+                            <th>Can Verify</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>👔 CEO</td>
+                            <td><span class="state-badge" style="background:#ef4444;">L0 - Root</span></td>
+                            <td>All Below</td>
+                            <td>Strategic</td>
+                        </tr>
+                        <tr>
+                            <td>🎯 CTO / CPO</td>
+                            <td><span class="state-badge" style="background:#f97316;">L1 - Executive</span></td>
+                            <td>L2 and below</td>
+                            <td>Technical/Product</td>
+                        </tr>
+                        <tr>
+                            <td>🏗️ Architect</td>
+                            <td><span class="state-badge" style="background:#22c55e;">L2 - Director</span></td>
+                            <td>L3 and below</td>
+                            <td>Design Quality</td>
+                        </tr>
+                        <tr>
+                            <td>💻 Lead Engineer</td>
+                            <td><span class="state-badge" style="background:#3b82f6;">L3 - Manager</span></td>
+                            <td>L4 and below</td>
+                            <td>Code Quality</td>
+                        </tr>
+                        <tr>
+                            <td>👨‍💻 Senior Dev</td>
+                            <td><span class="state-badge" style="background:#8b5cf6;">L4 - Senior</span></td>
+                            <td>L5 only</td>
+                            <td>Implementation</td>
+                        </tr>
+                        <tr>
+                            <td>🎓 Junior / Intern</td>
+                            <td><span class="state-badge" style="background:#a855f7;">L5 - Entry</span></td>
+                            <td>None</td>
+                            <td>Self Only</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- AGENT STATE MACHINE -->
+        <h2>🔄 Agent Lifecycle — State Machine</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="layer-badge layer-agent">AGENT</span>
+                Individual Agent State Transitions
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#3b82f6', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                stateDiagram-v2
+                [*] --> IDLE: Agent Created
+
+                IDLE --> ASSIGNED: Receive Task
+                ASSIGNED --> PLANNING: Begin Analysis
+
+                PLANNING --> EXECUTING: Plan Approved
+                PLANNING --> BLOCKED: Missing Dependencies
+
+                BLOCKED --> PLANNING: Dependencies Resolved
+                BLOCKED --> ESCALATED: Timeout/Error
+
+                EXECUTING --> DELEGATING: Subtask Needed
+                EXECUTING --> AWAITING_REVIEW: Work Complete
+
+                DELEGATING --> SUPERVISING: Child Assigned
+                SUPERVISING --> EXECUTING: Child Complete
+                SUPERVISING --> EXECUTING: Child Failed + Retry
+
+                AWAITING_REVIEW --> REVISING: Review Rejected
+                AWAITING_REVIEW --> COMPLETE: Review Approved
+
+                REVISING --> AWAITING_REVIEW: Revision Done
+
+                ESCALATED --> IDLE: Manager Resolved
+
+                COMPLETE --> IDLE: Ready for Next
+                COMPLETE --> [*]: Session End
+
+                note right of EXECUTING
+                Checkpoint Created
+                Every State Change
+                end note
+
+                note left of BLOCKED
+                Triggers Dependency
+                Resolution Flow
+                end note
+            </div>
+        </div>
+
+        <div class="note-box">
+            <h4>🎯 Key Structural Insights</h4>
+            <p>
+                <strong>1. Tenant Isolation:</strong> Each tenant has dedicated DB, Event Bus, and Agent Pool — no
+                cross-tenant data leakage.<br><br>
+                <strong>2. Instance Multiplexing:</strong> Single WebSocket can fan-out to multiple Org Chart Instances
+                via Message Router.<br><br>
+                <strong>3. Hierarchical Authority:</strong> Parent agents can only task children; verification flows
+                upward.<br><br>
+                <strong>4. State Durability:</strong> Every state transition creates a checkpoint for workflow recovery.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            stateDiagram: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+
+</html>

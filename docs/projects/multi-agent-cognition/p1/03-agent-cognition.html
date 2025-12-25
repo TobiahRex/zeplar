@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud Infrastructure — Concrete Technologies & Coordination</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #0d1117;
+            color: #e6edf3;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            padding: 30px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #326ce5, #22c55e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            color: #326ce5;
+            margin: 40px 0 20px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #21262d;
+        }
+
+        h3 {
+            color: #22c55e;
+            margin: 25px 0 15px 0;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #8b949e;
+            margin-bottom: 40px;
+        }
+
+        .diagram-container {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            border: 1px solid #30363d;
+            overflow-x: auto;
+        }
+
+        .diagram-title {
+            color: #f0f6fc;
+            font-weight: 600;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .tech-card {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #30363d;
+        }
+
+        .tech-card h4 {
+            color: #f0f6fc;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tech-card .tech-name {
+            color: #58a6ff;
+            font-weight: 600;
+        }
+
+        .tech-card .tech-version {
+            color: #8b949e;
+            font-size: 0.8rem;
+        }
+
+        .tech-card p {
+            color: #8b949e;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .tech-card ul {
+            color: #c9d1d9;
+            padding-left: 20px;
+            font-size: 0.9rem;
+        }
+
+        .tech-card li {
+            margin-bottom: 5px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-k8s {
+            background: #326ce5;
+            color: white;
+        }
+
+        .badge-db {
+            background: #336791;
+            color: white;
+        }
+
+        .badge-cache {
+            background: #dc382d;
+            color: white;
+        }
+
+        .badge-msg {
+            background: #27aae1;
+            color: white;
+        }
+
+        .badge-obs {
+            background: #f46800;
+            color: white;
+        }
+
+        .badge-sec {
+            background: #ffcb2d;
+            color: black;
+        }
+
+        .code-block {
+            background: #0d1117;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.82rem;
+            overflow-x: auto;
+            border: 1px solid #30363d;
+            margin: 15px 0;
+        }
+
+        .code-comment {
+            color: #8b949e;
+        }
+
+        .code-keyword {
+            color: #ff7b72;
+        }
+
+        .code-string {
+            color: #a5d6ff;
+        }
+
+        .code-type {
+            color: #79c0ff;
+        }
+
+        .code-const {
+            color: #ffa657;
+        }
+
+        .arch-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .arch-table th {
+            background: #21262d;
+            color: #f0f6fc;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .arch-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #21262d;
+            color: #c9d1d9;
+        }
+
+        .arch-table tr:hover {
+            background: rgba(56, 139, 253, 0.05);
+        }
+
+        .note-box {
+            background: rgba(50, 108, 229, 0.1);
+            border: 1px solid #326ce5;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .note-box h4 {
+            color: #326ce5;
+            margin-bottom: 10px;
+        }
+
+        .flow-animation {
+            background: #161b22;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #30363d;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>☁️ Cloud Infrastructure — Concrete Technologies</h1>
+        <p class="subtitle">Production-Grade Architecture with Specific Services, Versions, and Coordination Patterns
+        </p>
+
+        <!-- TECHNOLOGY STACK OVERVIEW -->
+        <h2>🛠️ Technology Stack</h2>
+        <div class="grid-3">
+            <div class="tech-card">
+                <h4>
+                    <span class="badge badge-k8s">K8s</span>
+                    <span class="tech-name">Kubernetes</span>
+                    <span class="tech-version">v1.29+</span>
+                </h4>
+                <p>Container orchestration with namespace-per-tenant isolation</p>
+                <ul>
+                    <li>GKE Autopilot / EKS Fargate</li>
+                    <li>Istio service mesh v1.20</li>
+                    <li>Keda for agent autoscaling</li>
+                    <li>Argo Workflows for DAG execution</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <h4>
+                    <span class="badge badge-db">DB</span>
+                    <span class="tech-name">PostgreSQL + Citus</span>
+                    <span class="tech-version">v16 + v12</span>
+                </h4>
+                <p>Distributed PostgreSQL for horizontal scaling</p>
+                <ul>
+                    <li>Citus for tenant sharding</li>
+                    <li>PgBouncer connection pooling</li>
+                    <li>pg_partman for time-series data</li>
+                    <li>pgvector for embeddings</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <h4>
+                    <span class="badge badge-msg">MSG</span>
+                    <span class="tech-name">NATS JetStream</span>
+                    <span class="tech-version">v2.10+</span>
+                </h4>
+                <p>High-performance messaging with persistence</p>
+                <ul>
+                    <li>Subject-based routing</li>
+                    <li>Consumer groups per OCI</li>
+                    <li>At-least-once delivery</li>
+                    <li>Stream replay for recovery</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <h4>
+                    <span class="badge badge-cache">CACHE</span>
+                    <span class="tech-name">Redis Cluster</span>
+                    <span class="tech-version">v7.2+</span>
+                </h4>
+                <p>Ephemeral state and caching layer</p>
+                <ul>
+                    <li>Session state management</li>
+                    <li>LLM response caching</li>
+                    <li>Rate limiting counters</li>
+                    <li>Pub/sub for local events</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <h4>
+                    <span class="badge badge-obs">OBS</span>
+                    <span class="tech-name">Grafana Stack</span>
+                    <span class="tech-version">LGTM</span>
+                </h4>
+                <p>Full observability suite</p>
+                <ul>
+                    <li>Loki for logs</li>
+                    <li>Grafana for dashboards</li>
+                    <li>Tempo for traces</li>
+                    <li>Mimir for metrics</li>
+                </ul>
+            </div>
+
+            <div class="tech-card">
+                <h4>
+                    <span class="badge badge-sec">SEC</span>
+                    <span class="tech-name">HashiCorp Vault</span>
+                    <span class="tech-version">v1.15+</span>
+                </h4>
+                <p>Secrets management and encryption</p>
+                <ul>
+                    <li>Dynamic DB credentials</li>
+                    <li>API key rotation</li>
+                    <li>Transit encryption</li>
+                    <li>K8s auth method</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- KUBERNETES ARCHITECTURE -->
+        <h2>⚙️ Kubernetes Architecture</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="badge badge-k8s">K8s</span>
+                Cluster Topology with Tenant Namespaces
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#326ce5', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                flowchart TB
+                subgraph CLUSTER["☸️ Kubernetes Cluster"]
+                direction TB
+
+                subgraph INGRESS["Ingress Layer"]
+                direction LR
+                NGINX["NGINX Ingress<br />Controller"]
+                CERT["cert-manager<br />(Let's Encrypt)"]
+                WAF["ModSecurity<br />WAF"]
+                end
+
+                subgraph MESH["Service Mesh (Istio)"]
+                direction LR
+                PILOT["istiod<br />(Control Plane)"]
+                GATEWAY["Istio Gateway<br />(mTLS termination)"]
+                end
+
+                subgraph PLATFORM["platform namespace"]
+                direction TB
+                subgraph API_LAYER["API Services"]
+                API["api-gateway<br />Deployment<br />(3 replicas)"]
+                WS["websocket-service<br />StatefulSet<br />(5 replicas)"]
+                AUTH["auth-service<br />Deployment<br />(3 replicas)"]
+                end
+
+                subgraph DATA_LAYER["Data Services"]
+                NATS["nats-jetstream<br />StatefulSet<br />(3 replicas)"]
+                REDIS["redis-cluster<br />StatefulSet<br />(6 nodes)"]
+                end
+
+                subgraph OBS_LAYER["Observability"]
+                OTEL["otel-collector<br />DaemonSet"]
+                PROM["prometheus<br />StatefulSet"]
+                end
+                end
+
+                subgraph TENANT_A["tenant-acme namespace"]
+                direction TB
+                PG_A["postgres-acme<br />CloudNativePG<br />(Primary + 2 Replicas)"]
+                POOL_A["pgbouncer-acme<br />Deployment"]
+                AGENT_A["agent-pool-acme<br />Deployment<br />(HPA: 2-50)"]
+                WORKER_A["task-worker-acme<br />Deployment<br />(HPA: 1-20)"]
+                end
+
+                subgraph TENANT_B["tenant-globex namespace"]
+                direction TB
+                PG_B["postgres-globex<br />CloudNativePG"]
+                POOL_B["pgbouncer-globex<br />Deployment"]
+                AGENT_B["agent-pool-globex<br />Deployment"]
+                WORKER_B["task-worker-globex<br />Deployment"]
+                end
+                end
+
+                NGINX --> GATEWAY
+                GATEWAY --> API
+                GATEWAY --> WS
+                API --> AUTH
+                WS --> NATS
+
+                API --> POOL_A
+                API --> POOL_B
+                POOL_A --> PG_A
+                POOL_B --> PG_B
+
+                AGENT_A --> NATS
+                AGENT_B --> NATS
+                AGENT_A --> REDIS
+                AGENT_B --> REDIS
+
+                WORKER_A --> POOL_A
+                WORKER_B --> POOL_B
+
+                OTEL --> PROM
+
+                style CLUSTER fill:#0d1117,stroke:#326ce5,stroke-width:2px
+                style INGRESS fill:#21262d,stroke:#f97316,stroke-width:1px
+                style MESH fill:#21262d,stroke:#a371f7,stroke-width:1px
+                style PLATFORM fill:#161b22,stroke:#22c55e,stroke-width:2px
+                style TENANT_A fill:#161b22,stroke:#3b82f6,stroke-width:2px
+                style TENANT_B fill:#161b22,stroke:#ef4444,stroke-width:2px
+            </div>
+        </div>
+
+        <!-- RESOURCE DEFINITIONS -->
+        <h3>📋 Key Resource Definitions</h3>
+        <div class="grid-2">
+            <div class="diagram-container">
+                <div class="diagram-title">Agent Pool HPA Configuration</div>
+                <div class="code-block">
+                    <span class="code-keyword">apiVersion:</span> <span class="code-string">autoscaling/v2</span>
+                    <span class="code-keyword">kind:</span> <span class="code-string">HorizontalPodAutoscaler</span>
+                    <span class="code-keyword">metadata:</span>
+                    <span class="code-keyword">name:</span> <span class="code-string">agent-pool-hpa</span>
+                    <span class="code-keyword">namespace:</span> <span class="code-string">tenant-acme</span>
+                    <span class="code-keyword">spec:</span>
+                    <span class="code-keyword">scaleTargetRef:</span>
+                    <span class="code-keyword">apiVersion:</span> <span class="code-string">apps/v1</span>
+                    <span class="code-keyword">kind:</span> <span class="code-string">Deployment</span>
+                    <span class="code-keyword">name:</span> <span class="code-string">agent-pool</span>
+                    <span class="code-keyword">minReplicas:</span> <span class="code-const">2</span>
+                    <span class="code-keyword">maxReplicas:</span> <span class="code-const">50</span>
+                    <span class="code-keyword">metrics:</span>
+                    - <span class="code-keyword">type:</span> <span class="code-string">External</span>
+                    <span class="code-keyword">external:</span>
+                    <span class="code-keyword">metric:</span>
+                    <span class="code-keyword">name:</span> <span
+                        class="code-string">nats_consumer_pending_messages</span>
+                    <span class="code-keyword">selector:</span>
+                    <span class="code-keyword">matchLabels:</span>
+                    <span class="code-keyword">stream:</span> <span class="code-string">TASKS</span>
+                    <span class="code-keyword">target:</span>
+                    <span class="code-keyword">type:</span> <span class="code-string">AverageValue</span>
+                    <span class="code-keyword">averageValue:</span> <span class="code-const">5</span> <span
+                        class="code-comment"># Scale when >5 pending/pod</span>
+                    <span class="code-keyword">behavior:</span>
+                    <span class="code-keyword">scaleUp:</span>
+                    <span class="code-keyword">stabilizationWindowSeconds:</span> <span class="code-const">30</span>
+                    <span class="code-keyword">policies:</span>
+                    - <span class="code-keyword">type:</span> <span class="code-string">Percent</span>
+                    <span class="code-keyword">value:</span> <span class="code-const">100</span> <span
+                        class="code-comment"># Double capacity</span>
+                    <span class="code-keyword">periodSeconds:</span> <span class="code-const">15</span>
+                    <span class="code-keyword">scaleDown:</span>
+                    <span class="code-keyword">stabilizationWindowSeconds:</span> <span class="code-const">300</span>
+                    <span class="code-comment"># 5min cooldown</span>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">CloudNativePG Cluster Definition</div>
+                <div class="code-block">
+                    <span class="code-keyword">apiVersion:</span> <span class="code-string">postgresql.cnpg.io/v1</span>
+                    <span class="code-keyword">kind:</span> <span class="code-string">Cluster</span>
+                    <span class="code-keyword">metadata:</span>
+                    <span class="code-keyword">name:</span> <span class="code-string">postgres-acme</span>
+                    <span class="code-keyword">namespace:</span> <span class="code-string">tenant-acme</span>
+                    <span class="code-keyword">spec:</span>
+                    <span class="code-keyword">instances:</span> <span class="code-const">3</span>
+                    <span class="code-keyword">imageName:</span> <span
+                        class="code-string">ghcr.io/cloudnative-pg/postgresql:16.1</span>
+
+                    <span class="code-keyword">postgresql:</span>
+                    <span class="code-keyword">parameters:</span>
+                    <span class="code-keyword">shared_buffers:</span> <span class="code-string">"256MB"</span>
+                    <span class="code-keyword">max_connections:</span> <span class="code-string">"200"</span>
+                    <span class="code-keyword">wal_level:</span> <span class="code-string">"logical"</span> <span
+                        class="code-comment"># For CDC</span>
+                    <span class="code-keyword">pg_hba:</span>
+                    - <span class="code-string">hostssl all all all scram-sha-256</span>
+
+                    <span class="code-keyword">storage:</span>
+                    <span class="code-keyword">size:</span> <span class="code-string">100Gi</span>
+                    <span class="code-keyword">storageClass:</span> <span class="code-string">premium-rwo</span>
+
+                    <span class="code-keyword">backup:</span>
+                    <span class="code-keyword">barmanObjectStore:</span>
+                    <span class="code-keyword">destinationPath:</span> <span
+                        class="code-string">s3://backups/tenant-acme</span>
+                    <span class="code-keyword">s3Credentials:</span>
+                    <span class="code-keyword">accessKeyId:</span>
+                    <span class="code-keyword">name:</span> <span class="code-string">backup-creds</span>
+                    <span class="code-keyword">key:</span> <span class="code-string">ACCESS_KEY_ID</span>
+                    <span class="code-keyword">retentionPolicy:</span> <span class="code-string">"30d"</span>
+
+                    <span class="code-keyword">monitoring:</span>
+                    <span class="code-keyword">enablePodMonitor:</span> <span class="code-const">true</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- DATA FLOW ARCHITECTURE -->
+        <h2>🌊 Data Flow Architecture</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="badge badge-msg">MSG</span>
+                NATS JetStream Subject Hierarchy & Consumer Groups
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#27aae1', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                flowchart TB
+                subgraph NATS["NATS JetStream Cluster"]
+                direction TB
+
+                subgraph STREAMS["Streams (Persistent)"]
+                S_TASKS["TASKS Stream<br />Retention: WorkQueue<br />MaxAge: 24h"]
+                S_EVENTS["EVENTS Stream<br />Retention: Limits<br />MaxMsgs: 1M"]
+                S_CHECKPOINTS["CHECKPOINTS Stream<br />Retention: Limits<br />MaxAge: 7d"]
+                end
+
+                subgraph SUBJECTS["Subject Hierarchy"]
+                direction LR
+                T1["tasks.{tenant}.{oci}.created"]
+                T2["tasks.{tenant}.{oci}.progress"]
+                T3["tasks.{tenant}.{oci}.completed"]
+
+                E1["events.{tenant}.agent.state"]
+                E2["events.{tenant}.agent.message"]
+                E3["events.{tenant}.workflow.checkpoint"]
+
+                C1["checkpoints.{tenant}.{oci}.{agent}"]
+                end
+
+                subgraph CONSUMERS["Consumer Groups"]
+                direction TB
+                CG1["agent-pool-acme<br />Pull Consumer<br />MaxAckPending: 100"]
+                CG2["ws-bridge-acme<br />Push Consumer<br />DeliverPolicy: New"]
+                CG3["checkpoint-writer<br />Pull Consumer<br />AckWait: 30s"]
+                end
+                end
+
+                S_TASKS --> T1
+                S_TASKS --> T2
+                S_TASKS --> T3
+                S_EVENTS --> E1
+                S_EVENTS --> E2
+                S_EVENTS --> E3
+                S_CHECKPOINTS --> C1
+
+                T1 --> CG1
+                T2 --> CG1
+                E1 --> CG2
+                E2 --> CG2
+                C1 --> CG3
+
+                style NATS fill:#0d1117,stroke:#27aae1,stroke-width:2px
+                style STREAMS fill:#21262d,stroke:#22c55e,stroke-width:1px
+                style SUBJECTS fill:#21262d,stroke:#f97316,stroke-width:1px
+                style CONSUMERS fill:#21262d,stroke:#a371f7,stroke-width:1px
+            </div>
+        </div>
+
+        <!-- DATABASE SHARDING -->
+        <h2>🗄️ Database Sharding Strategy</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">
+                <span class="badge badge-db">DB</span>
+                Citus Distributed Tables with Tenant Sharding
+            </div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#336791', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                flowchart TB
+                subgraph CITUS["Citus Cluster"]
+                direction TB
+
+                subgraph COORD["Coordinator Node"]
+                ROUTER["Query Router"]
+                META["Metadata Tables"]
+                end
+
+                subgraph WORKERS["Worker Nodes"]
+                direction LR
+                W1["Worker 1<br />Shards: 0-31"]
+                W2["Worker 2<br />Shards: 32-63"]
+                W3["Worker 3<br />Shards: 64-95"]
+                W4["Worker 4<br />Shards: 96-127"]
+                end
+
+                subgraph SHARD_EXAMPLE["Shard Distribution (tenant_id hash)"]
+                direction TB
+                TENANT_ACME["tenant: acme<br />hash: 47 → Worker 2"]
+                TENANT_GLOBEX["tenant: globex<br />hash: 102 → Worker 4"]
+                TENANT_INITECH["tenant: initech<br />hash: 15 → Worker 1"]
+                end
+                end
+
+                ROUTER --> W1
+                ROUTER --> W2
+                ROUTER --> W3
+                ROUTER --> W4
+
+                style CITUS fill:#0d1117,stroke:#336791,stroke-width:2px
+                style COORD fill:#21262d,stroke:#f97316,stroke-width:1px
+                style WORKERS fill:#21262d,stroke:#22c55e,stroke-width:1px
+            </div>
+        </div>
+
+        <div class="code-block">
+            <span class="code-comment">-- Citus distributed table setup</span>
+            <span class="code-keyword">SELECT</span> create_distributed_table(<span
+                class="code-string">'checkpoints'</span>, <span class="code-string">'tenant_id'</span>);
+            <span class="code-keyword">SELECT</span> create_distributed_table(<span class="code-string">'agents'</span>,
+            <span class="code-string">'tenant_id'</span>);
+            <span class="code-keyword">SELECT</span> create_distributed_table(<span class="code-string">'tasks'</span>,
+            <span class="code-string">'tenant_id'</span>);
+            <span class="code-keyword">SELECT</span> create_distributed_table(<span
+                class="code-string">'agent_messages'</span>, <span class="code-string">'tenant_id'</span>);
+            <span class="code-keyword">SELECT</span> create_distributed_table(<span
+                class="code-string">'memory_stream'</span>, <span class="code-string">'tenant_id'</span>);
+
+            <span class="code-comment">-- Co-locate related tables for efficient joins</span>
+            <span class="code-keyword">SELECT</span> create_distributed_table(<span
+                class="code-string">'conversations'</span>, <span class="code-string">'tenant_id'</span>,
+            colocate_with => <span class="code-string">'agents'</span>);
+
+            <span class="code-comment">-- Reference tables (replicated to all workers)</span>
+            <span class="code-keyword">SELECT</span> create_reference_table(<span
+                class="code-string">'agent_roles'</span>);
+            <span class="code-keyword">SELECT</span> create_reference_table(<span
+                class="code-string">'system_prompts'</span>);
+        </div>
+
+        <!-- SERVICE COORDINATION -->
+        <h2>🔗 Service Coordination Patterns</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">Request Flow with Circuit Breakers & Retries</div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#22c55e', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                sequenceDiagram
+                participant C as Client
+                participant GW as API Gateway
+                participant ISTIO as Istio Sidecar
+                participant AUTH as Auth Service
+                participant AGENT as Agent Pool
+                participant NATS as NATS JetStream
+                participant PG as PostgreSQL
+                participant LLM as LLM Provider
+
+                Note over C,LLM: Request Flow with Resilience Patterns
+
+                C->>GW: POST /v1/tasks (JWT)
+                GW->>ISTIO: Forward (mTLS)
+
+                ISTIO->>AUTH: Validate JWT
+                AUTH-->>ISTIO: Claims + Tenant ID
+
+                ISTIO->>AGENT: Create Task
+                Note right of ISTIO: Circuit Breaker:<br />5 failures = OPEN<br />30s half-open
+
+                AGENT->>PG: BEGIN TRANSACTION
+                AGENT->>PG: INSERT task
+                AGENT->>NATS: Publish tasks.{tenant}.created
+                AGENT->>PG: COMMIT
+
+                Note over AGENT,LLM: Agent Execution Loop
+
+                loop Until Complete or Timeout
+                AGENT->>LLM: Chat Completion (streaming)
+                Note right of LLM: Retry Policy:<br />3 attempts<br />Exponential backoff<br />1s, 2s, 4s
+
+                alt LLM Success
+                LLM-->>AGENT: Token stream
+                AGENT->>NATS: Publish events.{tenant}.agent.state
+                AGENT->>PG: INSERT checkpoint
+                else LLM Timeout/Error
+                AGENT->>AGENT: Fallback to cached response
+                AGENT->>NATS: Publish events.{tenant}.agent.blocked
+                end
+                end
+
+                AGENT->>NATS: Publish tasks.{tenant}.completed
+                AGENT-->>GW: 202 Accepted + Task ID
+                GW-->>C: Response
+            </div>
+        </div>
+
+        <!-- ISTIO CONFIGURATION -->
+        <h3>🛡️ Istio Traffic Management</h3>
+        <div class="grid-2">
+            <div class="diagram-container">
+                <div class="diagram-title">Virtual Service with Retry Policy</div>
+                <div class="code-block">
+                    <span class="code-keyword">apiVersion:</span> <span
+                        class="code-string">networking.istio.io/v1beta1</span>
+                    <span class="code-keyword">kind:</span> <span class="code-string">VirtualService</span>
+                    <span class="code-keyword">metadata:</span>
+                    <span class="code-keyword">name:</span> <span class="code-string">agent-pool</span>
+                    <span class="code-keyword">spec:</span>
+                    <span class="code-keyword">hosts:</span>
+                    - <span class="code-string">agent-pool.tenant-acme.svc.cluster.local</span>
+                    <span class="code-keyword">http:</span>
+                    - <span class="code-keyword">route:</span>
+                    - <span class="code-keyword">destination:</span>
+                    <span class="code-keyword">host:</span> <span class="code-string">agent-pool</span>
+                    <span class="code-keyword">port:</span>
+                    <span class="code-keyword">number:</span> <span class="code-const">8080</span>
+                    <span class="code-keyword">retries:</span>
+                    <span class="code-keyword">attempts:</span> <span class="code-const">3</span>
+                    <span class="code-keyword">perTryTimeout:</span> <span class="code-string">10s</span>
+                    <span class="code-keyword">retryOn:</span> <span
+                        class="code-string">gateway-error,connect-failure,retriable-4xx</span>
+                    <span class="code-keyword">timeout:</span> <span class="code-string">60s</span>
+                </div>
+            </div>
+
+            <div class="diagram-container">
+                <div class="diagram-title">Destination Rule with Circuit Breaker</div>
+                <div class="code-block">
+                    <span class="code-keyword">apiVersion:</span> <span
+                        class="code-string">networking.istio.io/v1beta1</span>
+                    <span class="code-keyword">kind:</span> <span class="code-string">DestinationRule</span>
+                    <span class="code-keyword">metadata:</span>
+                    <span class="code-keyword">name:</span> <span class="code-string">agent-pool</span>
+                    <span class="code-keyword">spec:</span>
+                    <span class="code-keyword">host:</span> <span
+                        class="code-string">agent-pool.tenant-acme.svc.cluster.local</span>
+                    <span class="code-keyword">trafficPolicy:</span>
+                    <span class="code-keyword">connectionPool:</span>
+                    <span class="code-keyword">tcp:</span>
+                    <span class="code-keyword">maxConnections:</span> <span class="code-const">100</span>
+                    <span class="code-keyword">http:</span>
+                    <span class="code-keyword">h2UpgradePolicy:</span> <span class="code-string">UPGRADE</span>
+                    <span class="code-keyword">maxRequestsPerConnection:</span> <span class="code-const">1000</span>
+                    <span class="code-keyword">outlierDetection:</span>
+                    <span class="code-keyword">consecutive5xxErrors:</span> <span class="code-const">5</span>
+                    <span class="code-keyword">interval:</span> <span class="code-string">30s</span>
+                    <span class="code-keyword">baseEjectionTime:</span> <span class="code-string">30s</span>
+                    <span class="code-keyword">maxEjectionPercent:</span> <span class="code-const">50</span>
+                    <span class="code-keyword">loadBalancer:</span>
+                    <span class="code-keyword">simple:</span> <span class="code-string">LEAST_REQUEST</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- DEPLOYMENT TOPOLOGY -->
+        <h2>🌍 Multi-Region Deployment</h2>
+        <div class="diagram-container">
+            <div class="diagram-title">Active-Active Multi-Region Architecture</div>
+            <div class="mermaid">
+                %%{init: {'theme': 'dark', 'themeVariables': { 'primaryColor': '#22c55e', 'primaryTextColor': '#fff',
+                'lineColor': '#8b949e'}}}%%
+                flowchart TB
+                subgraph GLOBAL["Global Layer"]
+                DNS["Cloud DNS<br />(GeoDNS)"]
+                CDN["Cloud CDN<br />(Static Assets)"]
+                GLB["Global Load Balancer<br />(Anycast)"]
+                end
+
+                subgraph US_WEST["us-west-2 (Primary)"]
+                direction TB
+                K8S_W["K8s Cluster"]
+                PG_W[("PostgreSQL<br />Primary")]
+                NATS_W["NATS Cluster"]
+                REDIS_W["Redis Cluster"]
+                end
+
+                subgraph US_EAST["us-east-1 (Secondary)"]
+                direction TB
+                K8S_E["K8s Cluster"]
+                PG_E[("PostgreSQL<br />Replica")]
+                NATS_E["NATS Cluster"]
+                REDIS_E["Redis Cluster"]
+                end
+
+                subgraph EU_WEST["eu-west-1 (DR)"]
+                direction TB
+                K8S_EU["K8s Cluster"]
+                PG_EU[("PostgreSQL<br />Async Replica")]
+                NATS_EU["NATS Cluster"]
+                end
+
+                DNS --> GLB
+                GLB --> K8S_W
+                GLB --> K8S_E
+                GLB --> K8S_EU
+
+                PG_W -.->|Sync Replication| PG_E
+                PG_W -.->|Async Replication| PG_EU
+
+                NATS_W <-->|Cluster Link| NATS_E
+                    NATS_E <-->|Cluster Link| NATS_EU
+
+                        style GLOBAL fill:#21262d,stroke:#f97316,stroke-width:2px
+                        style US_WEST fill:#161b22,stroke:#22c55e,stroke-width:2px
+                        style US_EAST fill:#161b22,stroke:#3b82f6,stroke-width:2px
+                        style EU_WEST fill:#161b22,stroke:#a371f7,stroke-width:2px
+            </div>
+        </div>
+
+        <!-- CAPACITY PLANNING -->
+        <h2>📊 Capacity Planning Reference</h2>
+        <div class="diagram-container">
+            <table class="arch-table">
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Base Capacity</th>
+                        <th>Per 1K Concurrent Agents</th>
+                        <th>Scaling Trigger</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>API Gateway</strong></td>
+                        <td>3 pods × 2 vCPU, 4GB</td>
+                        <td>+1 pod</td>
+                        <td>CPU > 70%, RPS > 5K/pod</td>
+                    </tr>
+                    <tr>
+                        <td><strong>WebSocket Service</strong></td>
+                        <td>5 pods × 2 vCPU, 8GB</td>
+                        <td>+2 pods</td>
+                        <td>Connections > 10K/pod</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Agent Pool (per tenant)</strong></td>
+                        <td>2-50 pods × 4 vCPU, 8GB</td>
+                        <td>Scales with queue depth</td>
+                        <td>Pending messages > 5/pod</td>
+                    </tr>
+                    <tr>
+                        <td><strong>NATS JetStream</strong></td>
+                        <td>3 nodes × 4 vCPU, 16GB</td>
+                        <td>+1 node per 500K msg/s</td>
+                        <td>Memory > 80%, Lag > 1K msgs</td>
+                    </tr>
+                    <tr>
+                        <td><strong>PostgreSQL (Citus)</strong></td>
+                        <td>1 coord + 4 workers × 8 vCPU, 32GB</td>
+                        <td>+1 worker per 10 tenants</td>
+                        <td>CPU > 70%, Storage > 80%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Redis Cluster</strong></td>
+                        <td>6 nodes × 2 vCPU, 8GB</td>
+                        <td>+2 nodes</td>
+                        <td>Memory > 75%, Ops > 50K/s</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="note-box">
+            <h4>💡 Infrastructure Design Principles</h4>
+            <p style="color: #c9d1d9;">
+                <strong>1. Namespace Isolation:</strong> Each tenant gets a dedicated K8s namespace with ResourceQuotas
+                and NetworkPolicies preventing cross-tenant traffic.<br><br>
+                <strong>2. Connection Pooling:</strong> PgBouncer in transaction mode limits DB connections to ~20 per
+                pod regardless of agent count.<br><br>
+                <strong>3. Message Durability:</strong> NATS JetStream provides at-least-once delivery with consumer
+                acknowledgment and replay capability.<br><br>
+                <strong>4. Secrets Rotation:</strong> Vault dynamically generates DB credentials with 1-hour TTL; agents
+                refresh on expiry.<br><br>
+                <strong>5. Zero-Trust Network:</strong> Istio enforces mTLS between all services; no plaintext traffic
+                within the mesh.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            }
+        });
+    </script>
+</body>
+
+</html>
