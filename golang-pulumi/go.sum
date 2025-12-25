@@ -1,0 +1,7 @@
+github.com/pulumi/pulumi-gcp/sdk/v7 v7.23.0/go.mod h1:CKJax8Wg7NxtKA65m5nWDIyQwaclK4ZGWJlxQkfZ8YQ=
+github.com/pulumi/pulumi-github/sdk/v4 v4.17.0 h1:mVPgra7gAW6zhmiDt5BA1H2joxMIiqo9qUNNGCy/C0I=
+github.com/pulumi/pulumi-github/sdk/v4 v4.17.0/go.mod h1:VGX6jSvh2C74NKvOeS0hBx225Pbcvlhj32+ZRB81sts=
+github.com/pulumi/pulumi-postgresql/sdk/v3 v3.11.3 h1:4BNcizMrUAI5tSvbauEVgJPUSxRN72jShFtC5X87TMo=
+github.com/pulumi/pulumi-postgresql/sdk/v3 v3.11.3/go.mod h1:ySEfKlR74ntSLiNDSiGjuMBTdV3lajQSofYjAi6HFr0=
+github.com/pulumi/pulumi/sdk/v3 v3.117.0/go.mod h1:kNea72+FQk82OjZ3yEP4dl6nbAl2ngE8PDBc0iFAaHg=
+github.com/pulumi/pulumi/sdk/v3 v3.124.0/go.mod h1:p1U24en3zt51agx+WlNboSOV8eLlPWYAkxMzVEXKbnY=

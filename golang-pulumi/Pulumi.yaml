@@ -1,0 +1,6 @@
+name: learn-cloud
+runtime: go
+description: Sandbox gcp environments (staging, sandbox, production)
+config:
+  learncloud:shared_project_name: learncloud-infra-shared
+  learn-g
