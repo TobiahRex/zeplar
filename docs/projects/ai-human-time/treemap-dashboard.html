@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Health Treemap</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0a0a0f;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            grid-template-rows: auto 1fr auto;
+            height: 100vh;
+        }
+        
+        .header {
+            grid-column: 1 / -1;
+            background: #0d1117;
+            border-bottom: 1px solid #1a1a2e;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header-metrics {
+            display: flex;
+            gap: 25px;
+        }
+        .metric {
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        .metric-label {
+            font-size: 0.7rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+        
+        .main {
+            background: #0d1117;
+            padding: 15px;
+            overflow: hidden;
+        }
+        
+        .treemap-container {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            gap: 3px;
+            grid-template-columns: 2fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+        
+        .feature-group {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .feature-label {
+            position: absolute;
+            top: 8px;
+            left: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            z-index: 10;
+        }
+        .feature-stats {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-size: 0.7rem;
+            color: rgba(255,255,255,0.7);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            z-index: 10;
+        }
+        
+        .modules-grid {
+            display: grid;
+            gap: 2px;
+            height: calc(100% - 30px);
+            margin-top: 28px;
+        }
+        
+        .module {
+            border-radius: 4px;
+            padding: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .module:hover {
+            transform: scale(1.02);
+            z-index: 5;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        }
+        .module-name {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        }
+        .module-stats {
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.8);
+            margin-top: 2px;
+        }
+        
+        /* Health colors */
+        .health-100 { background: linear-gradient(135deg, #22c55e, #16a34a); }
+        .health-90 { background: linear-gradient(135deg, #4ade80, #22c55e); }
+        .health-80 { background: linear-gradient(135deg, #84cc16, #65a30d); }
+        .health-70 { background: linear-gradient(135deg, #a3e635, #84cc16); }
+        .health-60 { background: linear-gradient(135deg, #facc15, #eab308); }
+        .health-50 { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
+        .health-40 { background: linear-gradient(135deg, #fb923c, #f97316); }
+        .health-30 { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .health-20 { background: linear-gradient(135deg, #ef4444, #dc2626); }
+        .health-10 { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .health-0 { background: linear-gradient(135deg, #991b1b, #7f1d1d); }
+        
+        /* Sidebar */
+        .sidebar {
+            background: #0d1117;
+            border-left: 1px solid #1a1a2e;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        
+        .panel-title {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+        }
+        
+        .detail-card {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        .detail-card h3 {
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            border-bottom: 1px solid #252538;
+            font-size: 0.85rem;
+        }
+        .detail-row:last-child { border-bottom: none; }
+        .detail-label { color: #888; }
+        
+        .health-bar {
+            height: 8px;
+            background: #252538;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .health-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s;
+        }
+        
+        .issue-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+            border-left: 3px solid #ef4444;
+        }
+        
+        /* Color scale legend */
+        .color-scale {
+            display: flex;
+            height: 12px;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .color-scale div {
+            flex: 1;
+        }
+        .scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #888;
+            margin-top: 4px;
+        }
+        
+        .footer {
+            grid-column: 1 / -1;
+            background: #0d1117;
+            border-top: 1px solid #1a1a2e;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+        .breadcrumb span {
+            color: #888;
+        }
+        .breadcrumb a {
+            color: #00d9ff;
+            text-decoration: none;
+        }
+        .breadcrumb a:hover { text-decoration: underline; }
+        
+        .view-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .view-btn {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        .view-btn:hover { background: #252538; }
+        .view-btn.active {
+            background: #00d9ff;
+            color: #0a0a0f;
+            border-color: #00d9ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <header class="header">
+            <h1><span>🗺️</span> System Health Treemap</h1>
+            <div class="header-metrics">
+                <div class="metric">
+                    <div class="metric-value" style="color: #4ade80;">47.2k</div>
+                    <div class="metric-label">Total LOC</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" style="color: #f59e0b;">83%</div>
+                    <div class="metric-label">Avg Health</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" style="color: #ef4444;">3</div>
+                    <div class="metric-label">Critical</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" style="color: #00d9ff;">12</div>
+                    <div class="metric-label">Features</div>
+                </div>
+            </div>
+        </header>
+        
+        <main class="main">
+            <div class="treemap-container">
+                <!-- AUTH FEATURE (Large - 35% of codebase) -->
+                <div class="feature-group" style="grid-row: span 2;">
+                    <div class="feature-label">🔐 Authentication</div>
+                    <div class="feature-stats">16.5k LOC • 91%</div>
+                    <div class="modules-grid" style="grid-template-columns: 1fr 1fr; grid-template-rows: 2fr 1fr 1fr;">
+                        <div class="module health-90" style="grid-column: span 2;">
+                            <div class="module-name">OAuth2 Provider</div>
+                            <div class="module-stats">5.2k LOC • 94%</div>
+                        </div>
+                        <div class="module health-100">
+                            <div class="module-name">JWT Handler</div>
+                            <div class="module-stats">2.1k • 100%</div>
+                        </div>
+                        <div class="module health-80">
+                            <div class="module-name">Session Mgr</div>
+                            <div class="module-stats">1.8k • 87%</div>
+                        </div>
+                        <div class="module health-90">
+                            <div class="module-name">MFA</div>
+                            <div class="module-stats">3.2k • 92%</div>
+                        </div>
+                        <div class="module health-70">
+                            <div class="module-name">Password</div>
+                            <div class="module-stats">1.4k • 78%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- API FEATURE (Medium) -->
+                <div class="feature-group">
+                    <div class="feature-label">🌐 API Layer</div>
+                    <div class="feature-stats">8.3k LOC • 76%</div>
+                    <div class="modules-grid" style="grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;">
+                        <div class="module health-90">
+                            <div class="module-name">REST</div>
+                            <div class="module-stats">3.1k • 92%</div>
+                        </div>
+                        <div class="module health-60">
+                            <div class="module-name">GraphQL</div>
+                            <div class="module-stats">2.4k • 68%</div>
+                        </div>
+                        <div class="module health-80">
+                            <div class="module-name">Validation</div>
+                            <div class="module-stats">1.2k • 85%</div>
+                        </div>
+                        <div class="module health-30">
+                            <div class="module-name">Rate Limit</div>
+                            <div class="module-stats">890 • 34%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- DATA FEATURE (Medium) -->
+                <div class="feature-group">
+                    <div class="feature-label">💾 Data Layer</div>
+                    <div class="feature-stats">7.1k LOC • 88%</div>
+                    <div class="modules-grid" style="grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;">
+                        <div class="module health-100">
+                            <div class="module-name">ORM</div>
+                            <div class="module-stats">2.8k • 100%</div>
+                        </div>
+                        <div class="module health-90">
+                            <div class="module-name">Migrations</div>
+                            <div class="module-stats">1.4k • 95%</div>
+                        </div>
+                        <div class="module health-80">
+                            <div class="module-name">Cache</div>
+                            <div class="module-stats">1.6k • 82%</div>
+                        </div>
+                        <div class="module health-70">
+                            <div class="module-name">Search</div>
+                            <div class="module-stats">980 • 76%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- NOTIFICATIONS (Small) -->
+                <div class="feature-group">
+                    <div class="feature-label">🔔 Notifications</div>
+                    <div class="feature-stats">4.2k LOC • 95%</div>
+                    <div class="modules-grid" style="grid-template-columns: 1fr; grid-template-rows: 1fr 1fr;">
+                        <div class="module health-100">
+                            <div class="module-name">Email</div>
+                            <div class="module-stats">2.1k • 100%</div>
+                        </div>
+                        <div class="module health-90">
+                            <div class="module-name">Push</div>
+                            <div class="module-stats">1.8k • 91%</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- PAYMENTS (Medium - Critical Issues) -->
+                <div class="feature-group">
+                    <div class="feature-label">💳 Payments</div>
+                    <div class="feature-stats">6.8k LOC • 52%</div>
+                    <div class="modules-grid" style="grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr;">
+                        <div class="module health-70">
+                            <div class="module-name">Stripe</div>
+                            <div class="module-stats">2.4k • 78%</div>
+                        </div>
+                        <div class="module health-20">
+                            <div class="module-name">Refunds</div>
+                            <div class="module-stats">1.6k • 23%</div>
+                        </div>
+                        <div class="module health-60">
+                            <div class="module-name">Invoices</div>
+                            <div class="module-stats">1.2k • 65%</div>
+                        </div>
+                        <div class="module health-40">
+                            <div class="module-name">Webhooks</div>
+                            <div class="module-stats">980 • 42%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <aside class="sidebar">
+            <div class="panel-title">🎯 Selected Module</div>
+            <div class="detail-card">
+                <h3 style="color: #ef4444;">Refunds</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Feature</span>
+                    <span>Payments</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Lines of Code</span>
+                    <span>1,623</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Functions</span>
+                    <span>47</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Avg Complexity</span>
+                    <span style="color: #f59e0b;">8.3</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Health Score</span>
+                    <span style="color: #ef4444;">23%</span>
+                </div>
+                <div class="health-bar">
+                    <div class="health-fill" style="width: 23%; background: linear-gradient(90deg, #ef4444, #dc2626);"></div>
+                </div>
+            </div>
+            
+            <div class="panel-title">🚨 Issues in Module</div>
+            <div class="issue-item">
+                <div>
+                    <div style="color: white;">processRefund()</div>
+                    <div style="color: #888; font-size: 0.75rem;">42% error rate • Timeout</div>
+                </div>
+            </div>
+            <div class="issue-item">
+                <div>
+                    <div style="color: white;">validateAmount()</div>
+                    <div style="color: #888; font-size: 0.75rem;">18% error rate • Invalid input</div>
+                </div>
+            </div>
+            <div class="issue-item">
+                <div>
+                    <div style="color: white;">notifyUser()</div>
+                    <div style="color: #888; font-size: 0.75rem;">Blocked path</div>
+                </div>
+            </div>
+            
+            <div class="panel-title" style="margin-top: 20px;">📊 Health Scale</div>
+            <div class="color-scale">
+                <div style="background: #7f1d1d;"></div>
+                <div style="background: #dc2626;"></div>
+                <div style="background: #f97316;"></div>
+                <div style="background: #fbbf24;"></div>
+                <div style="background: #facc15;"></div>
+                <div style="background: #a3e635;"></div>
+                <div style="background: #4ade80;"></div>
+                <div style="background: #22c55e;"></div>
+            </div>
+            <div class="scale-labels">
+                <span>0% (Dead)</span>
+                <span>100% (Healthy)</span>
+            </div>
+            
+            <div class="panel-title" style="margin-top: 20px;">📈 Size = Code Footprint</div>
+            <div style="background: #1a1a2e; border-radius: 8px; padding: 12px; font-size: 0.8rem; color: #888;">
+                Box area is proportional to lines of code. Larger boxes = more code = higher priority when unhealthy.
+            </div>
+        </aside>
+        
+        <footer class="footer">
+            <div class="breadcrumb">
+                <a href="#">System</a>
+                <span>›</span>
+                <a href="#">Payments</a>
+                <span>›</span>
+                <span style="color: white;">Refunds</span>
+            </div>
+            
+            <div class="view-controls">
+                <button class="view-btn active">By Health</button>
+                <button class="view-btn">By Size</button>
+                <button class="view-btn">By Churn</button>
+                <button class="view-btn">History</button>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Module click interaction
+        document.querySelectorAll('.module').forEach(module => {
+            module.addEventListener('click', function() {
+                // Highlight selected module
+                document.querySelectorAll('.module').forEach(m => m.style.outline = 'none');
+                this.style.outline = '2px solid #00d9ff';
+                
+                // Could update sidebar with module details
+                const name = this.querySelector('.module-name').textContent;
+                console.log('Selected module:', name);
+            });
+        });
+        
+        // View button interactions
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

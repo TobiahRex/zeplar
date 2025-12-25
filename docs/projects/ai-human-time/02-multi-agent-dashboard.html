@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Agent Ring Dashboard</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #0a0a0f;
+            color: white;
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            grid-template-rows: auto 1fr auto;
+            min-height: 100vh;
+            gap: 0;
+        }
+        
+        /* Header */
+        .header {
+            grid-column: 1 / -1;
+            background: #0d1117;
+            border-bottom: 1px solid #1a1a2e;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header h1 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .header h1 span { font-size: 1.5rem; }
+        .header-stats {
+            display: flex;
+            gap: 30px;
+        }
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #888;
+            text-transform: uppercase;
+        }
+        .stat-value.green { color: #4ade80; }
+        .stat-value.yellow { color: #f59e0b; }
+        .stat-value.red { color: #ef4444; }
+        
+        /* Main visualization area */
+        .main {
+            background: #0d1117;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        .ring-container {
+            position: relative;
+            width: 600px;
+            height: 600px;
+        }
+        
+        /* Side panel */
+        .sidebar {
+            background: #0f1218;
+            border-left: 1px solid #1a1a2e;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .panel-section {
+            margin-bottom: 25px;
+        }
+        .panel-title {
+            font-size: 0.8rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        /* Agent cards */
+        .agent-card {
+            background: #1a1a2e;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #4ade80;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .agent-card:hover {
+            background: #252538;
+        }
+        .agent-card.blocked { border-left-color: #ef4444; }
+        .agent-card.throttled { border-left-color: #f59e0b; }
+        .agent-card.optimal { border-left-color: #4ade80; }
+        
+        .agent-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .agent-name {
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+        .agent-speed {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #0d1117;
+        }
+        .agent-speed.fast { color: #4ade80; }
+        .agent-speed.slow { color: #f59e0b; }
+        .agent-speed.stopped { color: #ef4444; }
+        
+        .agent-task {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: #0d1117;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: #4ade80;
+            transition: width 0.3s;
+        }
+        .progress-fill.blocked { background: #ef4444; }
+        .progress-fill.throttled { background: #f59e0b; }
+        
+        /* Impediment list */
+        .impediment-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #1a1a2e;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 0.85rem;
+        }
+        .impediment-icon {
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        .impediment-icon.blocking { background: #ef444433; }
+        .impediment-icon.throttling { background: #f59e0b33; }
+        .impediment-icon.friction { background: #8b5cf633; }
+        
+        .impediment-details {
+            flex: 1;
+        }
+        .impediment-type {
+            font-weight: 500;
+        }
+        .impediment-agent {
+            font-size: 0.75rem;
+            color: #888;
+        }
+        
+        /* Footer controls */
+        .footer {
+            grid-column: 1 / -1;
+            background: #0d1117;
+            border-top: 1px solid #1a1a2e;
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .view-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .view-btn {
+            background: #1a1a2e;
+            border: 1px solid #333;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+        .view-btn:hover {
+            background: #252538;
+        }
+        .view-btn.active {
+            background: #4ade80;
+            color: #0d1117;
+            border-color: #4ade80;
+        }
+        
+        .speed-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .speed-control label {
+            font-size: 0.85rem;
+            color: #888;
+        }
+        .speed-slider {
+            width: 150px;
+            accent-color: #4ade80;
+        }
+        
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 20px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: #888;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .legend-dot.optimal { background: #4ade80; }
+        .legend-dot.throttled { background: #f59e0b; }
+        .legend-dot.blocked { background: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <header class="header">
+            <h1><span>🕐</span> Multi-Agent System Clock</h1>
+            <div class="header-stats">
+                <div class="stat">
+                    <div class="stat-value green" id="activeAgents">4</div>
+                    <div class="stat-label">Active Agents</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value yellow" id="systemVelocity">78%</div>
+                    <div class="stat-label">System Velocity</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="effortRemaining">127h</div>
+                    <div class="stat-label">Effort Remaining</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value green" id="etaAI">~6h</div>
+                    <div class="stat-label">ETA (AI)</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-value" id="etaHuman">~3w</div>
+                    <div class="stat-label">ETA (Human)</div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main visualization -->
+        <main class="main">
+            <div class="ring-container">
+                <svg width="600" height="600" viewBox="0 0 600 600" id="ringsSvg">
+                    <defs>
+                        <linearGradient id="optimalRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#4ade80"/>
+                            <stop offset="100%" style="stop-color:#22c55e"/>
+                        </linearGradient>
+                        <linearGradient id="throttledRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#f59e0b"/>
+                            <stop offset="100%" style="stop-color:#d97706"/>
+                        </linearGradient>
+                        <linearGradient id="blockedRing" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#ef4444"/>
+                            <stop offset="100%" style="stop-color:#dc2626"/>
+                        </linearGradient>
+                        <linearGradient id="effortCore" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#00d9ff"/>
+                            <stop offset="100%" style="stop-color:#0077aa"/>
+                        </linearGradient>
+                        
+                        <filter id="glow">
+                            <feGaussianBlur stdDeviation="3" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                        <filter id="glowStrong">
+                            <feGaussianBlur stdDeviation="5" result="blur"/>
+                            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                        </filter>
+                    </defs>
+                    
+                    <!-- Background grid -->
+                    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                        <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#1a1a2e" stroke-width="0.5"/>
+                    </pattern>
+                    <rect width="600" height="600" fill="url(#grid)" opacity="0.5"/>
+                    
+                    <!-- Agent 4: Outermost (Blocked - Human waiting) -->
+                    <g id="agent4Ring">
+                        <circle cx="300" cy="300" r="260" fill="none" stroke="url(#blockedRing)" stroke-width="22" stroke-dasharray="60 20" opacity="0.4" filter="url(#glow)"/>
+                        <!-- Impediment marker -->
+                        <g transform="translate(300, 40)">
+                            <circle r="15" fill="#ef4444" filter="url(#glow)"/>
+                            <text y="5" text-anchor="middle" fill="white" font-size="14">!</text>
+                        </g>
+                    </g>
+                    
+                    <!-- Agent 3: Third ring (Throttled - Rate limited) -->
+                    <g id="agent3Ring">
+                        <circle cx="300" cy="300" r="210" fill="none" stroke="url(#throttledRing)" stroke-width="22" stroke-dasharray="45 15" opacity="0.7" filter="url(#glow)">
+                            <animateTransform attributeName="transform" type="rotate" from="0 300 300" to="360 300 300" dur="8s" repeatCount="indefinite"/>
+                        </circle>
+                    </g>
+                    
+                    <!-- Agent 2: Second ring (Optimal) -->
+                    <g id="agent2Ring">
+                        <circle cx="300" cy="300" r="160" fill="none" stroke="url(#optimalRing)" stroke-width="22" stroke-dasharray="35 12" opacity="0.85" filter="url(#glow)">
+                            <animateTransform attributeName="transform" type="rotate" from="0 300 300" to="360 300 300" dur="2s" repeatCount="indefinite"/>
+                        </circle>
+                    </g>
+                    
+                    <!-- Agent 1: Inner ring (Optimal - fastest) -->
+                    <g id="agent1Ring">
+                        <circle cx="300" cy="300" r="110" fill="none" stroke="url(#optimalRing)" stroke-width="22" stroke-dasharray="25 10" opacity="0.9" filter="url(#glow)">
+                            <animateTransform attributeName="transform" type="rotate" from="0 300 300" to="360 300 300" dur="1.2s" repeatCount="indefinite"/>
+                        </circle>
+                    </g>
+                    
+                    <!-- Effort Core (invariant center) -->
+                    <circle cx="300" cy="300" r="55" fill="#080810" stroke="url(#effortCore)" stroke-width="3" filter="url(#glowStrong)"/>
+                    <circle cx="300" cy="300" r="40" fill="none" stroke="#00d9ff" stroke-width="1" opacity="0.5">
+                        <animate attributeName="r" values="40;52;40" dur="2s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0.5;0;0.5" dur="2s" repeatCount="indefinite"/>
+                    </circle>
+                    <text x="300" y="293" text-anchor="middle" fill="white" font-size="14" font-weight="bold">EFFORT</text>
+                    <text x="300" y="312" text-anchor="middle" fill="#00d9ff" font-size="11">127h remain</text>
+                    
+                    <!-- Agent labels -->
+                    <g id="agentLabels">
+                        <!-- Agent 1 label -->
+                        <g transform="translate(420, 190)">
+                            <rect x="0" y="-12" width="95" height="24" rx="4" fill="#1a1a2e" stroke="#4ade80" stroke-width="1"/>
+                            <text x="8" y="4" fill="#4ade80" font-size="10" font-weight="bold">Agent 1</text>
+                            <text x="58" y="4" fill="white" font-size="10">20x</text>
+                        </g>
+                        <!-- Agent 2 label -->
+                        <g transform="translate(450, 240)">
+                            <rect x="0" y="-12" width="95" height="24" rx="4" fill="#1a1a2e" stroke="#4ade80" stroke-width="1"/>
+                            <text x="8" y="4" fill="#4ade80" font-size="10" font-weight="bold">Agent 2</text>
+                            <text x="58" y="4" fill="white" font-size="10">18x</text>
+                        </g>
+                        <!-- Agent 3 label -->
+                        <g transform="translate(480, 300)">
+                            <rect x="0" y="-12" width="105" height="24" rx="4" fill="#1a1a2e" stroke="#f59e0b" stroke-width="1"/>
+                            <text x="8" y="4" fill="#f59e0b" font-size="10" font-weight="bold">Agent 3</text>
+                            <text x="58" y="4" fill="white" font-size="10">5x ⚠️</text>
+                        </g>
+                        <!-- Agent 4 label -->
+                        <g transform="translate(490, 360)">
+                            <rect x="0" y="-12" width="100" height="24" rx="4" fill="#1a1a2e" stroke="#ef4444" stroke-width="1"/>
+                            <text x="8" y="4" fill="#ef4444" font-size="10" font-weight="bold">Agent 4</text>
+                            <text x="58" y="4" fill="white" font-size="10">0x 🛑</text>
+                        </g>
+                    </g>
+                    
+                    <!-- Aggregate velocity arc -->
+                    <path id="velocityArc" d="M 300 30 A 270 270 0 1 1 88 435" fill="none" stroke="#4ade8044" stroke-width="4" stroke-linecap="round"/>
+                    <text x="70" y="450" fill="#888" font-size="10">78% System Velocity</text>
+                </svg>
+            </div>
+        </main>
+        
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="panel-section">
+                <div class="panel-title">🤖 Active Agents</div>
+                
+                <div class="agent-card optimal" data-agent="1">
+                    <div class="agent-header">
+                        <span class="agent-name">Agent 1 (Coder)</span>
+                        <span class="agent-speed fast">20x</span>
+                    </div>
+                    <div class="agent-task">Implementing auth module</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 67%"></div>
+                    </div>
+                </div>
+                
+                <div class="agent-card optimal" data-agent="2">
+                    <div class="agent-header">
+                        <span class="agent-name">Agent 2 (Coder)</span>
+                        <span class="agent-speed fast">18x</span>
+                    </div>
+                    <div class="agent-task">Building API endpoints</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: 45%"></div>
+                    </div>
+                </div>
+                
+                <div class="agent-card throttled" data-agent="3">
+                    <div class="agent-header">
+                        <span class="agent-name">Agent 3 (Tester)</span>
+                        <span class="agent-speed slow">5x ⚠️</span>
+                    </div>
+                    <div class="agent-task">Rate limited - API throttle</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill throttled" style="width: 30%"></div>
+                    </div>
+                </div>
+                
+                <div class="agent-card blocked" data-agent="4">
+                    <div class="agent-header">
+                        <span class="agent-name">Agent 4 (Reviewer)</span>
+                        <span class="agent-speed stopped">0x 🛑</span>
+                    </div>
+                    <div class="agent-task">Awaiting human approval</div>
+                    <div class="progress-bar">
+                        <div class="progress-fill blocked" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <div class="panel-title">🚧 Active Impediments</div>
+                
+                <div class="impediment-item">
+                    <div class="impediment-icon blocking">🛑</div>
+                    <div class="impediment-details">
+                        <div class="impediment-type">Human Approval Needed</div>
+                        <div class="impediment-agent">Agent 4 • PR #142</div>
+                    </div>
+                </div>
+                
+                <div class="impediment-item">
+                    <div class="impediment-icon throttling">⚡</div>
+                    <div class="impediment-details">
+                        <div class="impediment-type">API Rate Limit</div>
+                        <div class="impediment-agent">Agent 3 • Resets in 4m</div>
+                    </div>
+                </div>
+                
+                <div class="impediment-item">
+                    <div class="impediment-icon friction">🔀</div>
+                    <div class="impediment-details">
+                        <div class="impediment-type">Context Switch</div>
+                        <div class="impediment-agent">Agent 1 • ~2min overhead</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="panel-section">
+                <div class="panel-title">📊 Velocity Breakdown</div>
+                <div style="background: #1a1a2e; border-radius: 8px; padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #888; font-size: 0.85rem;">Theoretical Max</span>
+                        <span style="color: #4ade80; font-weight: bold;">100%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #888; font-size: 0.85rem;">Lost to Blocking</span>
+                        <span style="color: #ef4444; font-weight: bold;">-12%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #888; font-size: 0.85rem;">Lost to Throttling</span>
+                        <span style="color: #f59e0b; font-weight: bold;">-7%</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span style="color: #888; font-size: 0.85rem;">Lost to Friction</span>
+                        <span style="color: #8b5cf6; font-weight: bold;">-3%</span>
+                    </div>
+                    <div style="border-top: 1px solid #333; padding-top: 10px; display: flex; justify-content: space-between;">
+                        <span style="color: white; font-weight: bold;">Current Velocity</span>
+                        <span style="color: #f59e0b; font-weight: bold;">78%</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="view-controls">
+                <button class="view-btn active">All Agents</button>
+                <button class="view-btn">Aggregate</button>
+                <button class="view-btn">Timeline</button>
+                <button class="view-btn">Impediments</button>
+            </div>
+            
+            <div class="legend">
+                <div class="legend-item">
+                    <div class="legend-dot optimal"></div>
+                    <span>Optimal (>15x)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot throttled"></div>
+                    <span>Throttled (1-15x)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot blocked"></div>
+                    <span>Blocked (0x)</span>
+                </div>
+            </div>
+            
+            <div class="speed-control">
+                <label>Animation Speed</label>
+                <input type="range" class="speed-slider" min="0.1" max="3" step="0.1" value="1" id="speedSlider">
+                <span id="speedValue">1x</span>
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        // Animation speed control
+        const speedSlider = document.getElementById('speedSlider');
+        const speedValue = document.getElementById('speedValue');
+        
+        speedSlider.addEventListener('input', (e) => {
+            const speed = e.target.value;
+            speedValue.textContent = speed + 'x';
+            
+            // Update all animation durations
+            document.querySelectorAll('animateTransform').forEach(anim => {
+                const baseDur = parseFloat(anim.getAttribute('data-base-dur') || anim.getAttribute('dur'));
+                if (!anim.getAttribute('data-base-dur')) {
+                    anim.setAttribute('data-base-dur', anim.getAttribute('dur'));
+                }
+                anim.setAttribute('dur', (parseFloat(baseDur) / speed) + 's');
+            });
+        });
+        
+        // View button interactions
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        
+        // Agent card hover effects
+        document.querySelectorAll('.agent-card').forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                const agentId = card.dataset.agent;
+                // Could highlight corresponding ring
+            });
+        });
+    </script>
+</body>
+</html>
