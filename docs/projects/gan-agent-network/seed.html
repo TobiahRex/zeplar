@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAN → Multi-Agent Architecture Patterns</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e8e8e8;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #4a9eff, #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-icon {
+            font-size: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #fff;
+        }
+
+        .section-number {
+            background: rgba(74, 158, 255, 0.2);
+            color: #4a9eff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .diagram-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        .explanation {
+            background: rgba(74, 158, 255, 0.1);
+            border-left: 4px solid #4a9eff;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .explanation h4 {
+            color: #4a9eff;
+            margin-bottom: 0.5rem;
+        }
+
+        .mapping-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .mapping-table th {
+            background: rgba(74, 158, 255, 0.3);
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .mapping-table td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mapping-table tr:hover td {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .gan-term {
+            color: #4a9eff;
+            font-weight: 600;
+        }
+
+        .sw-term {
+            color: #2ecc71;
+            font-weight: 600;
+        }
+
+        .warning-box {
+            background: rgba(255, 107, 107, 0.1);
+            border-left: 4px solid #ff6b6b;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning-box h4 {
+            color: #ff6b6b;
+            margin-bottom: 0.5rem;
+        }
+
+        .success-box {
+            background: rgba(46, 204, 113, 0.1);
+            border-left: 4px solid #2ecc71;
+            padding: 1rem 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .success-box h4 {
+            color: #2ecc71;
+            margin-bottom: 0.5rem;
+        }
+
+        .philosophy-card {
+            background: linear-gradient(135deg, rgba(155, 89, 182, 0.2), rgba(142, 68, 173, 0.1));
+            border: 1px solid rgba(155, 89, 182, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .philosophy-card h4 {
+            color: #9b59b6;
+            margin-bottom: 1rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        .pattern-card {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .pattern-card h4 {
+            color: #4a9eff;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-blue {
+            background: rgba(74, 158, 255, 0.2);
+            color: #4a9eff;
+        }
+
+        .badge-red {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .badge-green {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+
+        .core-pattern-box {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(46, 204, 113, 0.1));
+            border: 2px solid rgba(52, 152, 219, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .core-pattern-box h3 {
+            text-align: center;
+            color: #3498db;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .formula {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            color: #4a9eff;
+            margin: 0.5rem 0;
+            overflow-x: auto;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin: 0.5rem 0;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>GAN → Multi-Agent Architecture Patterns</h1>
+    <p class="subtitle">Extracting adversarial learning patterns for your Bug Engineer system</p>
+
+    <!-- LEVEL 1: Foundational Structure -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-number">Level 1</span>
+            <span class="section-icon">🎮</span>
+            <h2 class="section-title">The Atomic Game Unit</h2>
+        </div>
+
+        <p style="margin-bottom: 1rem;">Before multi-agent systems, understand the fundamental two-player zero-sum game
+            that GANs are built on:</p>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+flowchart LR
+    subgraph GAME["🎮 Two-Player Zero-Sum Game"]
+        direction TB
+        
+        subgraph PLAYERS["Players"]
+            G["🔧 GENERATOR\n(Creates Artifacts)"]
+            D["🔍 DISCRIMINATOR\n(Evaluates Quality)"]
+        end
+        
+        subgraph OBJECTIVE["Minimax Objective"]
+            OBJ["min_G max_D V(G,D)"]
+        end
+        
+        G -->|"produces fake samples"| OBJ
+        D -->|"classifies real vs fake"| OBJ
+    end
+    
+    subgraph EQUILIBRIUM["⚖️ Nash Equilibrium"]
+        NE["D outputs 0.5 probability\nG produces indistinguishable output"]
+    end
+    
+    GAME --> EQUILIBRIUM
+            </pre>
+        </div>
+
+        <div class="explanation">
+            <h4>Key Insight from Paper</h4>
+            <p>The GAN objective function creates a <strong>minimax game</strong> where total utilities sum to zero —
+                one player's gain is exactly the other's loss.</p>
+            <div class="formula">V(G,D) = E[log D(x)] + E[log(1 - D(G(z)))]</div>
+        </div>
+    </div>
+
+    <!-- LEVEL 2: Domain Mapping -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-number">Level 2</span>
+            <span class="section-icon">🔄</span>
+            <h2 class="section-title">Mapping GAN → Software Engineering</h2>
+        </div>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+flowchart TB
+    subgraph GAN["🧠 GAN Domain"]
+        G1["Generator G"]
+        D1["Discriminator D"]
+        PDATA["P_data\n(Real Distribution)"]
+        PG["P_g\n(Generated Distribution)"]
+    end
+    
+    subgraph SW["💻 Your Software Domain"]
+        DEV["Dev Agents\n(Frontend, Backend, etc.)"]
+        BUG["Bug Engineer"]
+        SPEC["Spec-Compliant Code\n(Ground Truth)"]
+        PROD["Agent-Produced Code"]
+    end
+    
+    G1 -.->|"maps to"| DEV
+    D1 -.->|"maps to"| BUG
+    PDATA -.->|"maps to"| SPEC
+    PG -.->|"maps to"| PROD
+    
+    style G1 fill:#4a9eff,stroke:#333,color:#fff
+    style DEV fill:#4a9eff,stroke:#333,color:#fff
+    style D1 fill:#ff6b6b,stroke:#333,color:#fff
+    style BUG fill:#ff6b6b,stroke:#333,color:#fff
+            </pre>
+        </div>
+
+        <table class="mapping-table">
+            <thead>
+                <tr>
+                    <th>GAN Concept</th>
+                    <th>Your System Equivalent</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="gan-term">Generator G</td>
+                    <td class="sw-term">Dev Agents</td>
+                    <td>Produces artifacts (code) from latent space (requirements)</td>
+                </tr>
+                <tr>
+                    <td class="gan-term">Discriminator D</td>
+                    <td class="sw-term">Bug Engineer</td>
+                    <td>Evaluates quality, distinguishes good from problematic code</td>
+                </tr>
+                <tr>
+                    <td class="gan-term">Real Data P_data</td>
+                    <td class="sw-term">Spec-Compliant Code</td>
+                    <td>The "ground truth" that generators try to match</td>
+                </tr>
+                <tr>
+                    <td class="gan-term">Latent Noise z</td>
+                    <td class="sw-term">Requirements/Tasks</td>
+                    <td>Input that gets transformed into output artifacts</td>
+                </tr>
+                <tr>
+                    <td class="gan-term">Nash Equilibrium</td>
+                    <td class="sw-term">Optimal Quality State</td>
+                    <td>Bug Engineer can't find more bugs, Devs can't hide more</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- LENS 1: STRUCTURE -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-number">Lens 1</span>
+            <span class="section-icon">🏗️</span>
+            <h2 class="section-title">STRUCTURE Patterns</h2>
+        </div>
+
+        <p style="margin-bottom: 1.5rem;">The paper identifies three main architectural patterns. Each has specific
+            advantages for your system:</p>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+flowchart TB
+    subgraph P1["Pattern 1: Multi-Generator, Single Discriminator"]
+        direction LR
+        G1_1["🔧 Frontend\nAgent"]
+        G1_2["🔧 Backend\nAgent"]
+        G1_3["🔧 Infra\nAgent"]
+        D1_1["🔍 Bug\nEngineer"]
+        
+        G1_1 --> D1_1
+        G1_2 --> D1_1
+        G1_3 --> D1_1
+    end
+    
+    subgraph P2["Pattern 2: Single Generator, Multi-Discriminator"]
+        direction LR
+        G2_1["🔧 Dev\nTeam"]
+        D2_1["🔍 Security\nReview"]
+        D2_2["🔍 Perf\nReview"]
+        D2_3["🔍 Arch\nReview"]
+        
+        G2_1 --> D2_1
+        G2_1 --> D2_2
+        G2_1 --> D2_3
+    end
+    
+    subgraph P3["Pattern 3: Multi-Multi (MIX+GAN)"]
+        direction LR
+        G3_1["🔧 G₁"]
+        G3_2["🔧 G₂"]
+        D3_1["🔍 D₁"]
+        D3_2["🔍 D₂"]
+        
+        G3_1 --> D3_1
+        G3_1 --> D3_2
+        G3_2 --> D3_1
+        G3_2 --> D3_2
+    end
+    
+    style G1_1 fill:#4a9eff,stroke:#333,color:#fff
+    style G1_2 fill:#4a9eff,stroke:#333,color:#fff
+    style G1_3 fill:#4a9eff,stroke:#333,color:#fff
+    style G2_1 fill:#4a9eff,stroke:#333,color:#fff
+    style G3_1 fill:#4a9eff,stroke:#333,color:#fff
+    style G3_2 fill:#4a9eff,stroke:#333,color:#fff
+    
+    style D1_1 fill:#ff6b6b,stroke:#333,color:#fff
+    style D2_1 fill:#ff6b6b,stroke:#333,color:#fff
+    style D2_2 fill:#ff6b6b,stroke:#333,color:#fff
+    style D2_3 fill:#ff6b6b,stroke:#333,color:#fff
+    style D3_1 fill:#ff6b6b,stroke:#333,color:#fff
+    style D3_2 fill:#ff6b6b,stroke:#333,color:#fff
+            </pre>
+        </div>
+
+        <div class="grid-2">
+            <div class="pattern-card">
+                <h4><span class="badge badge-blue">MAD-GAN</span> Source Attribution</h4>
+                <p>Bug Engineer should not just classify "good/bad" but identify <strong>which dev agent</strong>
+                    produced problematic code.</p>
+                <p style="margin-top: 0.5rem; color: #888;">This creates accountability and prevents all agents from
+                    converging to identical solutions.</p>
+            </div>
+
+            <div class="pattern-card">
+                <h4><span class="badge badge-red">DDL</span> Discriminator Diversity</h4>
+                <p>Multiple reviewers (Security, Perf, Arch) must maintain <strong>diversity in what they
+                        catch</strong>.</p>
+                <p style="margin-top: 0.5rem; color: #888;">Discriminator Discrepancy Loss prevents all reviewers from
+                    finding the same issues.</p>
+            </div>
+
+            <div class="pattern-card">
+                <h4><span class="badge badge-green">MIX+GAN</span> Equilibrium Existence</h4>
+                <p>A mixture of finite generators and discriminators can <strong>approximate the minimax
+                        solution</strong>.</p>
+                <p style="margin-top: 0.5rem; color: #888;">You don't need infinite agents — small mixtures (T ≤ 5) work
+                    well.</p>
+            </div>
+
+            <div class="pattern-card">
+                <h4><span class="badge badge-blue">MGAN</span> Forced Diversity</h4>
+                <p>Add a classifier that identifies which generator produced each sample, forcing generators to
+                    <strong>specialize in different modes</strong>.</p>
+                <p style="margin-top: 0.5rem; color: #888;">Dev agents develop unique domain expertise rather than
+                    generic patterns.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- LENS 2: BEHAVIOR -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-number">Lens 2</span>
+            <span class="section-icon">⚡</span>
+            <h2 class="section-title">BEHAVIOR Patterns</h2>
+        </div>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+sequenceDiagram
+    participant DEV as 🔧 Dev Agents
+    participant SYS as 📦 System
+    participant BUG as 🔍 Bug Engineer
+    
+    rect rgb(70, 130, 180)
+        Note over DEV,SYS: Phase 1: Generator Move
+        DEV->>SYS: Produce code artifact
+        Note right of DEV: Strategy: Minimize detectable issues
+    end
+    
+    rect rgb(220, 80, 80)
+        Note over SYS,BUG: Phase 2: Discriminator Move
+        SYS->>BUG: Submit for review
+        BUG->>BUG: Analyze for issues
+        Note right of BUG: Strategy: Maximize detection
+        BUG->>DEV: Return feedback signal
+    end
+    
+    rect rgb(80, 180, 80)
+        Note over DEV,BUG: Phase 3: Update & Iterate
+        DEV->>DEV: Adjust strategy based on feedback
+        BUG->>BUG: Refine detection based on new patterns
+    end
+    
+    Note over DEV,BUG: Repeat until equilibrium...
+            </pre>
+        </div>
+
+        <h3 style="margin: 1.5rem 0 1rem; color: #fff;">Failure Modes to Avoid</h3>
+
+        <div class="grid-2">
+            <div class="warning-box">
+                <h4>🔄 Mode Collapse</h4>
+                <p><strong>GAN Problem:</strong> Generator produces limited variety of outputs</p>
+                <p><strong>Your System:</strong> All dev agents converge to same "safe" coding patterns</p>
+                <p><strong>Solution:</strong> MAD-GAN source attribution forces diversity</p>
+            </div>
+
+            <div class="warning-box">
+                <h4>📉 Vanishing Gradient</h4>
+                <p><strong>GAN Problem:</strong> Discriminator too strong, generator can't learn</p>
+                <p><strong>Your System:</strong> Bug Engineer finds everything instantly, devs get no useful feedback
+                </p>
+                <p><strong>Solution:</strong> Proximal Equilibrium — allow local, not global optimization</p>
+            </div>
+
+            <div class="warning-box">
+                <h4>🌀 Non-Convergence</h4>
+                <p><strong>GAN Problem:</strong> Strategies oscillate, never stabilize</p>
+                <p><strong>Your System:</strong> Quality bounces up and down, never reaches stable state</p>
+                <p><strong>Solution:</strong> Fictitious Play — train against historical models</p>
+            </div>
+
+            <div class="warning-box">
+                <h4>⚖️ Training Instability</h4>
+                <p><strong>GAN Problem:</strong> Agents overfit to each other's quirks</p>
+                <p><strong>Your System:</strong> Bug Engineer learns dev agent's specific patterns, not general issues
+                </p>
+                <p><strong>Solution:</strong> Stackelberg Game — clear leader/follower hierarchy</p>
+            </div>
+        </div>
+
+        <div class="success-box" style="margin-top: 1.5rem;">
+            <h4>✅ Key Behavioral Insight: Stackelberg Hierarchy</h4>
+            <p>The paper shows that modeling GANs as a <strong>Stackelberg game</strong> (leader-follower) provides more
+                stable training than simultaneous moves.</p>
+            <p style="margin-top: 0.5rem;"><strong>For your system:</strong> Bug Engineer acts as the "leader" setting
+                quality standards. Dev Agents act as "followers" adapting to meet those standards. This creates clear
+                expectations and stable convergence.</p>
+        </div>
+    </div>
+
+    <!-- LENS 3: PHILOSOPHY -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-number">Lens 3</span>
+            <span class="section-icon">🧘</span>
+            <h2 class="section-title">PHILOSOPHY Patterns</h2>
+        </div>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+flowchart TB
+    subgraph LOCAL["🎯 Local View: Zero-Sum"]
+        L1["Bug Engineer wins\n= Dev loses"]
+        L2["Dev wins\n= Bug Engineer loses"]
+    end
+    
+    subgraph GLOBAL["🌍 Global View: Positive-Sum"]
+        G1["System converges to\nhigher quality"]
+        G2["Both agents become\nmore capable"]
+    end
+    
+    subgraph PARADOX["💡 The Adversarial Paradox"]
+        P1["Competition ≠ Conflict"]
+        P2["Opponents ≠ Enemies"]
+        P3["Winning locally =\nLosing globally"]
+    end
+    
+    LOCAL -->|"sum across time"| GLOBAL
+    GLOBAL -->|"reveals"| PARADOX
+    
+    style P1 fill:#9b59b6,stroke:#333,color:#fff
+    style P2 fill:#9b59b6,stroke:#333,color:#fff
+    style P3 fill:#9b59b6,stroke:#333,color:#fff
+            </pre>
+        </div>
+
+        <div class="philosophy-card">
+            <h4>🎯 The Equilibrium Philosophy</h4>
+            <p>The paper's core insight: <strong>Nash Equilibrium represents the goal state, not a failure
+                    mode.</strong></p>
+            <p style="margin-top: 1rem;">At equilibrium:</p>
+            <ul>
+                <li><strong>Generator has captured the real distribution</strong> → Dev agents produce spec-compliant
+                    code</li>
+                <li><strong>Discriminator outputs 0.5 probability</strong> → Bug Engineer can't distinguish good code
+                    from perfect code (because they're equivalent)</li>
+                <li><strong>Neither can improve unilaterally</strong> → System has reached optimal quality</li>
+            </ul>
+        </div>
+
+        <div class="success-box">
+            <h4>🔑 Reframing the Bug Engineer's Role</h4>
+            <p>The Bug Engineer's goal is <strong>not to "win" by finding bugs forever</strong>.</p>
+            <p style="margin-top: 0.5rem;">The goal is to <strong>make itself obsolete</strong> by driving quality to
+                equilibrium.</p>
+            <p style="margin-top: 0.5rem;">Success = Bug Engineer has nothing left to find because dev agents have
+                internalized quality.</p>
+        </div>
+    </div>
+
+    <!-- LENS 4: VISUALIZATION (Training Dynamics) -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-number">Lens 4</span>
+            <span class="section-icon">📊</span>
+            <h2 class="section-title">VISUALIZATION — Training Dynamics</h2>
+        </div>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+flowchart LR
+    subgraph P1["🌱 Phase 1:\nEarly Training"]
+        E1["Dev: Low capability\nBug: Finds everything easily"]
+    end
+    
+    subgraph P2["🌿 Phase 2:\nArms Race"]
+        E2["Dev: Improving\nBug: Must work harder"]
+    end
+    
+    subgraph P3["🌳 Phase 3:\nNear Equilibrium"]
+        E3["Dev: High quality\nBug: Edge cases only"]
+    end
+    
+    subgraph P4["⚖️ Phase 4:\nEquilibrium"]
+        E4["Dev: Optimal quality\nBug: Cannot improve"]
+    end
+    
+    P1 -->|"learning"| P2
+    P2 -->|"refinement"| P3
+    P3 -->|"convergence"| P4
+    
+    style E1 fill:#ff9999,stroke:#333,color:#000
+    style E2 fill:#ffcc99,stroke:#333,color:#000
+    style E3 fill:#99ff99,stroke:#333,color:#000
+    style E4 fill:#99ffcc,stroke:#333,color:#000
+            </pre>
+        </div>
+
+        <table class="mapping-table">
+            <thead>
+                <tr>
+                    <th>Phase</th>
+                    <th>Dev Agent State</th>
+                    <th>Bug Engineer State</th>
+                    <th>System Quality</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge badge-red">Early</span></td>
+                    <td>Many obvious bugs, weak patterns</td>
+                    <td>Easy detection, high signal</td>
+                    <td>Low — large gap from equilibrium</td>
+                </tr>
+                <tr>
+                    <td><span class="badge" style="background: rgba(255,165,0,0.2); color: orange;">Arms Race</span>
+                    </td>
+                    <td>Fewer obvious bugs, learning</td>
+                    <td>Must find subtler issues</td>
+                    <td>Improving — gap closing</td>
+                </tr>
+                <tr>
+                    <td><span class="badge badge-green">Near Equilibrium</span></td>
+                    <td>High quality, subtle issues only</td>
+                    <td>Sophisticated analysis required</td>
+                    <td>High — approaching optimal</td>
+                </tr>
+                <tr>
+                    <td><span class="badge" style="background: rgba(52,152,219,0.2); color: #3498db;">Equilibrium</span>
+                    </td>
+                    <td>Optimal for current capability</td>
+                    <td>Cannot improve detection rate</td>
+                    <td>Optimal — stable state reached</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- RECOMMENDED ARCHITECTURE -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-number">Synthesis</span>
+            <span class="section-icon">🎯</span>
+            <h2 class="section-title">Recommended Architecture</h2>
+        </div>
+
+        <div class="diagram-container">
+            <pre class="mermaid">
+flowchart TB
+    subgraph GENS["🔧 Dev Agent Pool (Generators)"]
+        FE["Frontend\nAgent"]
+        BE["Backend\nAgent"]
+        INFRA["Infra\nAgent"]
+        DATA["Data\nAgent"]
+    end
+    
+    subgraph DISCS["🔍 Bug Engineer Pool (Discriminators)"]
+        SEC["Security\nReviewer"]
+        PERF["Perf\nReviewer"]
+        ARCH["Arch\nReviewer"]
+        LOGIC["Logic\nReviewer"]
+    end
+    
+    subgraph ORCH["🎮 Game Orchestrator"]
+        STACK["Stackelberg\nCoordinator"]
+        FICT["Fictitious Play\nHistory Buffer"]
+    end
+    
+    subgraph REWARD["📈 Reward Signal"]
+        DDL["Discriminator\nDiscrepancy Loss"]
+        SRC["Source\nAttribution"]
+    end
+    
+    GENS --> ORCH
+    DISCS --> ORCH
+    ORCH --> REWARD
+    REWARD -->|"feedback to devs"| GENS
+    REWARD -->|"calibration"| DISCS
+    
+    style FE fill:#4a9eff,stroke:#333,color:#fff
+    style BE fill:#4a9eff,stroke:#333,color:#fff
+    style INFRA fill:#4a9eff,stroke:#333,color:#fff
+    style DATA fill:#4a9eff,stroke:#333,color:#fff
+    
+    style SEC fill:#ff6b6b,stroke:#333,color:#fff
+    style PERF fill:#ff6b6b,stroke:#333,color:#fff
+    style ARCH fill:#ff6b6b,stroke:#333,color:#fff
+    style LOGIC fill:#ff6b6b,stroke:#333,color:#fff
+    
+    style STACK fill:#9b59b6,stroke:#333,color:#fff
+    style FICT fill:#9b59b6,stroke:#333,color:#fff
+            </pre>
+        </div>
+
+        <div class="core-pattern-box">
+            <h3>🔑 THE ADVERSARIAL COOPERATION PATTERN</h3>
+
+            <div class="grid-2">
+                <div>
+                    <h4 style="color: #3498db; margin-bottom: 0.5rem;">STRUCTURE</h4>
+                    <p>Multi-Generator + Multi-Discriminator with Source Attribution and Diversity Pressure</p>
+                </div>
+
+                <div>
+                    <h4 style="color: #e74c3c; margin-bottom: 0.5rem;">BEHAVIOR</h4>
+                    <p>Iterative minimax game with Stackelberg hierarchy, Fictitious play, and DDL</p>
+                </div>
+
+                <div>
+                    <h4 style="color: #9b59b6; margin-bottom: 0.5rem;">PHILOSOPHY</h4>
+                    <p>Local zero-sum → Global positive-sum. Competition as cooperation mechanism.</p>
+                </div>
+
+                <div>
+                    <h4 style="color: #2ecc71; margin-bottom: 0.5rem;">SUCCESS CRITERIA</h4>
+                    <p>Bug Engineer makes itself obsolete. System converges, doesn't oscillate.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEXICON -->
+    <div class="section">
+        <div class="section-header">
+            <span class="section-number">Reference</span>
+            <span class="section-icon">📚</span>
+            <h2 class="section-title">Lexicon of Key Terms</h2>
+        </div>
+
+        <table class="mapping-table">
+            <thead>
+                <tr>
+                    <th>Term</th>
+                    <th>GAN Definition</th>
+                    <th>Your System Application</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Nash Equilibrium</strong></td>
+                    <td>State where no player can improve by changing strategy alone</td>
+                    <td>Quality level where Bug Engineer can't find more AND devs can't hide more</td>
+                </tr>
+                <tr>
+                    <td><strong>Mode Collapse</strong></td>
+                    <td>Generator produces limited variety</td>
+                    <td>All dev agents produce identical "safe" patterns</td>
+                </tr>
+                <tr>
+                    <td><strong>Vanishing Gradient</strong></td>
+                    <td>Discriminator too strong</td>
+                    <td>Bug Engineer finds everything, devs get no learning signal</td>
+                </tr>
+                <tr>
+                    <td><strong>Stackelberg Game</strong></td>
+                    <td>Sequential game with leader/follower</td>
+                    <td>Bug Engineer sets standards first, devs respond</td>
+                </tr>
+                <tr>
+                    <td><strong>Fictitious Play</strong></td>
+                    <td>Learning against historical distribution</td>
+                    <td>Agents train against past versions to prevent oscillation</td>
+                </tr>
+                <tr>
+                    <td><strong>Proximal Equilibrium</strong></td>
+                    <td>Allow local (not global) optimization</td>
+                    <td>Bug Engineer reviews "nearby" code, not all possible code</td>
+                </tr>
+                <tr>
+                    <td><strong>DDL (Discriminator Discrepancy Loss)</strong></td>
+                    <td>Loss that maintains discriminator diversity</td>
+                    <td>Multiple reviewers find different types of issues</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            sequence: {
+                useMaxWidth: true
+            }
+        });
+    </script>
+</body>
+
+</html>
