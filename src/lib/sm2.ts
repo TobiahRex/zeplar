@@ -16,6 +16,8 @@ export type CardState = "new" | "learning" | "review" | "relearning";
 
 export interface CardProgress {
   cardKey: string;
+  patternId: string; // Pattern this card belongs to
+  layer: "L1" | "L2" | "L3"; // Layer of this card
   easeFactor: number;
   interval: number;
   repetitions: number;
@@ -37,9 +39,15 @@ export interface SM2Result {
 /**
  * Create initial progress for a new card
  */
-export function createInitialProgress(cardKey: string): CardProgress {
+export function createInitialProgress(
+  cardKey: string,
+  patternId: string,
+  layer: "L1" | "L2" | "L3",
+): CardProgress {
   return {
     cardKey,
+    patternId,
+    layer,
     easeFactor: 2.5,
     interval: 0,
     repetitions: 0,
