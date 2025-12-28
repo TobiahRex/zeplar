@@ -1,0 +1,74 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle for contrast -->
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" opacity="0.1"/>
+
+  <!-- Concentric circles representing spaced repetition -->
+  <circle cx="256" cy="256" r="200" stroke="url(#gradient1)" stroke-width="2" fill="none" opacity="0.3"/>
+  <circle cx="256" cy="256" r="170" stroke="url(#gradient1)" stroke-width="2" fill="none" opacity="0.4"/>
+  <circle cx="256" cy="256" r="140" stroke="url(#gradient1)" stroke-width="3" fill="none" opacity="0.5"/>
+  <circle cx="256" cy="256" r="110" stroke="url(#gradient1)" stroke-width="3" fill="none" opacity="0.6"/>
+
+  <!-- Central "Z" lettermark with geometric pattern -->
+  <g transform="translate(256, 256)">
+    <!-- Z shape made of layers (representing L1-L6) -->
+    <path d="M -60 -80 L 60 -80 L -60 80 L 60 80"
+          stroke="url(#gradient2)"
+          stroke-width="24"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          fill="none"/>
+
+    <!-- Inner geometric pattern -->
+    <path d="M -40 -60 L 40 -60 L -40 60 L 40 60"
+          stroke="url(#gradient3)"
+          stroke-width="16"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          fill="none"
+          opacity="0.8"/>
+
+    <!-- Accent dots representing learning nodes -->
+    <circle cx="-50" cy="-70" r="6" fill="url(#accentGradient)"/>
+    <circle cx="50" cy="-70" r="6" fill="url(#accentGradient)"/>
+    <circle cx="-50" cy="70" r="6" fill="url(#accentGradient)"/>
+    <circle cx="50" cy="70" r="6" fill="url(#accentGradient)"/>
+
+    <!-- Small pattern elements -->
+    <circle cx="0" cy="-20" r="4" fill="url(#accentGradient)" opacity="0.6"/>
+    <circle cx="0" cy="20" r="4" fill="url(#accentGradient)" opacity="0.6"/>
+  </g>
+
+  <!-- Gradients -->
+  <defs>
+    <!-- Background gradient -->
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Main gradient (blue-purple) -->
+    <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3b82f6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Secondary gradient (vibrant purple) -->
+    <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#8b5cf6;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Tertiary gradient (lighter purple) -->
+    <linearGradient id="gradient3" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c084fc;stop-opacity:1" />
+    </linearGradient>
+
+    <!-- Accent gradient (amber/orange for "fire") -->
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#f97316;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+</svg>
