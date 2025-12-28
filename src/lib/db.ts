@@ -1,5 +1,6 @@
 import Dexie, { type EntityTable } from "dexie";
 import type { CardProgress } from "./sm2";
+import { parseCardKey } from "./cardGenerator";
 
 // Stored card progress (dates as ISO strings for IndexedDB)
 interface StoredCardProgress {
@@ -98,8 +99,16 @@ export async function loadAllCardProgress(): Promise<
   const result: Record<string, CardProgress> = {};
 
   for (const item of items) {
+    const parsed = parseCardKey(item.cardKey);
+    if (!parsed) {
+      console.warn(`Invalid card key format: ${item.cardKey}`);
+      continue;
+    }
+
     result[item.cardKey] = {
       cardKey: item.cardKey,
+      patternId: parsed.patternId,
+      layer: `L${parsed.layer}` as "L1" | "L2" | "L3",
       easeFactor: item.easeFactor,
       interval: item.interval,
       repetitions: item.repetitions,

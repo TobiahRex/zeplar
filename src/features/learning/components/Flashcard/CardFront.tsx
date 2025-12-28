@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LayerBadge } from "@/components/LayerBadge";
 import type { Flashcard } from "@/lib/cardGenerator";
 
 interface CardFrontProps {
@@ -9,7 +10,12 @@ interface CardFrontProps {
 
 export function CardFront({ card, onFlip }: CardFrontProps) {
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col relative">
+      {/* Layer badge in top-right corner */}
+      <div className="absolute top-4 right-4 z-10">
+        <LayerBadge layer={`L${card.layer}` as "L1" | "L2" | "L3"} />
+      </div>
+
       <CardContent className="flex-1 flex flex-col items-center justify-center p-8 text-center">
         {card.front.hint && (
           <p className="text-sm text-muted-foreground mb-4 uppercase tracking-wide">

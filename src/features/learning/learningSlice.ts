@@ -89,7 +89,7 @@ const learningSlice = createSlice({
         createInitialProgress(
           cardKey,
           parsed.patternId,
-          parsed.layer as "L1" | "L2" | "L3",
+          `L${parsed.layer}` as "L1" | "L2" | "L3",
         );
 
       // Calculate new progress

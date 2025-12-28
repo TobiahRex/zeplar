@@ -150,6 +150,31 @@ export default function SessionSummary() {
           </Card>
         </div>
 
+        {/* Layer Unlock Notifications */}
+        {(() => {
+          // TODO: Track newly unlocked layers during session in learningSlice
+          // For now, this is a placeholder that will show when tracking is implemented
+          const newlyUnlockedLayers: Array<{
+            layer: string;
+            patternName: string;
+          }> = [];
+
+          return (
+            newlyUnlockedLayers.length > 0 && (
+              <div className="bg-gradient-to-r from-purple-500 to-blue-500 p-4 rounded-lg text-white">
+                <h3 className="text-xl font-bold mb-2">
+                  🎉 New Layers Unlocked!
+                </h3>
+                {newlyUnlockedLayers.map((unlock) => (
+                  <p key={unlock.layer}>
+                    {unlock.patternName} - {unlock.layer}
+                  </p>
+                ))}
+              </div>
+            )
+          );
+        })()}
+
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row gap-4">
           <Button onClick={handleContinueStudying} className="flex-1" size="lg">

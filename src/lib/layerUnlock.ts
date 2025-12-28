@@ -5,7 +5,7 @@
  * L1 is always unlocked. L2 unlocks at 80% L1 mastery. L3 unlocks at 80% L2 mastery.
  */
 
-import type { CardProgress } from "@/features/learning/types";
+import type { CardProgress } from "@/lib/sm2";
 
 // =============================================================================
 // Constants

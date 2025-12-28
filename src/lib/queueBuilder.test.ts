@@ -289,6 +289,8 @@ describe("queueBuilder", () => {
       const progress: Record<string, CardProgress> = {
         "card-1": {
           cardKey: "card-1",
+          patternId: "test-pattern",
+          layer: "L1",
           easeFactor: 2.5,
           interval: 0,
           repetitions: 0,

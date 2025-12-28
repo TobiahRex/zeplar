@@ -1,5 +1,6 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { RatingButtons } from "./RatingButtons";
+import { LayerBadge } from "@/components/LayerBadge";
 import type { Flashcard } from "@/lib/cardGenerator";
 import type { Quality } from "@/lib/sm2";
 
@@ -10,7 +11,12 @@ interface CardBackProps {
 
 export function CardBack({ card, onRate }: CardBackProps) {
   return (
-    <Card className="h-full flex flex-col">
+    <Card className="h-full flex flex-col relative">
+      {/* Layer badge in top-right corner */}
+      <div className="absolute top-4 right-4 z-10">
+        <LayerBadge layer={`L${card.layer}` as "L1" | "L2" | "L3"} />
+      </div>
+
       <CardContent className="flex-1 flex flex-col items-center justify-center p-8 text-center">
         <p className="text-xl font-medium leading-relaxed mb-4">
           {card.back.text}

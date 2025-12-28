@@ -5,8 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { useAppSelector } from "@/app/hooks";
-import { selectStats, selectProgress } from "@/features/learning/learningSlice";
+import {
+  selectStats,
+  selectProgress,
+  selectLayerUnlocks,
+} from "@/features/learning/learningSlice";
 import { patternList } from "@/data/patterns";
+import { MasteryBreakdown } from "@/components/MasteryBreakdown";
 import { generateAllL1Cards } from "@/lib/cardGenerator";
 import { getMasteryPercentage } from "@/lib/sm2";
 import { getRecentSessions } from "@/lib/db";
@@ -61,6 +66,7 @@ const qualityIcons: Record<string, string> = {
 export default function Dashboard() {
   const stats = useAppSelector(selectStats);
   const progress = useAppSelector(selectProgress);
+  const layerUnlocks = useAppSelector(selectLayerUnlocks);
   const [heatmapData, setHeatmapData] = useState<number[]>([]);
 
   // Calculate cards due
@@ -230,6 +236,26 @@ export default function Dashboard() {
             </Badge>
           ))}
         </div>
+
+        {/* Pattern Mastery by Layer */}
+        <section className="space-y-4">
+          <h2 className="text-2xl font-bold">Pattern Mastery by Layer</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {patternList.map((pattern) => {
+              const layerStatus = layerUnlocks[pattern.id];
+              if (!layerStatus) return null;
+
+              return (
+                <MasteryBreakdown
+                  key={pattern.id}
+                  patternId={pattern.id}
+                  patternName={pattern.concept.name}
+                  layerUnlocks={layerStatus}
+                />
+              );
+            })}
+          </div>
+        </section>
 
         <Card>
           <CardHeader>
