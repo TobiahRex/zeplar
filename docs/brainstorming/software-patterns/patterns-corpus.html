@@ -1,0 +1,2822 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>All Strategies - Complete L2 → L3 → L4 Expansion</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f172a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+
+        .quality-section {
+            margin-bottom: 3rem;
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .quality-header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .quality-header h2 {
+            font-size: 1.8rem;
+            color: #fff;
+        }
+
+        .quality-header .question {
+            font-size: 1rem;
+            opacity: 0.7;
+            font-weight: normal;
+        }
+
+        .quality-content {
+            padding: 0 1rem 1rem 1rem;
+        }
+
+        /* Quality colors */
+        .perf-section {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .perf-section .quality-header {
+            background: rgba(245, 158, 11, 0.2);
+        }
+
+        .perf-section h2 {
+            color: #f59e0b;
+        }
+
+        .rel-section {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .rel-section .quality-header {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        .rel-section h2 {
+            color: #3b82f6;
+        }
+
+        .scale-section {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .scale-section .quality-header {
+            background: rgba(16, 185, 129, 0.2);
+        }
+
+        .scale-section h2 {
+            color: #10b981;
+        }
+
+        .sec-section {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .sec-section .quality-header {
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        .sec-section h2 {
+            color: #ef4444;
+        }
+
+        .obs-section {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05));
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .obs-section .quality-header {
+            background: rgba(139, 92, 246, 0.2);
+        }
+
+        .obs-section h2 {
+            color: #a78bfa;
+        }
+
+        .maint-section {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05));
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+
+        .maint-section .quality-header {
+            background: rgba(236, 72, 153, 0.2);
+        }
+
+        .maint-section h2 {
+            color: #ec4899;
+        }
+
+        .strategy-card {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            margin: 1rem;
+            overflow: hidden;
+        }
+
+        .strategy-header {
+            padding: 1rem 1.5rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .strategy-header h3 {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .strategy-header .desc {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 0.25rem;
+        }
+
+        .strategy-content {
+            padding: 1rem 1.5rem;
+        }
+
+        .family-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .family-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .family-header h4 {
+            font-size: 1rem;
+            color: #fff;
+        }
+
+        .family-header .family-desc {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .patterns-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .pattern {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 6px;
+            padding: 0.5rem 0.75rem;
+            border-left: 3px solid;
+            font-size: 0.85rem;
+        }
+
+        .pattern-name {
+            color: #fff;
+            font-weight: 500;
+        }
+
+        .pattern-desc {
+            color: #666;
+            font-size: 0.75rem;
+        }
+
+        /* Pattern border colors by quality */
+        .perf-section .pattern {
+            border-color: #f59e0b;
+        }
+
+        .rel-section .pattern {
+            border-color: #3b82f6;
+        }
+
+        .scale-section .pattern {
+            border-color: #10b981;
+        }
+
+        .sec-section .pattern {
+            border-color: #ef4444;
+        }
+
+        .obs-section .pattern {
+            border-color: #a78bfa;
+        }
+
+        .maint-section .pattern {
+            border-color: #ec4899;
+        }
+
+        .nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+
+        .nav-bar a {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-perf {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .nav-rel {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .nav-scale {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .nav-sec {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .nav-obs {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+        }
+
+        .nav-maint {
+            background: rgba(236, 72, 153, 0.2);
+            color: #ec4899;
+        }
+
+        .nav-bar a:hover {
+            filter: brightness(1.3);
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 3rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            padding: 1rem;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .mermaid {
+            background: #0d1117;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🎯 All Strategies Deep Dive</h1>
+    <p class="subtitle">Complete L2 → L3 → L4 Expansion for All 6 System Qualities</p>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-num" style="color:#f59e0b;">6</div>
+            <div class="stat-label">L1 Qualities</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" style="color:#3b82f6;">24</div>
+            <div class="stat-label">L2 Strategies</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" style="color:#10b981;">~96</div>
+            <div class="stat-label">L3 Families</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" style="color:#a78bfa;">~300+</div>
+            <div class="stat-label">L4 Patterns</div>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <a href="#performance" class="nav-perf">⚡ Performance</a>
+        <a href="#reliability" class="nav-rel">🛡️ Reliability</a>
+        <a href="#scalability" class="nav-scale">📈 Scalability</a>
+        <a href="#security" class="nav-sec">🔒 Security</a>
+        <a href="#observability" class="nav-obs">👁️ Observability</a>
+        <a href="#maintainability" class="nav-maint">🔧 Maintainability</a>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- PERFORMANCE -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="quality-section perf-section" id="performance">
+        <div class="quality-header">
+            <h2>⚡ PERFORMANCE <span class="question">— "How fast does it respond?"</span></h2>
+        </div>
+        <div class="quality-content">
+
+            <!-- WORK REDUCTION -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🎯 Work Reduction</h3>
+                    <div class="desc">Avoid doing unnecessary work — "Can we skip this?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⏱️ Temporal</h4>
+                            <span class="family-desc">— Control when work executes</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Debouncing</span>
+                                <div class="pattern-desc">Wait for silence before executing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Throttling</span>
+                                <div class="pattern-desc">Max one per time window</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Sampling</span>
+                                <div class="pattern-desc">Take periodic snapshots</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Windowing</span>
+                                <div class="pattern-desc">Group by time intervals</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Coalescing Window</span>
+                                <div class="pattern-desc">Merge within time frame</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>💾 Caching</h4>
+                            <span class="family-desc">— Store results for reuse</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Memoization</span>
+                                <div class="pattern-desc">Function-level by args</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cache-Aside</span>
+                                <div class="pattern-desc">App manages cache + DB</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Read-Through</span>
+                                <div class="pattern-desc">Cache fetches on miss</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Write-Through</span>
+                                <div class="pattern-desc">Sync write to both</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Write-Back</span>
+                                <div class="pattern-desc">Async flush to DB</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Refresh-Ahead</span>
+                                <div class="pattern-desc">Proactive refresh</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">LRU Eviction</span>
+                                <div class="pattern-desc">Least recently used out</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">LFU Eviction</span>
+                                <div class="pattern-desc">Least frequently used out</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">TTL Expiration</span>
+                                <div class="pattern-desc">Time-based invalidation</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📦 Batching</h4>
+                            <span class="family-desc">— Group operations together</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Micro-Batching</span>
+                                <div class="pattern-desc">Collect over time window</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Bulk Operations</span>
+                                <div class="pattern-desc">Single call, N items</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">DataLoader</span>
+                                <div class="pattern-desc">Batch + dedupe in tick</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Nagle's Algorithm</span>
+                                <div class="pattern-desc">TCP packet batching</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Write Buffering</span>
+                                <div class="pattern-desc">Accumulate before flush</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Request Collapsing</span>
+                                <div class="pattern-desc">CDN combines requests</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔂 Deduplication</h4>
+                            <span class="family-desc">— Eliminate redundant work</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern" style="background:rgba(16,185,129,0.15);"><span class="pattern-name">⭐
+                                    Coalescing</span>
+                                <div class="pattern-desc">Merge concurrent identical</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Singleflight</span>
+                                <div class="pattern-desc">Go's request dedup</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Idempotency Keys</span>
+                                <div class="pattern-desc">Same input → same output</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Dedup Queue</span>
+                                <div class="pattern-desc">Drop duplicate messages</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Exactly-Once</span>
+                                <div class="pattern-desc">Guaranteed single process</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Content Hashing</span>
+                                <div class="pattern-desc">Skip if hash matches</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>😴 Lazy</h4>
+                            <span class="family-desc">— Defer work until needed</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Lazy Loading</span>
+                                <div class="pattern-desc">Load on first access</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Lazy Initialization</span>
+                                <div class="pattern-desc">Create on first use</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Virtual Scrolling</span>
+                                <div class="pattern-desc">Render only visible</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Pagination</span>
+                                <div class="pattern-desc">Load in chunks</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cursor-Based</span>
+                                <div class="pattern-desc">Stateless pagination</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Streaming</span>
+                                <div class="pattern-desc">Process incrementally</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Copy-on-Write</span>
+                                <div class="pattern-desc">Defer copy until mutate</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Lazy Evaluation</span>
+                                <div class="pattern-desc">Compute when accessed</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🏗️ Structural</h4>
+                            <span class="family-desc">— Share resources across operations</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Connection Pooling</span>
+                                <div class="pattern-desc">Reuse DB connections</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Thread Pooling</span>
+                                <div class="pattern-desc">Reuse worker threads</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Object Pooling</span>
+                                <div class="pattern-desc">Reuse expensive objects</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Flyweight</span>
+                                <div class="pattern-desc">Share intrinsic state</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">String Interning</span>
+                                <div class="pattern-desc">Canonical instances</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Buffer Pooling</span>
+                                <div class="pattern-desc">Reuse byte buffers</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WORK DISTRIBUTION -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🔀 Work Distribution</h3>
+                    <div class="desc">Spread work across resources — "Can we parallelize this?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⚡ Parallelism</h4>
+                            <span class="family-desc">— Execute simultaneously</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Multi-threading</span>
+                                <div class="pattern-desc">OS-level threads</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Multi-processing</span>
+                                <div class="pattern-desc">Separate processes</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Async/Await</span>
+                                <div class="pattern-desc">Cooperative concurrency</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Coroutines</span>
+                                <div class="pattern-desc">Lightweight threads</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Worker Pools</span>
+                                <div class="pattern-desc">Fixed thread count</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Fork-Join</span>
+                                <div class="pattern-desc">Divide and conquer</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Actor Model</span>
+                                <div class="pattern-desc">Message-passing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">CSP (Channels)</span>
+                                <div class="pattern-desc">Go-style concurrency</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">SIMD</span>
+                                <div class="pattern-desc">Single instruction, multi data</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">GPU Computing</span>
+                                <div class="pattern-desc">Massively parallel</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🧩 Sharding</h4>
+                            <span class="family-desc">— Partition by key or range</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Hash Sharding</span>
+                                <div class="pattern-desc">hash(key) mod N</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Consistent Hashing</span>
+                                <div class="pattern-desc">Minimize rebalancing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Range Sharding</span>
+                                <div class="pattern-desc">Key ranges to shards</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Directory-Based</span>
+                                <div class="pattern-desc">Lookup table routing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Geographic</span>
+                                <div class="pattern-desc">By user location</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Tenant-Based</span>
+                                <div class="pattern-desc">By customer/org</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Virtual Shards</span>
+                                <div class="pattern-desc">Logical partitions</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⚖️ Load Balancing</h4>
+                            <span class="family-desc">— Distribute across workers</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Round Robin</span>
+                                <div class="pattern-desc">Cycle through backends</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Weighted Round Robin</span>
+                                <div class="pattern-desc">Proportional cycling</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Random</span>
+                                <div class="pattern-desc">Probabilistic</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Least Connections</span>
+                                <div class="pattern-desc">Route to least busy</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Least Response Time</span>
+                                <div class="pattern-desc">Route to fastest</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">IP Hash</span>
+                                <div class="pattern-desc">Sticky sessions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Resource-Based</span>
+                                <div class="pattern-desc">Check backend health</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Power of Two</span>
+                                <div class="pattern-desc">Random two, pick best</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📋 Replication</h4>
+                            <span class="family-desc">— Copy data to multiple locations</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Leader-Follower</span>
+                                <div class="pattern-desc">Single writer, multi reader</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Multi-Leader</span>
+                                <div class="pattern-desc">Multiple writers</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Leaderless</span>
+                                <div class="pattern-desc">Any node writes</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Read Replicas</span>
+                                <div class="pattern-desc">Scale reads horizontally</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Sync Replication</span>
+                                <div class="pattern-desc">Wait for all acks</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Async Replication</span>
+                                <div class="pattern-desc">Don't wait for acks</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Semi-Sync</span>
+                                <div class="pattern-desc">Wait for N acks</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WORK OPTIMIZATION -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>⚙️ Work Optimization</h3>
+                    <div class="desc">Make work execute faster — "Can we do this more efficiently?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🧮 Algorithmic</h4>
+                            <span class="family-desc">— Better Big-O complexity</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Divide & Conquer</span>
+                                <div class="pattern-desc">Break into subproblems</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Dynamic Programming</span>
+                                <div class="pattern-desc">Cache subproblem results</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Greedy</span>
+                                <div class="pattern-desc">Local optimal choices</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Backtracking</span>
+                                <div class="pattern-desc">Explore and prune</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Branch & Bound</span>
+                                <div class="pattern-desc">Pruned search</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Approximation</span>
+                                <div class="pattern-desc">Good-enough solutions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Randomized</span>
+                                <div class="pattern-desc">Probabilistic algorithms</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Amortized</span>
+                                <div class="pattern-desc">Average over operations</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📊 Data Structures</h4>
+                            <span class="family-desc">— Right structure for access pattern</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Hash Tables</span>
+                                <div class="pattern-desc">O(1) key lookup</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Trees (BST, AVL, RB)</span>
+                                <div class="pattern-desc">O(log n) ordered</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Heaps</span>
+                                <div class="pattern-desc">Priority access</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Tries</span>
+                                <div class="pattern-desc">Prefix lookup</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Graphs</span>
+                                <div class="pattern-desc">Relationship modeling</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Bloom Filters</span>
+                                <div class="pattern-desc">Probabilistic membership</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Skip Lists</span>
+                                <div class="pattern-desc">Probabilistic balanced</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Ring Buffers</span>
+                                <div class="pattern-desc">Fixed-size circular</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">LSM Trees</span>
+                                <div class="pattern-desc">Write-optimized</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔍 Indexing</h4>
+                            <span class="family-desc">— Fast lookups via auxiliary structures</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">B-Tree Index</span>
+                                <div class="pattern-desc">Balanced for range queries</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">B+ Tree Index</span>
+                                <div class="pattern-desc">Leaf-linked B-Tree</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Hash Index</span>
+                                <div class="pattern-desc">Direct key lookup</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Inverted Index</span>
+                                <div class="pattern-desc">Full-text search</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Spatial Index</span>
+                                <div class="pattern-desc">R-Tree, Quadtree</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Bitmap Index</span>
+                                <div class="pattern-desc">Low-cardinality columns</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Composite Index</span>
+                                <div class="pattern-desc">Multi-column</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Covering Index</span>
+                                <div class="pattern-desc">Include all columns</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Partial Index</span>
+                                <div class="pattern-desc">Filtered subset</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🗜️ Compression</h4>
+                            <span class="family-desc">— Reduce data size</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">gzip/deflate</span>
+                                <div class="pattern-desc">General lossless</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">LZ4</span>
+                                <div class="pattern-desc">Fast lossless</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">zstd</span>
+                                <div class="pattern-desc">Modern lossless</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Snappy</span>
+                                <div class="pattern-desc">Speed over ratio</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Delta Encoding</span>
+                                <div class="pattern-desc">Store differences</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Run-Length (RLE)</span>
+                                <div class="pattern-desc">Compress sequences</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Dictionary Coding</span>
+                                <div class="pattern-desc">Replace repeated values</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Protocol Buffers</span>
+                                <div class="pattern-desc">Binary serialization</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">MessagePack</span>
+                                <div class="pattern-desc">Efficient JSON binary</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- WORK SCHEDULING -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>📋 Work Scheduling</h3>
+                    <div class="desc">Order and prioritize work smartly — "What should we do first?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔝 Prioritization</h4>
+                            <span class="family-desc">— Order by importance</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Priority Queue</span>
+                                <div class="pattern-desc">Heap-based ordering</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Multi-Level Queue</span>
+                                <div class="pattern-desc">Class-based priorities</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Deadline First (EDF)</span>
+                                <div class="pattern-desc">Earliest deadline wins</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Shortest Job First</span>
+                                <div class="pattern-desc">Minimize wait time</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Weighted Priorities</span>
+                                <div class="pattern-desc">Proportional access</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Real-Time Scheduling</span>
+                                <div class="pattern-desc">Guaranteed deadlines</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🚰 Flow Control</h4>
+                            <span class="family-desc">— Manage throughput</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Token Bucket</span>
+                                <div class="pattern-desc">Smooth rate limiting</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Leaky Bucket</span>
+                                <div class="pattern-desc">Fixed outflow rate</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Sliding Window</span>
+                                <div class="pattern-desc">Rolling time window</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Fixed Window</span>
+                                <div class="pattern-desc">Reset at interval</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Backpressure</span>
+                                <div class="pattern-desc">Slow producer when full</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Adaptive Concurrency</span>
+                                <div class="pattern-desc">Dynamic parallelism</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">AIMD</span>
+                                <div class="pattern-desc">Additive increase, mult decrease</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⏸️ Preemption</h4>
+                            <span class="family-desc">— Interrupt lower-priority work</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Time Slicing</span>
+                                <div class="pattern-desc">Round-robin CPU time</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Priority Preemption</span>
+                                <div class="pattern-desc">Higher priority interrupts</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cooperative Yielding</span>
+                                <div class="pattern-desc">Voluntary context switch</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Work Stealing</span>
+                                <div class="pattern-desc">Idle workers take tasks</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⚖️ Fairness</h4>
+                            <span class="family-desc">— Prevent starvation</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Weighted Fair Queuing</span>
+                                <div class="pattern-desc">Proportional bandwidth</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Max-Min Fairness</span>
+                                <div class="pattern-desc">Maximize minimum</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Lottery Scheduling</span>
+                                <div class="pattern-desc">Probabilistic fairness</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Aging</span>
+                                <div class="pattern-desc">Increase priority over time</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Deficit Round Robin</span>
+                                <div class="pattern-desc">Credit-based fairness</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- RELIABILITY -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="quality-section rel-section" id="reliability">
+        <div class="quality-header">
+            <h2>🛡️ RELIABILITY <span class="question">— "Does it keep working under failure?"</span></h2>
+        </div>
+        <div class="quality-content">
+
+            <!-- FAULT TOLERANCE -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>💔 Fault Tolerance</h3>
+                    <div class="desc">Continue operating despite failures — "What if something breaks?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔌 Circuit Breakers</h4>
+                            <span class="family-desc">— Stop cascading failures</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Closed State</span>
+                                <div class="pattern-desc">Normal operation</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Open State</span>
+                                <div class="pattern-desc">Fail fast</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Half-Open State</span>
+                                <div class="pattern-desc">Test recovery</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Adaptive Thresholds</span>
+                                <div class="pattern-desc">Dynamic trip conditions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Per-Endpoint Breakers</span>
+                                <div class="pattern-desc">Granular isolation</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔁 Retries</h4>
+                            <span class="family-desc">— Attempt again on transient failure</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Immediate Retry</span>
+                                <div class="pattern-desc">Try again instantly</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Fixed Interval</span>
+                                <div class="pattern-desc">Constant delay</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Exponential Backoff</span>
+                                <div class="pattern-desc">Increasing delays</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Jitter</span>
+                                <div class="pattern-desc">Randomize to prevent herd</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Retry Budget</span>
+                                <div class="pattern-desc">Cap total retries</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Retry Storm Prevention</span>
+                                <div class="pattern-desc">System-wide limits</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⏱️ Timeouts</h4>
+                            <span class="family-desc">— Bound waiting time</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Connection Timeout</span>
+                                <div class="pattern-desc">Max time to establish</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Read Timeout</span>
+                                <div class="pattern-desc">Max time for data</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Write Timeout</span>
+                                <div class="pattern-desc">Max time sending</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Request Timeout</span>
+                                <div class="pattern-desc">Total operation time</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Deadline Propagation</span>
+                                <div class="pattern-desc">Pass remaining time</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Adaptive Timeouts</span>
+                                <div class="pattern-desc">Based on latency p99</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🧱 Bulkheads</h4>
+                            <span class="family-desc">— Isolate failure domains</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Thread Pool Isolation</span>
+                                <div class="pattern-desc">Separate pools per dep</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Connection Pool Isolation</span>
+                                <div class="pattern-desc">Separate DB pools</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Process Isolation</span>
+                                <div class="pattern-desc">Separate processes</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Server Isolation</span>
+                                <div class="pattern-desc">Dedicated infrastructure</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Semaphore Isolation</span>
+                                <div class="pattern-desc">Limit concurrent calls</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- REDUNDANCY -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>📋 Redundancy</h3>
+                    <div class="desc">Duplicate critical components — "What's the backup plan?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔥 Hot Standby</h4>
+                            <span class="family-desc">— Active backup ready instantly</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Active-Active</span>
+                                <div class="pattern-desc">All nodes serve traffic</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Active-Passive</span>
+                                <div class="pattern-desc">One active, one ready</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">N+1 Redundancy</span>
+                                <div class="pattern-desc">One spare for N active</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">N+M Redundancy</span>
+                                <div class="pattern-desc">M spares for N active</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🌡️ Warm/Cold Standby</h4>
+                            <span class="family-desc">— Backup requires startup time</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Pilot Light</span>
+                                <div class="pattern-desc">Minimal standby infra</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Warm Standby</span>
+                                <div class="pattern-desc">Scaled-down ready</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cold Standby</span>
+                                <div class="pattern-desc">Offline until needed</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Backup & Restore</span>
+                                <div class="pattern-desc">Periodic snapshots</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🗳️ Quorum</h4>
+                            <span class="family-desc">— Majority agreement</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Simple Majority</span>
+                                <div class="pattern-desc">(N/2)+1 agreement</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Write Quorum (W)</span>
+                                <div class="pattern-desc">W nodes must ack</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Read Quorum (R)</span>
+                                <div class="pattern-desc">R nodes must respond</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">R + W > N</span>
+                                <div class="pattern-desc">Overlap for consistency</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Sloppy Quorum</span>
+                                <div class="pattern-desc">Use any N nodes</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🌍 Geographic</h4>
+                            <span class="family-desc">— Multi-region redundancy</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Multi-AZ</span>
+                                <div class="pattern-desc">Multiple availability zones</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Multi-Region</span>
+                                <div class="pattern-desc">Cross-region replication</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Multi-Cloud</span>
+                                <div class="pattern-desc">Across cloud providers</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Edge Locations</span>
+                                <div class="pattern-desc">Distributed globally</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RECOVERY -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🔄 Recovery</h3>
+                    <div class="desc">Restore normal operation after failure — "How do we come back?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📸 Checkpointing</h4>
+                            <span class="family-desc">— Save state periodically</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Periodic Checkpoint</span>
+                                <div class="pattern-desc">Time-based snapshots</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Transaction Checkpoint</span>
+                                <div class="pattern-desc">After N transactions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Incremental</span>
+                                <div class="pattern-desc">Only changed state</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Coordinated</span>
+                                <div class="pattern-desc">Distributed consistent</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Uncoordinated</span>
+                                <div class="pattern-desc">Independent snapshots</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📜 Write-Ahead Logging</h4>
+                            <span class="family-desc">— Log before applying</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Physical Logging</span>
+                                <div class="pattern-desc">Byte-level changes</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Logical Logging</span>
+                                <div class="pattern-desc">Operation-level</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Physiological</span>
+                                <div class="pattern-desc">Hybrid approach</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Log-Structured</span>
+                                <div class="pattern-desc">Append-only storage</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">ARIES</span>
+                                <div class="pattern-desc">IBM recovery algorithm</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⏪ State Restoration</h4>
+                            <span class="family-desc">— Undo or redo operations</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Rollback</span>
+                                <div class="pattern-desc">Undo to previous state</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Rollforward</span>
+                                <div class="pattern-desc">Redo from checkpoint</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Replay</span>
+                                <div class="pattern-desc">Re-execute from log</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Compensating Tx</span>
+                                <div class="pattern-desc">Semantic undo</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Point-in-Time Recovery</span>
+                                <div class="pattern-desc">Restore to timestamp</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- GRACEFUL DEGRADATION -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>📉 Graceful Degradation</h3>
+                    <div class="desc">Reduce functionality instead of failing completely — "What's the minimum?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🎚️ Feature Control</h4>
+                            <span class="family-desc">— Toggle functionality</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Feature Flags</span>
+                                <div class="pattern-desc">Runtime toggles</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Kill Switches</span>
+                                <div class="pattern-desc">Emergency disable</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Canary Features</span>
+                                <div class="pattern-desc">Gradual rollout</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">A/B Testing</span>
+                                <div class="pattern-desc">Split traffic</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📉 Load Shedding</h4>
+                            <span class="family-desc">— Drop excess requests</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Tail Drop</span>
+                                <div class="pattern-desc">Drop newest</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Random Early Drop</span>
+                                <div class="pattern-desc">Probabilistic dropping</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Priority Shedding</span>
+                                <div class="pattern-desc">Drop low priority first</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Admission Control</span>
+                                <div class="pattern-desc">Reject at entry</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🥫 Fallbacks</h4>
+                            <span class="family-desc">— Alternative responses</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Static Fallback</span>
+                                <div class="pattern-desc">Cached/default content</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Stale Cache</span>
+                                <div class="pattern-desc">Serve expired data</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Default Values</span>
+                                <div class="pattern-desc">Sensible defaults</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Alternative Service</span>
+                                <div class="pattern-desc">Backup provider</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Offline Mode</span>
+                                <div class="pattern-desc">Local-only operation</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⬇️ Quality Reduction</h4>
+                            <span class="family-desc">— Lower fidelity output</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Reduced Resolution</span>
+                                <div class="pattern-desc">Lower image quality</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Simplified UI</span>
+                                <div class="pattern-desc">Basic interface</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Partial Results</span>
+                                <div class="pattern-desc">Incomplete but fast</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Approximate Answers</span>
+                                <div class="pattern-desc">Good enough results</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- SCALABILITY -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="quality-section scale-section" id="scalability">
+        <div class="quality-header">
+            <h2>📈 SCALABILITY <span class="question">— "Can it handle growth?"</span></h2>
+        </div>
+        <div class="quality-content">
+
+            <!-- HORIZONTAL SCALING -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>↔️ Horizontal Scaling</h3>
+                    <div class="desc">Add more machines — "Can we add more servers?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📦 Containerization</h4>
+                            <span class="family-desc">— Package for deployment</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Docker</span>
+                                <div class="pattern-desc">Container runtime</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">OCI Images</span>
+                                <div class="pattern-desc">Standard format</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Multi-Stage Builds</span>
+                                <div class="pattern-desc">Optimized images</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Distroless</span>
+                                <div class="pattern-desc">Minimal base images</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🎼 Orchestration</h4>
+                            <span class="family-desc">— Manage container lifecycle</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Kubernetes</span>
+                                <div class="pattern-desc">Container orchestration</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Docker Swarm</span>
+                                <div class="pattern-desc">Native clustering</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Nomad</span>
+                                <div class="pattern-desc">HashiCorp orchestrator</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">ECS/Fargate</span>
+                                <div class="pattern-desc">AWS containers</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cloud Run</span>
+                                <div class="pattern-desc">GCP serverless containers</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🌐 Service Mesh</h4>
+                            <span class="family-desc">— Inter-service communication</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Sidecar Proxy</span>
+                                <div class="pattern-desc">Per-pod proxy</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Istio</span>
+                                <div class="pattern-desc">Full-featured mesh</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Linkerd</span>
+                                <div class="pattern-desc">Lightweight mesh</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Consul Connect</span>
+                                <div class="pattern-desc">HashiCorp mesh</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">mTLS</span>
+                                <div class="pattern-desc">Mutual TLS</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>☁️ Serverless</h4>
+                            <span class="family-desc">— Function-level scaling</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">AWS Lambda</span>
+                                <div class="pattern-desc">Function as a Service</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cloud Functions</span>
+                                <div class="pattern-desc">GCP FaaS</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Azure Functions</span>
+                                <div class="pattern-desc">Microsoft FaaS</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Edge Functions</span>
+                                <div class="pattern-desc">CDN edge compute</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cold Start Mitigation</span>
+                                <div class="pattern-desc">Provisioned concurrency</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VERTICAL SCALING -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>↕️ Vertical Scaling</h3>
+                    <div class="desc">Add more power to existing machines — "Can we upgrade?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🖥️ Hardware Upgrades</h4>
+                            <span class="family-desc">— More resources</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">CPU Upgrade</span>
+                                <div class="pattern-desc">More/faster cores</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Memory Upgrade</span>
+                                <div class="pattern-desc">More RAM</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Storage Upgrade</span>
+                                <div class="pattern-desc">Faster/larger disks</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Network Upgrade</span>
+                                <div class="pattern-desc">Higher bandwidth</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">GPU Acceleration</span>
+                                <div class="pattern-desc">Parallel compute</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>⚡ Instance Types</h4>
+                            <span class="family-desc">— Cloud instance families</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Compute Optimized</span>
+                                <div class="pattern-desc">CPU-intensive</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Memory Optimized</span>
+                                <div class="pattern-desc">RAM-intensive</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Storage Optimized</span>
+                                <div class="pattern-desc">I/O-intensive</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">GPU Instances</span>
+                                <div class="pattern-desc">ML/graphics</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Burstable</span>
+                                <div class="pattern-desc">Variable workloads</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ELASTICITY -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🌊 Elasticity</h3>
+                    <div class="desc">Auto-scale based on demand — "Can it flex?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📈 Auto-Scaling</h4>
+                            <span class="family-desc">— Adjust capacity automatically</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Target Tracking</span>
+                                <div class="pattern-desc">Maintain metric target</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Step Scaling</span>
+                                <div class="pattern-desc">Threshold-based steps</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Simple Scaling</span>
+                                <div class="pattern-desc">Single adjustment</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Predictive Scaling</span>
+                                <div class="pattern-desc">ML-based forecasting</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Scheduled Scaling</span>
+                                <div class="pattern-desc">Time-based patterns</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📊 Scaling Metrics</h4>
+                            <span class="family-desc">— What to scale on</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">CPU Utilization</span>
+                                <div class="pattern-desc">Processor usage</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Memory Utilization</span>
+                                <div class="pattern-desc">RAM usage</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Request Count</span>
+                                <div class="pattern-desc">Throughput-based</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Queue Depth</span>
+                                <div class="pattern-desc">Backlog size</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Custom Metrics</span>
+                                <div class="pattern-desc">Application-specific</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🎛️ Scaling Controls</h4>
+                            <span class="family-desc">— Boundaries and behaviors</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Min/Max Capacity</span>
+                                <div class="pattern-desc">Scaling bounds</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cooldown Period</span>
+                                <div class="pattern-desc">Prevent thrashing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Scale-In Protection</span>
+                                <div class="pattern-desc">Prevent premature removal</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Warm Pool</span>
+                                <div class="pattern-desc">Pre-initialized instances</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PARTITIONING -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🧩 Partitioning</h3>
+                    <div class="desc">Divide data/load across boundaries — "How do we split it?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>#️⃣ Hash Partitioning</h4>
+                            <span class="family-desc">— Distribute by hash</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Modulo Hashing</span>
+                                <div class="pattern-desc">hash(key) mod N</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Consistent Hashing</span>
+                                <div class="pattern-desc">Minimize rebalancing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Rendezvous Hashing</span>
+                                <div class="pattern-desc">Highest random weight</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Jump Hash</span>
+                                <div class="pattern-desc">Fast, minimal memory</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Virtual Nodes</span>
+                                <div class="pattern-desc">Better distribution</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📏 Range Partitioning</h4>
+                            <span class="family-desc">— Distribute by key ranges</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Alphabetic Ranges</span>
+                                <div class="pattern-desc">A-M, N-Z</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Numeric Ranges</span>
+                                <div class="pattern-desc">ID ranges</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Time-Based</span>
+                                <div class="pattern-desc">By date/time</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Dynamic Ranges</span>
+                                <div class="pattern-desc">Auto-split on size</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🗂️ Other Partitioning</h4>
+                            <span class="family-desc">— Alternative strategies</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">List Partitioning</span>
+                                <div class="pattern-desc">Explicit mappings</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Geographic</span>
+                                <div class="pattern-desc">By region/country</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Tenant-Based</span>
+                                <div class="pattern-desc">By customer</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Round Robin</span>
+                                <div class="pattern-desc">Sequential distribution</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Composite</span>
+                                <div class="pattern-desc">Multi-strategy</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- SECURITY -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="quality-section sec-section" id="security">
+        <div class="quality-header">
+            <h2>🔒 SECURITY <span class="question">— "Is it protected from threats?"</span></h2>
+        </div>
+        <div class="quality-content">
+
+            <!-- AUTHENTICATION -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🪪 Authentication</h3>
+                    <div class="desc">Verify identity — "Who are you?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔑 Credential-Based</h4>
+                            <span class="family-desc">— Something you know/have</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Password</span>
+                                <div class="pattern-desc">Something you know</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">API Keys</span>
+                                <div class="pattern-desc">Secret tokens</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">SSH Keys</span>
+                                <div class="pattern-desc">Asymmetric keypairs</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Client Certificates</span>
+                                <div class="pattern-desc">PKI-based</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📱 Multi-Factor</h4>
+                            <span class="family-desc">— Multiple proof types</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">TOTP</span>
+                                <div class="pattern-desc">Time-based OTP</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">SMS/Email OTP</span>
+                                <div class="pattern-desc">Out-of-band codes</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Hardware Tokens</span>
+                                <div class="pattern-desc">YubiKey, etc.</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Biometrics</span>
+                                <div class="pattern-desc">Fingerprint, face</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Push Notifications</span>
+                                <div class="pattern-desc">Approve on device</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🎟️ Token-Based</h4>
+                            <span class="family-desc">— Stateless authentication</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">JWT</span>
+                                <div class="pattern-desc">Self-contained tokens</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">OAuth 2.0</span>
+                                <div class="pattern-desc">Delegated authorization</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">OIDC</span>
+                                <div class="pattern-desc">Identity layer on OAuth</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">SAML</span>
+                                <div class="pattern-desc">Enterprise SSO</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Refresh Tokens</span>
+                                <div class="pattern-desc">Long-lived renewal</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔗 Federated</h4>
+                            <span class="family-desc">— Third-party identity</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Social Login</span>
+                                <div class="pattern-desc">Google, Facebook, etc.</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">SSO</span>
+                                <div class="pattern-desc">Single sign-on</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Identity Provider</span>
+                                <div class="pattern-desc">Centralized IdP</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">LDAP/AD</span>
+                                <div class="pattern-desc">Directory services</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- AUTHORIZATION -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🎫 Authorization</h3>
+                    <div class="desc">Verify permissions — "What can you do?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📋 Role-Based (RBAC)</h4>
+                            <span class="family-desc">— Permissions via roles</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">User-Role Mapping</span>
+                                <div class="pattern-desc">Assign roles to users</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Role Hierarchy</span>
+                                <div class="pattern-desc">Inherit permissions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Role Constraints</span>
+                                <div class="pattern-desc">Separation of duties</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Dynamic Roles</span>
+                                <div class="pattern-desc">Context-dependent</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🏷️ Attribute-Based (ABAC)</h4>
+                            <span class="family-desc">— Permissions via attributes</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">User Attributes</span>
+                                <div class="pattern-desc">Department, level</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Resource Attributes</span>
+                                <div class="pattern-desc">Classification, owner</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Environment Attributes</span>
+                                <div class="pattern-desc">Time, location</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Action Attributes</span>
+                                <div class="pattern-desc">Read, write, delete</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📜 Policy-Based</h4>
+                            <span class="family-desc">— Declarative rules</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">OPA/Rego</span>
+                                <div class="pattern-desc">Open Policy Agent</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">AWS IAM Policies</span>
+                                <div class="pattern-desc">JSON policy docs</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cedar</span>
+                                <div class="pattern-desc">Amazon's policy lang</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">XACML</span>
+                                <div class="pattern-desc">XML access control</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔒 Access Control Models</h4>
+                            <span class="family-desc">— Enforcement approaches</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">ACL</span>
+                                <div class="pattern-desc">Access Control Lists</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Capability-Based</span>
+                                <div class="pattern-desc">Token grants access</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Mandatory (MAC)</span>
+                                <div class="pattern-desc">System-enforced labels</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Discretionary (DAC)</span>
+                                <div class="pattern-desc">Owner-controlled</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ENCRYPTION -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🔐 Encryption</h3>
+                    <div class="desc">Protect data — "Can others read it?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔀 Symmetric</h4>
+                            <span class="family-desc">— Same key encrypt/decrypt</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">AES</span>
+                                <div class="pattern-desc">Advanced Encryption Std</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">ChaCha20</span>
+                                <div class="pattern-desc">Stream cipher</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">AES-GCM</span>
+                                <div class="pattern-desc">Authenticated encryption</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">XChaCha20-Poly1305</span>
+                                <div class="pattern-desc">Modern AEAD</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔐 Asymmetric</h4>
+                            <span class="family-desc">— Public/private key pairs</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">RSA</span>
+                                <div class="pattern-desc">Classic asymmetric</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">ECDSA</span>
+                                <div class="pattern-desc">Elliptic curve signing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Ed25519</span>
+                                <div class="pattern-desc">Modern EdDSA</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">X25519</span>
+                                <div class="pattern-desc">Key exchange</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>#️⃣ Hashing</h4>
+                            <span class="family-desc">— One-way transformation</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">SHA-256/384/512</span>
+                                <div class="pattern-desc">Secure Hash Algorithm</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">BLAKE3</span>
+                                <div class="pattern-desc">Modern fast hash</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">bcrypt</span>
+                                <div class="pattern-desc">Password hashing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Argon2</span>
+                                <div class="pattern-desc">Modern password hash</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">HMAC</span>
+                                <div class="pattern-desc">Keyed hashing</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔑 Key Management</h4>
+                            <span class="family-desc">— Secure key handling</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">KMS</span>
+                                <div class="pattern-desc">Key Management Service</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">HSM</span>
+                                <div class="pattern-desc">Hardware Security Module</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Envelope Encryption</span>
+                                <div class="pattern-desc">Key hierarchy</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Key Rotation</span>
+                                <div class="pattern-desc">Periodic updates</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Key Derivation</span>
+                                <div class="pattern-desc">HKDF, PBKDF2</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DEFENSE IN DEPTH -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🏰 Defense in Depth</h3>
+                    <div class="desc">Multiple security layers — "What if one layer fails?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🌐 Network Security</h4>
+                            <span class="family-desc">— Perimeter & transport</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Firewall</span>
+                                <div class="pattern-desc">Traffic filtering</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">WAF</span>
+                                <div class="pattern-desc">Web App Firewall</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">VPN</span>
+                                <div class="pattern-desc">Encrypted tunnel</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Network Segmentation</span>
+                                <div class="pattern-desc">Isolate zones</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">DDoS Protection</span>
+                                <div class="pattern-desc">Traffic scrubbing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">TLS/mTLS</span>
+                                <div class="pattern-desc">Transport encryption</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🖥️ Application Security</h4>
+                            <span class="family-desc">— Code-level protection</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Input Validation</span>
+                                <div class="pattern-desc">Sanitize all input</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Output Encoding</span>
+                                <div class="pattern-desc">Prevent XSS</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Parameterized Queries</span>
+                                <div class="pattern-desc">Prevent SQL injection</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">CSRF Tokens</span>
+                                <div class="pattern-desc">Cross-site protection</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">CSP</span>
+                                <div class="pattern-desc">Content Security Policy</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Secrets Management</span>
+                                <div class="pattern-desc">Vault, etc.</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>💾 Data Security</h4>
+                            <span class="family-desc">— Protect stored data</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Encryption at Rest</span>
+                                <div class="pattern-desc">Encrypted storage</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Data Masking</span>
+                                <div class="pattern-desc">Hide sensitive fields</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Tokenization</span>
+                                <div class="pattern-desc">Replace with tokens</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Data Classification</span>
+                                <div class="pattern-desc">Label sensitivity</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Backup Encryption</span>
+                                <div class="pattern-desc">Secure backups</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>👤 Identity Security</h4>
+                            <span class="family-desc">— Access governance</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Least Privilege</span>
+                                <div class="pattern-desc">Minimal permissions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Zero Trust</span>
+                                <div class="pattern-desc">Never trust, verify</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">JIT Access</span>
+                                <div class="pattern-desc">Just-in-time privileges</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">PAM</span>
+                                <div class="pattern-desc">Privileged Access Mgmt</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Session Management</span>
+                                <div class="pattern-desc">Timeout, rotation</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- OBSERVABILITY -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="quality-section obs-section" id="observability">
+        <div class="quality-header">
+            <h2>👁️ OBSERVABILITY <span class="question">— "Can we see what's happening inside?"</span></h2>
+        </div>
+        <div class="quality-content">
+
+            <!-- LOGGING -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>📝 Logging</h3>
+                    <div class="desc">Record discrete events — "What happened?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📋 Log Formats</h4>
+                            <span class="family-desc">— How to structure logs</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Structured (JSON)</span>
+                                <div class="pattern-desc">Key-value format</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Unstructured</span>
+                                <div class="pattern-desc">Plain text</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Semi-Structured</span>
+                                <div class="pattern-desc">Parseable patterns</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Common Log Format</span>
+                                <div class="pattern-desc">Apache/NGINX style</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📊 Log Levels</h4>
+                            <span class="family-desc">— Severity classification</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">TRACE</span>
+                                <div class="pattern-desc">Finest detail</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">DEBUG</span>
+                                <div class="pattern-desc">Development info</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">INFO</span>
+                                <div class="pattern-desc">Normal operations</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">WARN</span>
+                                <div class="pattern-desc">Potential issues</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">ERROR</span>
+                                <div class="pattern-desc">Failures</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">FATAL</span>
+                                <div class="pattern-desc">Critical failures</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔄 Log Management</h4>
+                            <span class="family-desc">— Collection & storage</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Log Aggregation</span>
+                                <div class="pattern-desc">Centralize logs</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Log Rotation</span>
+                                <div class="pattern-desc">Manage storage</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Log Shipping</span>
+                                <div class="pattern-desc">Forward to central</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Log Retention</span>
+                                <div class="pattern-desc">TTL policies</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Log Sampling</span>
+                                <div class="pattern-desc">Reduce volume</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- METRICS -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>📊 Metrics</h3>
+                    <div class="desc">Aggregate numerical measurements — "What are the numbers?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📈 Metric Types</h4>
+                            <span class="family-desc">— Data representations</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Counter</span>
+                                <div class="pattern-desc">Monotonically increasing</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Gauge</span>
+                                <div class="pattern-desc">Point-in-time value</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Histogram</span>
+                                <div class="pattern-desc">Value distribution</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Summary</span>
+                                <div class="pattern-desc">Quantiles over time</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Timer</span>
+                                <div class="pattern-desc">Duration measurements</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🎯 Methodologies</h4>
+                            <span class="family-desc">— What to measure</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">RED Method</span>
+                                <div class="pattern-desc">Rate, Errors, Duration</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">USE Method</span>
+                                <div class="pattern-desc">Utilization, Saturation, Errors</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Four Golden Signals</span>
+                                <div class="pattern-desc">Latency, Traffic, Errors, Saturation</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">SLIs/SLOs/SLAs</span>
+                                <div class="pattern-desc">Service level indicators</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📊 Collection Patterns</h4>
+                            <span class="family-desc">— How to gather metrics</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Pull-Based</span>
+                                <div class="pattern-desc">Prometheus style</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Push-Based</span>
+                                <div class="pattern-desc">StatsD style</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Agent-Based</span>
+                                <div class="pattern-desc">Local collectors</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Sidecar</span>
+                                <div class="pattern-desc">Per-pod collection</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Cardinality Control</span>
+                                <div class="pattern-desc">Limit label values</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TRACING -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🔗 Tracing</h3>
+                    <div class="desc">Follow requests across services — "Where did it go?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🌐 Distributed Tracing</h4>
+                            <span class="family-desc">— Cross-service visibility</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Spans</span>
+                                <div class="pattern-desc">Individual operations</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Traces</span>
+                                <div class="pattern-desc">Collection of spans</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Parent-Child</span>
+                                <div class="pattern-desc">Span relationships</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Baggage</span>
+                                <div class="pattern-desc">Cross-cutting data</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📍 Context Propagation</h4>
+                            <span class="family-desc">— Pass trace context</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">W3C Trace Context</span>
+                                <div class="pattern-desc">Standard headers</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">B3 Propagation</span>
+                                <div class="pattern-desc">Zipkin style</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Jaeger Headers</span>
+                                <div class="pattern-desc">Uber style</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Correlation IDs</span>
+                                <div class="pattern-desc">Request linking</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📊 Sampling</h4>
+                            <span class="family-desc">— Reduce trace volume</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Head-Based</span>
+                                <div class="pattern-desc">Decide at start</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Tail-Based</span>
+                                <div class="pattern-desc">Decide after complete</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Probabilistic</span>
+                                <div class="pattern-desc">Random sampling</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Rate-Limited</span>
+                                <div class="pattern-desc">Cap per second</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Adaptive</span>
+                                <div class="pattern-desc">Dynamic rates</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ALERTING -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🚨 Alerting</h3>
+                    <div class="desc">Notify on anomalies — "When should we act?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📊 Alert Types</h4>
+                            <span class="family-desc">— Detection methods</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Threshold Alerts</span>
+                                <div class="pattern-desc">Static boundaries</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Anomaly Detection</span>
+                                <div class="pattern-desc">Statistical deviation</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Trend Alerts</span>
+                                <div class="pattern-desc">Rate of change</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Composite Alerts</span>
+                                <div class="pattern-desc">Multiple conditions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Absence Alerts</span>
+                                <div class="pattern-desc">Missing data</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔔 Alert Management</h4>
+                            <span class="family-desc">— Reduce noise</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Alert Grouping</span>
+                                <div class="pattern-desc">Combine related</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Alert Suppression</span>
+                                <div class="pattern-desc">Reduce duplicates</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Alert Inhibition</span>
+                                <div class="pattern-desc">Block during known issues</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Maintenance Windows</span>
+                                <div class="pattern-desc">Scheduled silence</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Deduplication</span>
+                                <div class="pattern-desc">Merge identical</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📞 On-Call</h4>
+                            <span class="family-desc">— Response management</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Escalation Policies</span>
+                                <div class="pattern-desc">Tiered response</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Rotation Schedules</span>
+                                <div class="pattern-desc">Team rotations</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Override Schedules</span>
+                                <div class="pattern-desc">Temporary changes</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Multi-Channel</span>
+                                <div class="pattern-desc">SMS, call, Slack</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Acknowledgment</span>
+                                <div class="pattern-desc">Claim ownership</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- MAINTAINABILITY -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="quality-section maint-section" id="maintainability">
+        <div class="quality-header">
+            <h2>🔧 MAINTAINABILITY <span class="question">— "Can we change it safely over time?"</span></h2>
+        </div>
+        <div class="quality-content">
+
+            <!-- MODULARITY -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>📦 Modularity</h3>
+                    <div class="desc">Separate concerns into components — "How is it organized?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🏗️ Architecture Styles</h4>
+                            <span class="family-desc">— System organization</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Microservices</span>
+                                <div class="pattern-desc">Independent services</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Modular Monolith</span>
+                                <div class="pattern-desc">Bounded modules</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Layered</span>
+                                <div class="pattern-desc">Horizontal layers</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Hexagonal</span>
+                                <div class="pattern-desc">Ports & adapters</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Clean Architecture</span>
+                                <div class="pattern-desc">Dependency inversion</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Event-Driven</span>
+                                <div class="pattern-desc">Async messaging</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🧩 Component Patterns</h4>
+                            <span class="family-desc">— Code organization</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Plugin Architecture</span>
+                                <div class="pattern-desc">Extensible via plugins</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Micro-Frontends</span>
+                                <div class="pattern-desc">Frontend microservices</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Shared Libraries</span>
+                                <div class="pattern-desc">Common code</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">SDK/Client Libraries</span>
+                                <div class="pattern-desc">Consumer packages</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Domain Modules</span>
+                                <div class="pattern-desc">Business boundaries</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔗 Integration Patterns</h4>
+                            <span class="family-desc">— Component communication</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">API Gateway</span>
+                                <div class="pattern-desc">Unified entry point</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Message Queue</span>
+                                <div class="pattern-desc">Async decoupling</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Event Bus</span>
+                                <div class="pattern-desc">Pub/sub messaging</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Service Registry</span>
+                                <div class="pattern-desc">Dynamic discovery</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">BFF</span>
+                                <div class="pattern-desc">Backend for Frontend</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TESTABILITY -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🧪 Testability</h3>
+                    <div class="desc">Enable verification of correctness — "How do we know it works?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔬 Test Types</h4>
+                            <span class="family-desc">— Testing pyramid</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Unit Tests</span>
+                                <div class="pattern-desc">Individual functions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Integration Tests</span>
+                                <div class="pattern-desc">Component interactions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">E2E Tests</span>
+                                <div class="pattern-desc">Full user flows</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Contract Tests</span>
+                                <div class="pattern-desc">API agreements</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Smoke Tests</span>
+                                <div class="pattern-desc">Basic functionality</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Load Tests</span>
+                                <div class="pattern-desc">Performance under load</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🎭 Test Doubles</h4>
+                            <span class="family-desc">— Fake dependencies</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Mocks</span>
+                                <div class="pattern-desc">Verify interactions</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Stubs</span>
+                                <div class="pattern-desc">Canned responses</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Fakes</span>
+                                <div class="pattern-desc">Working implementations</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Spies</span>
+                                <div class="pattern-desc">Record calls</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Dummies</span>
+                                <div class="pattern-desc">Placeholder objects</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔧 Testing Techniques</h4>
+                            <span class="family-desc">— Advanced approaches</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">TDD</span>
+                                <div class="pattern-desc">Test-Driven Development</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">BDD</span>
+                                <div class="pattern-desc">Behavior-Driven</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Property-Based</span>
+                                <div class="pattern-desc">Generated test cases</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Mutation Testing</span>
+                                <div class="pattern-desc">Test the tests</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Fuzzing</span>
+                                <div class="pattern-desc">Random input</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Chaos Engineering</span>
+                                <div class="pattern-desc">Inject failures</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DOCUMENTATION -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>📚 Documentation</h3>
+                    <div class="desc">Capture knowledge for humans — "How do we understand it?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📖 Documentation Types</h4>
+                            <span class="family-desc">— What to document</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">API Documentation</span>
+                                <div class="pattern-desc">Endpoint references</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Architecture Docs</span>
+                                <div class="pattern-desc">System design</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Runbooks</span>
+                                <div class="pattern-desc">Operational procedures</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">ADRs</span>
+                                <div class="pattern-desc">Decision records</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">README</span>
+                                <div class="pattern-desc">Project overview</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Tutorials</span>
+                                <div class="pattern-desc">Learning guides</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🛠️ Documentation Tools</h4>
+                            <span class="family-desc">— How to document</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">OpenAPI/Swagger</span>
+                                <div class="pattern-desc">API specs</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">AsyncAPI</span>
+                                <div class="pattern-desc">Event-driven specs</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">GraphQL Schema</span>
+                                <div class="pattern-desc">Self-documenting</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Docstrings</span>
+                                <div class="pattern-desc">Inline code docs</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Diagrams as Code</span>
+                                <div class="pattern-desc">Mermaid, PlantUML</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>📋 Documentation Practices</h4>
+                            <span class="family-desc">— Keeping docs current</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Docs as Code</span>
+                                <div class="pattern-desc">Version controlled</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Living Documentation</span>
+                                <div class="pattern-desc">Generated from tests</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Doc Reviews</span>
+                                <div class="pattern-desc">PR process for docs</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Changelog</span>
+                                <div class="pattern-desc">Track changes</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VERSIONING -->
+            <div class="strategy-card">
+                <div class="strategy-header">
+                    <h3>🏷️ Versioning</h3>
+                    <div class="desc">Manage changes over time — "How do we evolve safely?"</div>
+                </div>
+                <div class="strategy-content">
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔢 Version Schemes</h4>
+                            <span class="family-desc">— Numbering systems</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Semantic Versioning</span>
+                                <div class="pattern-desc">MAJOR.MINOR.PATCH</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Calendar Versioning</span>
+                                <div class="pattern-desc">Date-based</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Build Numbers</span>
+                                <div class="pattern-desc">Sequential builds</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Git SHA</span>
+                                <div class="pattern-desc">Commit hash</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🌿 Branching Strategies</h4>
+                            <span class="family-desc">— Git workflows</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Git Flow</span>
+                                <div class="pattern-desc">Feature branches</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Trunk-Based</span>
+                                <div class="pattern-desc">Single main branch</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">GitHub Flow</span>
+                                <div class="pattern-desc">Simple PR workflow</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Release Branches</span>
+                                <div class="pattern-desc">Stabilization branches</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🔄 API Versioning</h4>
+                            <span class="family-desc">— Evolving interfaces</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">URL Versioning</span>
+                                <div class="pattern-desc">/v1/users</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Header Versioning</span>
+                                <div class="pattern-desc">Accept-Version header</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Query Param</span>
+                                <div class="pattern-desc">?version=1</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Content Negotiation</span>
+                                <div class="pattern-desc">Accept header</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="family-section">
+                        <div class="family-header">
+                            <h4>🚀 Release Patterns</h4>
+                            <span class="family-desc">— Deployment strategies</span>
+                        </div>
+                        <div class="patterns-grid">
+                            <div class="pattern"><span class="pattern-name">Blue-Green</span>
+                                <div class="pattern-desc">Parallel environments</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Canary</span>
+                                <div class="pattern-desc">Gradual rollout</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Rolling</span>
+                                <div class="pattern-desc">Incremental replacement</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Feature Flags</span>
+                                <div class="pattern-desc">Runtime toggles</div>
+                            </div>
+                            <div class="pattern"><span class="pattern-name">Dark Launching</span>
+                                <div class="pattern-desc">Hidden deployment</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

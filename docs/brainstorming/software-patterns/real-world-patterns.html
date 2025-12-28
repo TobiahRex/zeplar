@@ -1,0 +1,2747 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Design → Pattern Mapping</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f172a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.5;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .nav-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+        }
+
+        .nav-bar a {
+            padding: 0.4rem 0.8rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.1);
+            color: #aaa;
+            transition: all 0.2s;
+        }
+
+        .nav-bar a:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .system-card {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .system-header {
+            padding: 1.5rem 2rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .system-icon {
+            font-size: 2.5rem;
+        }
+
+        .system-info h2 {
+            font-size: 1.5rem;
+            color: #fff;
+        }
+
+        .system-info .tagline {
+            font-size: 0.9rem;
+            color: #888;
+        }
+
+        .system-content {
+            padding: 1.5rem 2rem;
+        }
+
+        .quality-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .quality-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .quality-header h3 {
+            font-size: 1rem;
+        }
+
+        .patterns-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .strategy-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            align-items: flex-start;
+        }
+
+        .strategy-label {
+            font-size: 0.75rem;
+            color: #666;
+            min-width: 140px;
+            padding-top: 0.25rem;
+        }
+
+        .pattern-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            flex: 1;
+        }
+
+        .pattern-tag {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            color: #aaa;
+            white-space: nowrap;
+        }
+
+        /* Quality colors */
+        .q-perf .quality-header h3 {
+            color: #f59e0b;
+        }
+
+        .q-perf .pattern-tag {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .q-rel .quality-header h3 {
+            color: #3b82f6;
+        }
+
+        .q-rel .pattern-tag {
+            background: rgba(59, 130, 246, 0.15);
+            color: #3b82f6;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .q-scale .quality-header h3 {
+            color: #10b981;
+        }
+
+        .q-scale .pattern-tag {
+            background: rgba(16, 185, 129, 0.15);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .q-sec .quality-header h3 {
+            color: #ef4444;
+        }
+
+        .q-sec .pattern-tag {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .q-obs .quality-header h3 {
+            color: #a78bfa;
+        }
+
+        .q-obs .pattern-tag {
+            background: rgba(139, 92, 246, 0.15);
+            color: #a78bfa;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .q-maint .quality-header h3 {
+            color: #ec4899;
+        }
+
+        .q-maint .pattern-tag {
+            background: rgba(236, 72, 153, 0.15);
+            color: #ec4899;
+            border: 1px solid rgba(236, 72, 153, 0.3);
+        }
+
+        .highlight-tag {
+            background: rgba(16, 185, 129, 0.3) !important;
+            color: #10b981 !important;
+            border: 1px solid rgba(16, 185, 129, 0.6) !important;
+            font-weight: 600;
+        }
+
+        .key-challenges {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .key-challenges h4 {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .challenge-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .challenge {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 4px;
+            color: #f59e0b;
+        }
+
+        .pattern-index {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .pattern-index h2 {
+            color: #f59e0b;
+            margin-bottom: 1rem;
+        }
+
+        .index-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .index-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0.6rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+
+        .index-item .pattern-name {
+            color: #fff;
+        }
+
+        .index-item .systems {
+            color: #666;
+            font-size: 0.7rem;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🏗️ System Design → Pattern Mapping</h1>
+    <p class="subtitle">25 Real-World Systems mapped to ~360 Patterns — Complete Coverage</p>
+
+    <div class="stats-bar">
+        <div class="stat">
+            <div class="stat-num" style="color:#f59e0b;">25</div>
+            <div class="stat-label">Systems</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" style="color:#3b82f6;">6</div>
+            <div class="stat-label">Qualities</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" style="color:#10b981;">24</div>
+            <div class="stat-label">Strategies</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" style="color:#a78bfa;">~360</div>
+            <div class="stat-label">Patterns Mapped</div>
+        </div>
+    </div>
+
+    <nav class="nav-bar">
+        <a href="#twitter">Twitter</a>
+        <a href="#netflix">Netflix</a>
+        <a href="#uber">Uber</a>
+        <a href="#whatsapp">WhatsApp</a>
+        <a href="#youtube">YouTube</a>
+        <a href="#amazon">Amazon</a>
+        <a href="#google-search">Google Search</a>
+        <a href="#dropbox">Dropbox</a>
+        <a href="#slack">Slack</a>
+        <a href="#stripe">Stripe</a>
+        <a href="#instagram">Instagram</a>
+        <a href="#spotify">Spotify</a>
+        <a href="#airbnb">Airbnb</a>
+        <a href="#linkedin">LinkedIn</a>
+        <a href="#tiktok">TikTok</a>
+        <a href="#zoom">Zoom</a>
+        <a href="#github">GitHub</a>
+        <a href="#robinhood">Robinhood</a>
+        <a href="#doordash">DoorDash</a>
+        <a href="#google-maps">Google Maps</a>
+        <a href="#typeahead">Typeahead</a>
+        <a href="#url-shortener">URL Shortener</a>
+        <a href="#rate-limiter">Rate Limiter</a>
+        <a href="#notification">Notifications</a>
+        <a href="#web-crawler">Web Crawler</a>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- TWITTER -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="twitter">
+        <div class="system-header">
+            <span class="system-icon">🐦</span>
+            <div class="system-info">
+                <h2>Twitter / X</h2>
+                <span class="tagline">Social feed, timeline, real-time updates, trending topics</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Fan-out on write vs read</span>
+                    <span class="challenge">Celebrity accounts (100M followers)</span>
+                    <span class="challenge">Real-time timeline</span>
+                    <span class="challenge">Trending computation</span>
+                    <span class="challenge">Search indexing</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Memoization</span>
+                            <span class="pattern-tag">Cache-Aside</span>
+                            <span class="pattern-tag">Write-Back</span>
+                            <span class="pattern-tag">TTL Expiration</span>
+                            <span class="pattern-tag highlight-tag">⭐ Coalescing</span>
+                            <span class="pattern-tag">Debouncing</span>
+                            <span class="pattern-tag">DataLoader</span>
+                            <span class="pattern-tag">Lazy Loading</span>
+                            <span class="pattern-tag">Virtual Scrolling</span>
+                            <span class="pattern-tag">Cursor Pagination</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Async/Await</span>
+                            <span class="pattern-tag">Worker Pools</span>
+                            <span class="pattern-tag">Consistent Hashing</span>
+                            <span class="pattern-tag">Geographic Sharding</span>
+                            <span class="pattern-tag">Leader-Follower</span>
+                            <span class="pattern-tag">Read Replicas</span>
+                            <span class="pattern-tag">Least Connections LB</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Inverted Index</span>
+                            <span class="pattern-tag">B-Tree Index</span>
+                            <span class="pattern-tag">Bloom Filters</span>
+                            <span class="pattern-tag">Skip Lists</span>
+                            <span class="pattern-tag">zstd Compression</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Priority Queue</span>
+                            <span class="pattern-tag">Token Bucket</span>
+                            <span class="pattern-tag">Rate Limiting</span>
+                            <span class="pattern-tag">Backpressure</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Fault Tolerance</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Circuit Breakers</span>
+                            <span class="pattern-tag">Exponential Backoff</span>
+                            <span class="pattern-tag">Jitter</span>
+                            <span class="pattern-tag">Deadline Propagation</span>
+                            <span class="pattern-tag">Bulkheads</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Redundancy</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Active-Active</span>
+                            <span class="pattern-tag">Multi-AZ</span>
+                            <span class="pattern-tag">Multi-Region</span>
+                            <span class="pattern-tag">Quorum Writes</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Graceful Degradation</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Feature Flags</span>
+                            <span class="pattern-tag">Load Shedding</span>
+                            <span class="pattern-tag">Stale Cache Fallback</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Horizontal</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Kubernetes</span>
+                            <span class="pattern-tag">Service Mesh (Envoy)</span>
+                            <span class="pattern-tag">Serverless (Lambda)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Elasticity</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Target Tracking</span>
+                            <span class="pattern-tag">Predictive Scaling</span>
+                            <span class="pattern-tag">Queue Depth Scaling</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Partitioning</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Consistent Hashing</span>
+                            <span class="pattern-tag">User ID Sharding</span>
+                            <span class="pattern-tag">Time-Based Partitioning</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Auth</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">OAuth 2.0</span>
+                            <span class="pattern-tag">JWT</span>
+                            <span class="pattern-tag">MFA (TOTP)</span>
+                            <span class="pattern-tag">Refresh Tokens</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Defense</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">WAF</span>
+                            <span class="pattern-tag">DDoS Protection</span>
+                            <span class="pattern-tag">CSRF Tokens</span>
+                            <span class="pattern-tag">CSP</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-obs">
+                <div class="quality-header">
+                    <h3>👁️ Observability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Monitoring</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Structured Logging</span>
+                            <span class="pattern-tag">Distributed Tracing</span>
+                            <span class="pattern-tag">RED Method</span>
+                            <span class="pattern-tag">Anomaly Detection</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-maint">
+                <div class="quality-header">
+                    <h3>🔧 Maintainability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Architecture</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Microservices</span>
+                            <span class="pattern-tag">Event-Driven</span>
+                            <span class="pattern-tag">API Gateway</span>
+                            <span class="pattern-tag">Message Queue</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Deployment</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Canary Releases</span>
+                            <span class="pattern-tag">Feature Flags</span>
+                            <span class="pattern-tag">Blue-Green</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- NETFLIX -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="netflix">
+        <div class="system-header">
+            <span class="system-icon">🎬</span>
+            <div class="system-info">
+                <h2>Netflix</h2>
+                <span class="tagline">Video streaming, recommendations, content delivery</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Global video delivery</span>
+                    <span class="challenge">Adaptive bitrate streaming</span>
+                    <span class="challenge">Personalized recommendations</span>
+                    <span class="challenge">Peak load (Sunday nights)</span>
+                    <span class="challenge">Content encoding at scale</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">CDN Caching</span>
+                            <span class="pattern-tag">Edge Caching</span>
+                            <span class="pattern-tag">Read-Through Cache</span>
+                            <span class="pattern-tag">Refresh-Ahead</span>
+                            <span class="pattern-tag highlight-tag">⭐ Request Coalescing</span>
+                            <span class="pattern-tag">Streaming (chunked)</span>
+                            <span class="pattern-tag">Lazy Loading</span>
+                            <span class="pattern-tag">Prefetching</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">GPU Computing</span>
+                            <span class="pattern-tag">Fork-Join (encoding)</span>
+                            <span class="pattern-tag">Geographic Sharding</span>
+                            <span class="pattern-tag">Multi-Leader Replication</span>
+                            <span class="pattern-tag">Weighted Load Balancing</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">H.265/HEVC Compression</span>
+                            <span class="pattern-tag">Per-Title Encoding</span>
+                            <span class="pattern-tag">Delta Encoding</span>
+                            <span class="pattern-tag">Protocol Buffers</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Priority Queue (premium)</span>
+                            <span class="pattern-tag">Adaptive Concurrency</span>
+                            <span class="pattern-tag">AIMD</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Fault Tolerance</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Hystrix Circuit Breaker</span>
+                            <span class="pattern-tag">Retry with Jitter</span>
+                            <span class="pattern-tag">Adaptive Timeouts</span>
+                            <span class="pattern-tag">Thread Pool Isolation</span>
+                            <span class="pattern-tag">Semaphore Isolation</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Redundancy</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Active-Active (3 regions)</span>
+                            <span class="pattern-tag">Multi-Cloud</span>
+                            <span class="pattern-tag">N+2 Redundancy</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Graceful Degradation</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Reduced Resolution</span>
+                            <span class="pattern-tag">Static Fallback (cached UI)</span>
+                            <span class="pattern-tag">Quality Reduction</span>
+                            <span class="pattern-tag">Partial Results</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Recovery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Chaos Monkey</span>
+                            <span class="pattern-tag">Chaos Kong</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Horizontal</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Open Connect (own CDN)</span>
+                            <span class="pattern-tag">Edge Locations</span>
+                            <span class="pattern-tag">Containerization</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Elasticity</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Predictive Scaling</span>
+                            <span class="pattern-tag">Scheduled Scaling</span>
+                            <span class="pattern-tag">Warm Pool</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Auth & DRM</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Device Authentication</span>
+                            <span class="pattern-tag">DRM (Widevine)</span>
+                            <span class="pattern-tag">Tokenized URLs</span>
+                            <span class="pattern-tag">E2E Encryption</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-obs">
+                <div class="quality-header">
+                    <h3>👁️ Observability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Monitoring</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Atlas (metrics)</span>
+                            <span class="pattern-tag">Real-time Analytics</span>
+                            <span class="pattern-tag">A/B Test Metrics</span>
+                            <span class="pattern-tag">Playback QoE Metrics</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-maint">
+                <div class="quality-header">
+                    <h3>🔧 Maintainability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Architecture</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Microservices (700+)</span>
+                            <span class="pattern-tag">API Gateway (Zuul)</span>
+                            <span class="pattern-tag">Service Registry (Eureka)</span>
+                            <span class="pattern-tag">Event Sourcing</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- UBER -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="uber">
+        <div class="system-header">
+            <span class="system-icon">🚗</span>
+            <div class="system-info">
+                <h2>Uber</h2>
+                <span class="tagline">Ride-sharing, real-time matching, location tracking, pricing</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Real-time driver matching</span>
+                    <span class="challenge">Location updates (millions/sec)</span>
+                    <span class="challenge">Dynamic surge pricing</span>
+                    <span class="challenge">ETA calculation</span>
+                    <span class="challenge">Payment processing</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Geospatial Caching</span>
+                            <span class="pattern-tag">LRU Cache</span>
+                            <span class="pattern-tag highlight-tag">⭐ Write Coalescing</span>
+                            <span class="pattern-tag">Micro-Batching</span>
+                            <span class="pattern-tag">Throttling (location)</span>
+                            <span class="pattern-tag">Sampling (GPS)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Actor Model (Ringpop)</span>
+                            <span class="pattern-tag">Geographic Sharding</span>
+                            <span class="pattern-tag">Geofence-Based LB</span>
+                            <span class="pattern-tag">Async Event Processing</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Spatial Index (H3)</span>
+                            <span class="pattern-tag">R-Tree Index</span>
+                            <span class="pattern-tag">Quadtree</span>
+                            <span class="pattern-tag">Geohash</span>
+                            <span class="pattern-tag">Graph Algorithms (routing)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Priority Preemption</span>
+                            <span class="pattern-tag">Weighted Fair Queuing</span>
+                            <span class="pattern-tag">Real-Time Scheduling</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Fault Tolerance</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Circuit Breakers</span>
+                            <span class="pattern-tag">Retry Budget</span>
+                            <span class="pattern-tag">Connection Timeout</span>
+                            <span class="pattern-tag">Request Timeout</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Redundancy</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Multi-Region Active</span>
+                            <span class="pattern-tag">Cell-Based Architecture</span>
+                            <span class="pattern-tag">Sloppy Quorum</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Recovery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Write-Ahead Logging</span>
+                            <span class="pattern-tag">Event Replay</span>
+                            <span class="pattern-tag">Compensating Transactions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Partitioning</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">City-Based Sharding</span>
+                            <span class="pattern-tag">H3 Hexagonal Grid</span>
+                            <span class="pattern-tag">Dynamic Range Partitioning</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Elasticity</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Demand-Based Scaling</span>
+                            <span class="pattern-tag">Event-Driven Scaling</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Auth & Payment</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Phone Auth</span>
+                            <span class="pattern-tag">Tokenization (PCI)</span>
+                            <span class="pattern-tag">Fraud Detection ML</span>
+                            <span class="pattern-tag">Location Masking</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-obs">
+                <div class="quality-header">
+                    <h3>👁️ Observability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Monitoring</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Jaeger Tracing</span>
+                            <span class="pattern-tag">M3 Metrics</span>
+                            <span class="pattern-tag">Real-time Dashboards</span>
+                            <span class="pattern-tag">USE Method</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-maint">
+                <div class="quality-header">
+                    <h3>🔧 Maintainability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Architecture</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Domain-Driven Design</span>
+                            <span class="pattern-tag">CQRS</span>
+                            <span class="pattern-tag">Event Sourcing</span>
+                            <span class="pattern-tag">Saga Pattern</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- WHATSAPP -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="whatsapp">
+        <div class="system-header">
+            <span class="system-icon">💬</span>
+            <div class="system-info">
+                <h2>WhatsApp</h2>
+                <span class="tagline">Messaging, presence, media sharing, E2E encryption</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Billions of messages/day</span>
+                    <span class="challenge">E2E encryption</span>
+                    <span class="challenge">Delivery guarantees</span>
+                    <span class="challenge">Presence (online status)</span>
+                    <span class="challenge">Group messaging</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Connection Pooling</span>
+                            <span class="pattern-tag">Message Batching</span>
+                            <span class="pattern-tag highlight-tag">⭐ Presence Coalescing</span>
+                            <span class="pattern-tag">Debouncing (typing indicator)</span>
+                            <span class="pattern-tag">Lazy Loading (media)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Erlang Actors</span>
+                            <span class="pattern-tag">BEAM VM Concurrency</span>
+                            <span class="pattern-tag">User ID Sharding</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Protocol Buffers</span>
+                            <span class="pattern-tag">Delta Sync</span>
+                            <span class="pattern-tag">Image Compression</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Delivery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">At-Least-Once Delivery</span>
+                            <span class="pattern-tag">Idempotency Keys</span>
+                            <span class="pattern-tag">Message Acknowledgments</span>
+                            <span class="pattern-tag">Offline Queue</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Redundancy</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Multi-DC</span>
+                            <span class="pattern-tag">Erlang Hot Code Reload</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Encryption</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Signal Protocol</span>
+                            <span class="pattern-tag">E2E Encryption</span>
+                            <span class="pattern-tag">X25519 Key Exchange</span>
+                            <span class="pattern-tag">AES-256-GCM</span>
+                            <span class="pattern-tag">Double Ratchet</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Auth</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Phone Verification</span>
+                            <span class="pattern-tag">Device Binding</span>
+                            <span class="pattern-tag">Key Verification (QR)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- YOUTUBE -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="youtube">
+        <div class="system-header">
+            <span class="system-icon">📺</span>
+            <div class="system-info">
+                <h2>YouTube</h2>
+                <span class="tagline">Video upload, transcoding, streaming, recommendations</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">500 hours uploaded/minute</span>
+                    <span class="challenge">Transcoding at scale</span>
+                    <span class="challenge">Global CDN delivery</span>
+                    <span class="challenge">Comment moderation</span>
+                    <span class="challenge">Recommendation engine</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Global CDN Caching</span>
+                            <span class="pattern-tag">Adaptive Bitrate</span>
+                            <span class="pattern-tag highlight-tag">⭐ View Count Coalescing</span>
+                            <span class="pattern-tag">Bulk Operations (likes)</span>
+                            <span class="pattern-tag">Infinite Scroll</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">MapReduce (transcoding)</span>
+                            <span class="pattern-tag">GPU Clusters</span>
+                            <span class="pattern-tag">Distributed Storage (Colossus)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">VP9/AV1 Codec</span>
+                            <span class="pattern-tag">Chunked Encoding</span>
+                            <span class="pattern-tag">ML-Based Compression</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Recovery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Resumable Uploads</span>
+                            <span class="pattern-tag">Checkpointing</span>
+                            <span class="pattern-tag">Incremental Processing</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Storage</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Object Storage</span>
+                            <span class="pattern-tag">Hot/Warm/Cold Tiering</span>
+                            <span class="pattern-tag">Erasure Coding</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- AMAZON -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="amazon">
+        <div class="system-header">
+            <span class="system-icon">🛒</span>
+            <div class="system-info">
+                <h2>Amazon E-Commerce</h2>
+                <span class="tagline">Shopping cart, inventory, orders, recommendations, search</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Inventory consistency</span>
+                    <span class="challenge">Cart availability</span>
+                    <span class="challenge">Prime Day traffic spikes</span>
+                    <span class="challenge">Order processing</span>
+                    <span class="challenge">Product search</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Session Caching</span>
+                            <span class="pattern-tag">Product Cache</span>
+                            <span class="pattern-tag">Cart Memoization</span>
+                            <span class="pattern-tag highlight-tag">⭐ Inventory Coalescing</span>
+                            <span class="pattern-tag">Lazy Initialization</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Warehouse Sharding</span>
+                            <span class="pattern-tag">Region-Based LB</span>
+                            <span class="pattern-tag">Async Order Processing</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Elasticsearch</span>
+                            <span class="pattern-tag">Composite Index</span>
+                            <span class="pattern-tag">Covering Index</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Consistency</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Eventual Consistency</span>
+                            <span class="pattern-tag">Vector Clocks</span>
+                            <span class="pattern-tag">Last Write Wins</span>
+                            <span class="pattern-tag">Conflict Resolution</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Transactions</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Saga Pattern</span>
+                            <span class="pattern-tag">Compensating Tx</span>
+                            <span class="pattern-tag">Two-Phase Commit (orders)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Architecture</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Cell-Based Architecture</span>
+                            <span class="pattern-tag">Shuffle Sharding</span>
+                            <span class="pattern-tag">Auto-Scaling Groups</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Payment</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">PCI DSS Compliance</span>
+                            <span class="pattern-tag">Tokenization</span>
+                            <span class="pattern-tag">Fraud Detection</span>
+                            <span class="pattern-tag">Encryption at Rest</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- GOOGLE SEARCH -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="google-search">
+        <div class="system-header">
+            <span class="system-icon">🔍</span>
+            <div class="system-info">
+                <h2>Google Search</h2>
+                <span class="tagline">Web crawling, indexing, ranking, query processing</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Trillions of pages indexed</span>
+                    <span class="challenge">Sub-second query latency</span>
+                    <span class="challenge">Continuous crawling</span>
+                    <span class="challenge">PageRank computation</span>
+                    <span class="challenge">Spam detection</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Query Cache</span>
+                            <span class="pattern-tag">Result Caching</span>
+                            <span class="pattern-tag">Snippet Cache</span>
+                            <span class="pattern-tag highlight-tag">⭐ Query Coalescing</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">MapReduce</span>
+                            <span class="pattern-tag">Scatter-Gather</span>
+                            <span class="pattern-tag">Index Sharding</span>
+                            <span class="pattern-tag">Tier-Based Serving</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Inverted Index</span>
+                            <span class="pattern-tag">Posting Lists</span>
+                            <span class="pattern-tag">Skip Pointers</span>
+                            <span class="pattern-tag">Compression (PForDelta)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Early Termination</span>
+                            <span class="pattern-tag">Deadline-Aware</span>
+                            <span class="pattern-tag">Speculative Execution</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Storage</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">GFS/Colossus</span>
+                            <span class="pattern-tag">Bigtable</span>
+                            <span class="pattern-tag">Spanner</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- DROPBOX -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="dropbox">
+        <div class="system-header">
+            <span class="system-icon">📦</span>
+            <div class="system-info">
+                <h2>Dropbox</h2>
+                <span class="tagline">File sync, storage, sharing, collaboration</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">File deduplication</span>
+                    <span class="challenge">Sync conflicts</span>
+                    <span class="challenge">Bandwidth optimization</span>
+                    <span class="challenge">Large file handling</span>
+                    <span class="challenge">Real-time sync</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Content-Addressed Storage</span>
+                            <span class="pattern-tag">Block-Level Dedup</span>
+                            <span class="pattern-tag highlight-tag">⭐ Content Hashing</span>
+                            <span class="pattern-tag">Delta Sync</span>
+                            <span class="pattern-tag">Copy-on-Write</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Block Chunking (4MB)</span>
+                            <span class="pattern-tag">LZ4 Compression</span>
+                            <span class="pattern-tag">Rolling Hash (rsync)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Sync</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Operational Transform</span>
+                            <span class="pattern-tag">Vector Clocks</span>
+                            <span class="pattern-tag">Conflict Resolution</span>
+                            <span class="pattern-tag">Version History</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Encryption</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">AES-256 at Rest</span>
+                            <span class="pattern-tag">TLS in Transit</span>
+                            <span class="pattern-tag">Per-File Keys</span>
+                            <span class="pattern-tag">Key Rotation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- SLACK -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="slack">
+        <div class="system-header">
+            <span class="system-icon">💼</span>
+            <div class="system-info">
+                <h2>Slack</h2>
+                <span class="tagline">Team messaging, channels, search, integrations</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Real-time messaging</span>
+                    <span class="challenge">Channel fan-out</span>
+                    <span class="challenge">Message search</span>
+                    <span class="challenge">Presence at scale</span>
+                    <span class="challenge">Integration webhooks</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">WebSocket Connection Pooling</span>
+                            <span class="pattern-tag">Message Batching</span>
+                            <span class="pattern-tag highlight-tag">⭐ Presence Coalescing</span>
+                            <span class="pattern-tag">Debouncing (typing)</span>
+                            <span class="pattern-tag">Virtual Scrolling</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Channel-Based Sharding</span>
+                            <span class="pattern-tag">Pub/Sub (message fan-out)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Delivery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Exactly-Once Delivery</span>
+                            <span class="pattern-tag">Message Ordering</span>
+                            <span class="pattern-tag">Idempotent Receipts</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Enterprise</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">SAML SSO</span>
+                            <span class="pattern-tag">SCIM Provisioning</span>
+                            <span class="pattern-tag">Enterprise Key Management</span>
+                            <span class="pattern-tag">DLP Integration</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- STRIPE -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="stripe">
+        <div class="system-header">
+            <span class="system-icon">💳</span>
+            <div class="system-info">
+                <h2>Stripe</h2>
+                <span class="tagline">Payment processing, subscriptions, fraud detection</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">PCI compliance</span>
+                    <span class="challenge">Exactly-once payments</span>
+                    <span class="challenge">Multi-currency</span>
+                    <span class="challenge">Fraud prevention</span>
+                    <span class="challenge">99.999% availability</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Idempotency Keys</span>
+                            <span class="pattern-tag highlight-tag">⭐ Payment Deduplication</span>
+                            <span class="pattern-tag">Request Memoization</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Transactions</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Exactly-Once Semantics</span>
+                            <span class="pattern-tag">Idempotent Operations</span>
+                            <span class="pattern-tag">Two-Phase Commit</span>
+                            <span class="pattern-tag">Saga with Rollback</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Recovery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Write-Ahead Logging</span>
+                            <span class="pattern-tag">Point-in-Time Recovery</span>
+                            <span class="pattern-tag">Transaction Log</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">PCI DSS</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Tokenization</span>
+                            <span class="pattern-tag">HSM Key Storage</span>
+                            <span class="pattern-tag">Network Segmentation</span>
+                            <span class="pattern-tag">Encryption at Rest</span>
+                            <span class="pattern-tag">mTLS</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Fraud</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">ML Fraud Detection (Radar)</span>
+                            <span class="pattern-tag">Velocity Checks</span>
+                            <span class="pattern-tag">3D Secure</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-obs">
+                <div class="quality-header">
+                    <h3>👁️ Observability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Audit</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Immutable Audit Log</span>
+                            <span class="pattern-tag">Request Tracing</span>
+                            <span class="pattern-tag">Financial Reconciliation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- INSTAGRAM -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="instagram">
+        <div class="system-header">
+            <span class="system-icon">📸</span>
+            <div class="system-info">
+                <h2>Instagram</h2>
+                <span class="tagline">Photo sharing, stories, feed, explore, reels</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Feed ranking</span>
+                    <span class="challenge">Image processing</span>
+                    <span class="challenge">Stories (24h ephemeral)</span>
+                    <span class="challenge">Like/comment scale</span>
+                    <span class="challenge">Content moderation</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Image CDN</span>
+                            <span class="pattern-tag">Multiple Resolutions</span>
+                            <span class="pattern-tag highlight-tag">⭐ Like Count Coalescing</span>
+                            <span class="pattern-tag">Feed Caching</span>
+                            <span class="pattern-tag">Prefetching</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Fan-out on Write (feed)</span>
+                            <span class="pattern-tag">Async Processing</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">WebP/AVIF Images</span>
+                            <span class="pattern-tag">Progressive JPEG</span>
+                            <span class="pattern-tag">ML-Based Cropping</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Storage</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Cassandra</span>
+                            <span class="pattern-tag">PostgreSQL Sharding</span>
+                            <span class="pattern-tag">Object Storage (S3)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- SPOTIFY -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="spotify">
+        <div class="system-header">
+            <span class="system-icon">🎵</span>
+            <div class="system-info">
+                <h2>Spotify</h2>
+                <span class="tagline">Music streaming, playlists, discovery, podcasts</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Audio streaming</span>
+                    <span class="challenge">Music recommendations</span>
+                    <span class="challenge">Offline mode</span>
+                    <span class="challenge">Royalty tracking</span>
+                    <span class="challenge">P2P optimization</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Audio Caching</span>
+                            <span class="pattern-tag">Predictive Prefetch</span>
+                            <span class="pattern-tag highlight-tag">⭐ Play Count Coalescing</span>
+                            <span class="pattern-tag">Gapless Playback</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Ogg Vorbis/AAC</span>
+                            <span class="pattern-tag">Variable Bitrate</span>
+                            <span class="pattern-tag">Audio Normalization</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-maint">
+                <div class="quality-header">
+                    <h3>🔧 Maintainability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Architecture</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Microservices (800+)</span>
+                            <span class="pattern-tag">Backstage (dev portal)</span>
+                            <span class="pattern-tag">Golden Paths</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- AIRBNB -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="airbnb">
+        <div class="system-header">
+            <span class="system-icon">🏠</span>
+            <div class="system-info">
+                <h2>Airbnb</h2>
+                <span class="tagline">Marketplace, search, booking, payments, reviews</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Availability calendar</span>
+                    <span class="challenge">Double booking prevention</span>
+                    <span class="challenge">Search ranking</span>
+                    <span class="challenge">Trust & safety</span>
+                    <span class="challenge">Pricing optimization</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Search Cache</span>
+                            <span class="pattern-tag">Calendar Cache</span>
+                            <span class="pattern-tag highlight-tag">⭐ Availability Coalescing</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Elasticsearch</span>
+                            <span class="pattern-tag">Geo-spatial Index</span>
+                            <span class="pattern-tag">ML Ranking</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Booking</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Distributed Locking</span>
+                            <span class="pattern-tag">Optimistic Locking</span>
+                            <span class="pattern-tag">Reservation Pattern</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Trust</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Identity Verification</span>
+                            <span class="pattern-tag">Fraud ML Models</span>
+                            <span class="pattern-tag">Payment Escrow</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- LINKEDIN -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="linkedin">
+        <div class="system-header">
+            <span class="system-icon">💼</span>
+            <div class="system-info">
+                <h2>LinkedIn</h2>
+                <span class="tagline">Professional network, feed, connections, jobs, messaging</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Graph queries (connections)</span>
+                    <span class="challenge">Feed relevance</span>
+                    <span class="challenge">Job matching</span>
+                    <span class="challenge">Profile search</span>
+                    <span class="challenge">InMail delivery</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Graph Caching</span>
+                            <span class="pattern-tag">Profile Cache</span>
+                            <span class="pattern-tag highlight-tag">⭐ Connection Degree Coalescing</span>
+                            <span class="pattern-tag">Feed Precomputation</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Graph Database</span>
+                            <span class="pattern-tag">BFS/DFS Optimization</span>
+                            <span class="pattern-tag">Bloom Filter (visited)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-maint">
+                <div class="quality-header">
+                    <h3>🔧 Maintainability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Architecture</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Rest.li Framework</span>
+                            <span class="pattern-tag">Kafka (events)</span>
+                            <span class="pattern-tag">Samza (stream processing)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- TIKTOK -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="tiktok">
+        <div class="system-header">
+            <span class="system-icon">🎭</span>
+            <div class="system-info">
+                <h2>TikTok</h2>
+                <span class="tagline">Short video, For You feed, effects, sounds</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Real-time recommendation</span>
+                    <span class="challenge">Video processing</span>
+                    <span class="challenge">Global latency</span>
+                    <span class="challenge">Engagement signals</span>
+                    <span class="challenge">Content moderation</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Preload Next Videos</span>
+                            <span class="pattern-tag">Edge Caching</span>
+                            <span class="pattern-tag highlight-tag">⭐ Engagement Coalescing</span>
+                            <span class="pattern-tag">Client-Side Prefetch</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">ML Inference Sharding</span>
+                            <span class="pattern-tag">Feature Store</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Safety</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">ML Content Moderation</span>
+                            <span class="pattern-tag">Age Verification</span>
+                            <span class="pattern-tag">COPPA Compliance</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- ZOOM -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="zoom">
+        <div class="system-header">
+            <span class="system-icon">📹</span>
+            <div class="system-info">
+                <h2>Zoom</h2>
+                <span class="tagline">Video conferencing, screen share, chat, webinars</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Real-time video/audio</span>
+                    <span class="challenge">Network adaptation</span>
+                    <span class="challenge">Large meetings (1000+)</span>
+                    <span class="challenge">Screen sharing latency</span>
+                    <span class="challenge">Recording/transcription</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Selective Forwarding Unit</span>
+                            <span class="pattern-tag">Simulcast (multiple qualities)</span>
+                            <span class="pattern-tag highlight-tag">⭐ Frame Coalescing</span>
+                            <span class="pattern-tag">Voice Activity Detection</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">H.264/VP8 Codec</span>
+                            <span class="pattern-tag">Opus Audio</span>
+                            <span class="pattern-tag">Adaptive Bitrate</span>
+                            <span class="pattern-tag">Jitter Buffer</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Active Speaker Detection</span>
+                            <span class="pattern-tag">Bandwidth Allocation</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Network</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">FEC (Forward Error Correction)</span>
+                            <span class="pattern-tag">Packet Loss Concealment</span>
+                            <span class="pattern-tag">Automatic Failover</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Encryption</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">E2E Encryption (optional)</span>
+                            <span class="pattern-tag">AES-256-GCM</span>
+                            <span class="pattern-tag">Waiting Room</span>
+                            <span class="pattern-tag">Meeting Passwords</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- GITHUB -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="github">
+        <div class="system-header">
+            <span class="system-icon">🐙</span>
+            <div class="system-info">
+                <h2>GitHub</h2>
+                <span class="tagline">Git hosting, CI/CD, code review, issues, actions</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Git operations at scale</span>
+                    <span class="challenge">CI/CD pipeline execution</span>
+                    <span class="challenge">Code search</span>
+                    <span class="challenge">Large repo handling</span>
+                    <span class="challenge">Webhook delivery</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Git Pack Files</span>
+                            <span class="pattern-tag">Shallow Clone</span>
+                            <span class="pattern-tag">Partial Clone</span>
+                            <span class="pattern-tag highlight-tag">⭐ CI Build Coalescing</span>
+                            <span class="pattern-tag">Object Deduplication</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Git Delta Compression</span>
+                            <span class="pattern-tag">Tree-sitter (parsing)</span>
+                            <span class="pattern-tag">Code Search Index</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Webhooks</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">At-Least-Once Delivery</span>
+                            <span class="pattern-tag">Exponential Backoff</span>
+                            <span class="pattern-tag">Dead Letter Queue</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-maint">
+                <div class="quality-header">
+                    <h3>🔧 Maintainability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Testing</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Unit Tests</span>
+                            <span class="pattern-tag">Integration Tests</span>
+                            <span class="pattern-tag">Contract Tests</span>
+                            <span class="pattern-tag">Chaos Engineering</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Documentation</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">OpenAPI Specs</span>
+                            <span class="pattern-tag">ADRs</span>
+                            <span class="pattern-tag">Runbooks</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- ROBINHOOD -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="robinhood">
+        <div class="system-header">
+            <span class="system-icon">📈</span>
+            <div class="system-info">
+                <h2>Robinhood / Trading Platform</h2>
+                <span class="tagline">Stock trading, real-time quotes, order execution</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Real-time market data</span>
+                    <span class="challenge">Order matching</span>
+                    <span class="challenge">Regulatory compliance</span>
+                    <span class="challenge">Sub-millisecond latency</span>
+                    <span class="challenge">Market open spikes</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Quote Caching</span>
+                            <span class="pattern-tag highlight-tag">⭐ Quote Coalescing</span>
+                            <span class="pattern-tag">Throttling (quote updates)</span>
+                            <span class="pattern-tag">Sampling (tick data)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Lock-Free Data Structures</span>
+                            <span class="pattern-tag">Memory-Mapped I/O</span>
+                            <span class="pattern-tag">Kernel Bypass (DPDK)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Price-Time Priority</span>
+                            <span class="pattern-tag">FIFO Queue</span>
+                            <span class="pattern-tag">Real-Time OS</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Transactions</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Exactly-Once Order Execution</span>
+                            <span class="pattern-tag">Idempotent Orders</span>
+                            <span class="pattern-tag">Immutable Audit Trail</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-sec">
+                <div class="quality-header">
+                    <h3>🔒 Security</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Compliance</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">SOC 2</span>
+                            <span class="pattern-tag">SEC Regulations</span>
+                            <span class="pattern-tag">Trade Surveillance</span>
+                            <span class="pattern-tag">Data Masking</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- DOORDASH -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="doordash">
+        <div class="system-header">
+            <span class="system-icon">🍕</span>
+            <div class="system-info">
+                <h2>DoorDash / Food Delivery</h2>
+                <span class="tagline">Ordering, driver dispatch, real-time tracking, ETA</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Driver-order matching</span>
+                    <span class="challenge">ETA prediction</span>
+                    <span class="challenge">Surge pricing</span>
+                    <span class="challenge">Restaurant capacity</span>
+                    <span class="challenge">Dinner rush spikes</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Menu Caching</span>
+                            <span class="pattern-tag">Location Batching</span>
+                            <span class="pattern-tag highlight-tag">⭐ Order Coalescing (same restaurant)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Route Optimization</span>
+                            <span class="pattern-tag">ML ETA Prediction</span>
+                            <span class="pattern-tag">Geospatial Index</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Delivery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">At-Least-Once Notifications</span>
+                            <span class="pattern-tag">Idempotent Order Creation</span>
+                            <span class="pattern-tag">Saga (order→payment→dispatch)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- GOOGLE MAPS -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="google-maps">
+        <div class="system-header">
+            <span class="system-icon">🗺️</span>
+            <div class="system-info">
+                <h2>Google Maps</h2>
+                <span class="tagline">Maps, navigation, traffic, places, street view</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Real-time traffic</span>
+                    <span class="challenge">Route computation</span>
+                    <span class="challenge">Map tile serving</span>
+                    <span class="challenge">Place search</span>
+                    <span class="challenge">Offline maps</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Tile Caching</span>
+                            <span class="pattern-tag">Route Caching</span>
+                            <span class="pattern-tag highlight-tag">⭐ Route Request Coalescing</span>
+                            <span class="pattern-tag">Vector Tiles</span>
+                            <span class="pattern-tag">Level of Detail (LOD)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Dijkstra's Algorithm</span>
+                            <span class="pattern-tag">A* Search</span>
+                            <span class="pattern-tag">Contraction Hierarchies</span>
+                            <span class="pattern-tag">Graph Partitioning</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Partitioning</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">S2 Cell Partitioning</span>
+                            <span class="pattern-tag">Quadtree</span>
+                            <span class="pattern-tag">Geohash</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- TYPEAHEAD -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="typeahead">
+        <div class="system-header">
+            <span class="system-icon">🔤</span>
+            <div class="system-info">
+                <h2>Typeahead / Autocomplete</h2>
+                <span class="tagline">Search suggestions, prefix matching, ranking</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Sub-100ms latency</span>
+                    <span class="challenge">Prefix matching</span>
+                    <span class="challenge">Personalization</span>
+                    <span class="challenge">Trending queries</span>
+                    <span class="challenge">Typo tolerance</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Debouncing (typing)</span>
+                            <span class="pattern-tag">Result Caching</span>
+                            <span class="pattern-tag highlight-tag">⭐ Query Coalescing</span>
+                            <span class="pattern-tag">Client-Side Cache</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Trie Data Structure</span>
+                            <span class="pattern-tag">Radix Tree</span>
+                            <span class="pattern-tag">Ternary Search Tree</span>
+                            <span class="pattern-tag">Levenshtein Automata</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Partitioning</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Prefix-Based Sharding</span>
+                            <span class="pattern-tag">Range Partitioning (A-M, N-Z)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- URL SHORTENER -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="url-shortener">
+        <div class="system-header">
+            <span class="system-icon">🔗</span>
+            <div class="system-info">
+                <h2>URL Shortener (bit.ly)</h2>
+                <span class="tagline">Short URL generation, redirect, analytics</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Unique ID generation</span>
+                    <span class="challenge">High read:write ratio</span>
+                    <span class="challenge">Redirect latency</span>
+                    <span class="challenge">Click analytics</span>
+                    <span class="challenge">Custom aliases</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Read-Through Cache</span>
+                            <span class="pattern-tag">CDN Redirects</span>
+                            <span class="pattern-tag highlight-tag">⭐ Analytics Coalescing</span>
+                            <span class="pattern-tag">Write Buffering (clicks)</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Optimization</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Base62 Encoding</span>
+                            <span class="pattern-tag">Hash Index</span>
+                            <span class="pattern-tag">Snowflake ID</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">ID Generation</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Counter with Range</span>
+                            <span class="pattern-tag">Zookeeper Coordination</span>
+                            <span class="pattern-tag">Snowflake IDs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- RATE LIMITER -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="rate-limiter">
+        <div class="system-header">
+            <span class="system-icon">🚦</span>
+            <div class="system-info">
+                <h2>Rate Limiter</h2>
+                <span class="tagline">API protection, throttling, quota management</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Distributed counting</span>
+                    <span class="challenge">Low latency checks</span>
+                    <span class="challenge">Multiple rate limits</span>
+                    <span class="challenge">Burst handling</span>
+                    <span class="challenge">Consistency</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Token Bucket</span>
+                            <span class="pattern-tag">Leaky Bucket</span>
+                            <span class="pattern-tag">Sliding Window Log</span>
+                            <span class="pattern-tag">Sliding Window Counter</span>
+                            <span class="pattern-tag">Fixed Window Counter</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Local Cache (sync periodic)</span>
+                            <span class="pattern-tag highlight-tag">⭐ Count Coalescing</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-scale">
+                <div class="quality-header">
+                    <h3>📈 Scalability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Distributed</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Redis INCR</span>
+                            <span class="pattern-tag">Redis Lua Scripts</span>
+                            <span class="pattern-tag">Sticky Sessions</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- NOTIFICATION SYSTEM -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="notification">
+        <div class="system-header">
+            <span class="system-icon">🔔</span>
+            <div class="system-info">
+                <h2>Notification System</h2>
+                <span class="tagline">Push, email, SMS, in-app notifications</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">Multi-channel delivery</span>
+                    <span class="challenge">User preferences</span>
+                    <span class="challenge">Deduplication</span>
+                    <span class="challenge">Rate limiting per user</span>
+                    <span class="challenge">Delivery tracking</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Micro-Batching</span>
+                            <span class="pattern-tag highlight-tag">⭐ Notification Coalescing</span>
+                            <span class="pattern-tag">Dedup Queue</span>
+                            <span class="pattern-tag">Template Caching</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Priority Queue</span>
+                            <span class="pattern-tag">User Rate Limiting</span>
+                            <span class="pattern-tag">Scheduled Delivery</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Delivery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">At-Least-Once Delivery</span>
+                            <span class="pattern-tag">Idempotent Processing</span>
+                            <span class="pattern-tag">Dead Letter Queue</span>
+                            <span class="pattern-tag">Retry with Backoff</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-obs">
+                <div class="quality-header">
+                    <h3>👁️ Observability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Tracking</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Delivery Receipts</span>
+                            <span class="pattern-tag">Open Tracking</span>
+                            <span class="pattern-tag">Click Tracking</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <!-- WEB CRAWLER -->
+    <!-- ═══════════════════════════════════════════════════════════════════════════ -->
+    <div class="system-card" id="web-crawler">
+        <div class="system-header">
+            <span class="system-icon">🕷️</span>
+            <div class="system-info">
+                <h2>Web Crawler</h2>
+                <span class="tagline">URL discovery, fetching, parsing, indexing</span>
+            </div>
+        </div>
+        <div class="system-content">
+            <div class="key-challenges">
+                <h4>🎯 Key Challenges</h4>
+                <div class="challenge-list">
+                    <span class="challenge">URL deduplication</span>
+                    <span class="challenge">Politeness (robots.txt)</span>
+                    <span class="challenge">URL prioritization</span>
+                    <span class="challenge">Duplicate content</span>
+                    <span class="challenge">Distributed coordination</span>
+                </div>
+            </div>
+
+            <div class="quality-section q-perf">
+                <div class="quality-header">
+                    <h3>⚡ Performance</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Reduction</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">URL Deduplication</span>
+                            <span class="pattern-tag">Bloom Filter (seen URLs)</span>
+                            <span class="pattern-tag highlight-tag">⭐ Domain Coalescing</span>
+                            <span class="pattern-tag">Content Hashing</span>
+                            <span class="pattern-tag">robots.txt Caching</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Distribution</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">URL Frontier Sharding</span>
+                            <span class="pattern-tag">Domain-Based Partitioning</span>
+                            <span class="pattern-tag">Worker Pools</span>
+                        </div>
+                    </div>
+                    <div class="strategy-row">
+                        <span class="strategy-label">Work Scheduling</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Priority Frontier</span>
+                            <span class="pattern-tag">Politeness Delay</span>
+                            <span class="pattern-tag">Adaptive Crawl Rate</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quality-section q-rel">
+                <div class="quality-header">
+                    <h3>🛡️ Reliability</h3>
+                </div>
+                <div class="patterns-container">
+                    <div class="strategy-row">
+                        <span class="strategy-label">Recovery</span>
+                        <div class="pattern-tags">
+                            <span class="pattern-tag">Checkpointing</span>
+                            <span class="pattern-tag">Incremental Crawling</span>
+                            <span class="pattern-tag">Frontier Persistence</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'dark',
+            securityLevel: 'loose'
+        });
+    </script>
+</body>
+
+</html>

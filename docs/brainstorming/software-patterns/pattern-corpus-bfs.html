@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern Universe - BFS Enumeration</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f172a 100%);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 2rem;
+            line-height: 1.6;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #3b82f6, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 2rem;
+        }
+
+        .level-section {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .level-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .level-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .l0 .level-badge {
+            background: rgba(239, 68, 68, 0.3);
+            color: #ef4444;
+        }
+
+        .l1 .level-badge {
+            background: rgba(245, 158, 11, 0.3);
+            color: #f59e0b;
+        }
+
+        .l2 .level-badge {
+            background: rgba(16, 185, 129, 0.3);
+            color: #10b981;
+        }
+
+        .l3 .level-badge {
+            background: rgba(59, 130, 246, 0.3);
+            color: #3b82f6;
+        }
+
+        .l4 .level-badge {
+            background: rgba(139, 92, 246, 0.3);
+            color: #a78bfa;
+        }
+
+        .l5 .level-badge {
+            background: rgba(236, 72, 153, 0.3);
+            color: #ec4899;
+        }
+
+        .level-title {
+            font-size: 1.3rem;
+            color: #fff;
+        }
+
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .item {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            border-left: 3px solid;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .item-name {
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-desc {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* Color coding by family */
+        .perf {
+            border-color: #f59e0b;
+        }
+
+        .perf .item-name {
+            color: #f59e0b;
+        }
+
+        .rel {
+            border-color: #3b82f6;
+        }
+
+        .rel .item-name {
+            color: #3b82f6;
+        }
+
+        .scale {
+            border-color: #10b981;
+        }
+
+        .scale .item-name {
+            color: #10b981;
+        }
+
+        .sec {
+            border-color: #ef4444;
+        }
+
+        .sec .item-name {
+            color: #ef4444;
+        }
+
+        .obs {
+            border-color: #8b5cf6;
+        }
+
+        .obs .item-name {
+            color: #a78bfa;
+        }
+
+        .maint {
+            border-color: #ec4899;
+        }
+
+        .maint .item-name {
+            color: #ec4899;
+        }
+
+        .highlight {
+            background: rgba(16, 185, 129, 0.15) !important;
+            border-color: #10b981 !important;
+            border-width: 3px;
+        }
+
+        .highlight .item-name {
+            color: #10b981 !important;
+        }
+
+        .subsection {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px dashed rgba(255, 255, 255, 0.1);
+        }
+
+        .subsection-title {
+            font-size: 1rem;
+            color: #888;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .subsection-title span {
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-size: 0.85rem;
+        }
+
+        .breadcrumb span {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+
+        .breadcrumb .arrow {
+            color: #444;
+        }
+
+        .bc-l0 {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .bc-l1 {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .bc-l2 {
+            background: rgba(16, 185, 129, 0.3);
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .bc-l3 {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .bc-l4 {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+        }
+
+        .bc-l5 {
+            background: rgba(236, 72, 153, 0.2);
+            color: #ec4899;
+        }
+
+        .toc {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .toc h3 {
+            color: #f59e0b;
+            margin-bottom: 1rem;
+        }
+
+        .toc-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .toc a {
+            color: #888;
+            text-decoration: none;
+            padding: 0.5rem;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .toc a:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin: 2rem 0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-num {
+            font-size: 2rem;
+            font-weight: bold;
+            background: linear-gradient(90deg, #f59e0b, #10b981);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #666;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🌌 Pattern Universe</h1>
+    <p class="subtitle">Complete Breadth-First Enumeration — 5 Levels Deep</p>
+
+    <div class="breadcrumb">
+        <span class="bc-l0">L0: System Qualities</span>
+        <span class="arrow">→</span>
+        <span class="bc-l1">L1: Performance</span>
+        <span class="arrow">→</span>
+        <span class="bc-l2">L2: Work Reduction ⭐</span>
+        <span class="arrow">→</span>
+        <span class="bc-l3">L3: Deduplication</span>
+        <span class="arrow">→</span>
+        <span class="bc-l4">L4: Coalescing</span>
+        <span class="arrow">→</span>
+        <span class="bc-l5">L5: singleflight</span>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-num">6</div>
+            <div class="stat-label">System Qualities</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">24</div>
+            <div class="stat-label">Strategies</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">~80</div>
+            <div class="stat-label">Pattern Families</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">~200</div>
+            <div class="stat-label">Specific Patterns</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num">∞</div>
+            <div class="stat-label">Implementations</div>
+        </div>
+    </div>
+
+    <!-- LEVEL 0 -->
+    <div class="level-section l0" id="l0">
+        <div class="level-header">
+            <span class="level-badge">Level 0</span>
+            <span class="level-title">🌌 Root — System Design Patterns</span>
+        </div>
+        <div class="items-grid">
+            <div class="item perf">
+                <span class="item-name">🌌 System Design Patterns</span>
+                <span class="item-desc">All patterns for building software systems</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL 1 -->
+    <div class="level-section l1" id="l1">
+        <div class="level-header">
+            <span class="level-badge">Level 1</span>
+            <span class="level-title">🎯 System Qualities (The "-ilities")</span>
+        </div>
+        <div class="items-grid">
+            <div class="item perf">
+                <span class="item-name">⚡ Performance</span>
+                <span class="item-desc">How fast does it respond?</span>
+            </div>
+            <div class="item rel">
+                <span class="item-name">🛡️ Reliability</span>
+                <span class="item-desc">Does it keep working under failure?</span>
+            </div>
+            <div class="item scale">
+                <span class="item-name">📈 Scalability</span>
+                <span class="item-desc">Can it handle growth?</span>
+            </div>
+            <div class="item sec">
+                <span class="item-name">🔒 Security</span>
+                <span class="item-desc">Is it protected from threats?</span>
+            </div>
+            <div class="item obs">
+                <span class="item-name">👁️ Observability</span>
+                <span class="item-desc">Can we see what's happening?</span>
+            </div>
+            <div class="item maint">
+                <span class="item-name">🔧 Maintainability</span>
+                <span class="item-desc">Can we change it safely?</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL 2 -->
+    <div class="level-section l2" id="l2">
+        <div class="level-header">
+            <span class="level-badge">Level 2</span>
+            <span class="level-title">📋 Strategies (4 per Quality)</span>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">⚡ Performance Strategies</div>
+            <div class="items-grid">
+                <div class="item highlight">
+                    <span class="item-name">🎯 Work Reduction ⭐</span>
+                    <span class="item-desc">Avoid doing unnecessary work</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔀 Work Distribution</span>
+                    <span class="item-desc">Spread work across resources</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">⚙️ Work Optimization</span>
+                    <span class="item-desc">Make work execute faster</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📋 Work Scheduling</span>
+                    <span class="item-desc">Order and prioritize smartly</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🛡️ Reliability Strategies</div>
+            <div class="items-grid">
+                <div class="item rel">
+                    <span class="item-name">💔 Fault Tolerance</span>
+                    <span class="item-desc">Continue operating despite failures</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">📋 Redundancy</span>
+                    <span class="item-desc">Duplicate critical components</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🔄 Recovery</span>
+                    <span class="item-desc">Restore after failure</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">📉 Graceful Degradation</span>
+                    <span class="item-desc">Reduce instead of fail</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">📈 Scalability Strategies</div>
+            <div class="items-grid">
+                <div class="item scale">
+                    <span class="item-name">↔️ Horizontal Scaling</span>
+                    <span class="item-desc">Add more machines</span>
+                </div>
+                <div class="item scale">
+                    <span class="item-name">↕️ Vertical Scaling</span>
+                    <span class="item-desc">Add more power</span>
+                </div>
+                <div class="item scale">
+                    <span class="item-name">🌊 Elasticity</span>
+                    <span class="item-desc">Auto-scale on demand</span>
+                </div>
+                <div class="item scale">
+                    <span class="item-name">🧩 Partitioning</span>
+                    <span class="item-desc">Divide across boundaries</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🔒 Security Strategies</div>
+            <div class="items-grid">
+                <div class="item sec">
+                    <span class="item-name">🪪 Authentication</span>
+                    <span class="item-desc">Verify identity</span>
+                </div>
+                <div class="item sec">
+                    <span class="item-name">🎫 Authorization</span>
+                    <span class="item-desc">Verify permissions</span>
+                </div>
+                <div class="item sec">
+                    <span class="item-name">🔐 Encryption</span>
+                    <span class="item-desc">Protect data</span>
+                </div>
+                <div class="item sec">
+                    <span class="item-name">🏰 Defense in Depth</span>
+                    <span class="item-desc">Multiple layers</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">👁️ Observability Strategies</div>
+            <div class="items-grid">
+                <div class="item obs">
+                    <span class="item-name">📝 Logging</span>
+                    <span class="item-desc">Record discrete events</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">📊 Metrics</span>
+                    <span class="item-desc">Aggregate measurements</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">🔗 Tracing</span>
+                    <span class="item-desc">Follow requests</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">🚨 Alerting</span>
+                    <span class="item-desc">Notify on anomalies</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🔧 Maintainability Strategies</div>
+            <div class="items-grid">
+                <div class="item maint">
+                    <span class="item-name">📦 Modularity</span>
+                    <span class="item-desc">Separate concerns</span>
+                </div>
+                <div class="item maint">
+                    <span class="item-name">🧪 Testability</span>
+                    <span class="item-desc">Enable verification</span>
+                </div>
+                <div class="item maint">
+                    <span class="item-name">📚 Documentation</span>
+                    <span class="item-desc">Capture knowledge</span>
+                </div>
+                <div class="item maint">
+                    <span class="item-name">🏷️ Versioning</span>
+                    <span class="item-desc">Manage changes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL 3 -->
+    <div class="level-section l3" id="l3">
+        <div class="level-header">
+            <span class="level-badge">Level 3</span>
+            <span class="level-title">👨‍👩‍👧‍👦 Pattern Families</span>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">⚡ Performance → 🎯 Work Reduction Families</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">⏱️ Temporal</span>
+                    <span class="item-desc">Control when work executes</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">💾 Caching</span>
+                    <span class="item-desc">Store results for reuse</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📦 Batching</span>
+                    <span class="item-desc">Group operations together</span>
+                </div>
+                <div class="item highlight">
+                    <span class="item-name">🔂 Deduplication ⭐</span>
+                    <span class="item-desc">Eliminate redundant work</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">😴 Lazy</span>
+                    <span class="item-desc">Defer until needed</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🏗️ Structural</span>
+                    <span class="item-desc">Share resources</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">⚡ Performance → 🔀 Work Distribution Families</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">⚡ Parallelism</span>
+                    <span class="item-desc">Execute simultaneously</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🧩 Sharding</span>
+                    <span class="item-desc">Partition by key/range</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">⚖️ Load Balancing</span>
+                    <span class="item-desc">Distribute across workers</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📋 Replication</span>
+                    <span class="item-desc">Copy to multiple locations</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">⚡ Performance → ⚙️ Work Optimization Families</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🧮 Algorithmic</span>
+                    <span class="item-desc">Better Big-O complexity</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📊 Data Structures</span>
+                    <span class="item-desc">Right structure for pattern</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔍 Indexing</span>
+                    <span class="item-desc">Fast lookups</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🗜️ Compression</span>
+                    <span class="item-desc">Reduce data size</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">⚡ Performance → 📋 Work Scheduling Families</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🔝 Prioritization</span>
+                    <span class="item-desc">Order by importance</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🚰 Flow Control</span>
+                    <span class="item-desc">Manage throughput</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">⏸️ Preemption</span>
+                    <span class="item-desc">Interrupt lower priority</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">⚖️ Fairness</span>
+                    <span class="item-desc">Prevent starvation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🛡️ Reliability → 💔 Fault Tolerance Families</div>
+            <div class="items-grid">
+                <div class="item rel">
+                    <span class="item-name">🔌 Circuit Breakers</span>
+                    <span class="item-desc">Stop cascading failures</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🔁 Retries</span>
+                    <span class="item-desc">Attempt again</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">⏱️ Timeouts</span>
+                    <span class="item-desc">Bound waiting time</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🧱 Bulkheads</span>
+                    <span class="item-desc">Isolate failure domains</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🛡️ Reliability → 🔄 Recovery Families</div>
+            <div class="items-grid">
+                <div class="item rel">
+                    <span class="item-name">📸 Checkpointing</span>
+                    <span class="item-desc">Save state periodically</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">📜 Write-Ahead Logging</span>
+                    <span class="item-desc">Log before applying</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">⏪ Rollback</span>
+                    <span class="item-desc">Undo to previous state</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🔁 Replay</span>
+                    <span class="item-desc">Re-execute from log</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">📈 Scalability → 🧩 Partitioning Families</div>
+            <div class="items-grid">
+                <div class="item scale">
+                    <span class="item-name">#️⃣ Hash Partitioning</span>
+                    <span class="item-desc">Distribute by hash(key)</span>
+                </div>
+                <div class="item scale">
+                    <span class="item-name">📏 Range Partitioning</span>
+                    <span class="item-desc">Distribute by ranges</span>
+                </div>
+                <div class="item scale">
+                    <span class="item-name">🗂️ List Partitioning</span>
+                    <span class="item-desc">Distribute by lists</span>
+                </div>
+                <div class="item scale">
+                    <span class="item-name">🧬 Composite</span>
+                    <span class="item-desc">Combine strategies</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🔒 Security → 🔐 Encryption Families</div>
+            <div class="items-grid">
+                <div class="item sec">
+                    <span class="item-name">🔀 Symmetric</span>
+                    <span class="item-desc">Same key (AES)</span>
+                </div>
+                <div class="item sec">
+                    <span class="item-name">🔐 Asymmetric</span>
+                    <span class="item-desc">Public/private (RSA)</span>
+                </div>
+                <div class="item sec">
+                    <span class="item-name">#️⃣ Hashing</span>
+                    <span class="item-desc">One-way (SHA)</span>
+                </div>
+                <div class="item sec">
+                    <span class="item-name">🤝 Key Exchange</span>
+                    <span class="item-desc">Negotiate keys (DH)</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">👁️ Observability → 📊 Metrics Families</div>
+            <div class="items-grid">
+                <div class="item obs">
+                    <span class="item-name">⏱️ Counters</span>
+                    <span class="item-desc">Monotonically increasing</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">📏 Gauges</span>
+                    <span class="item-desc">Point-in-time values</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">📊 Histograms</span>
+                    <span class="item-desc">Distribution of values</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">📈 Summaries</span>
+                    <span class="item-desc">Quantiles over time</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL 4 -->
+    <div class="level-section l4" id="l4">
+        <div class="level-header">
+            <span class="level-badge">Level 4</span>
+            <span class="level-title">🔧 Specific Patterns</span>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🎯 Work Reduction → ⏱️ Temporal Patterns</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">⏸️ Debouncing</span>
+                    <span class="item-desc">Wait for silence before executing</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🚦 Throttling</span>
+                    <span class="item-desc">Max one per time window</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📊 Sampling</span>
+                    <span class="item-desc">Take periodic snapshots</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">⏰ Windowing</span>
+                    <span class="item-desc">Group by time intervals</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🎯 Work Reduction → 💾 Caching Patterns</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🧠 Memoization</span>
+                    <span class="item-desc">Cache by function arguments</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📖 Cache-Aside</span>
+                    <span class="item-desc">App manages cache + DB</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">✍️ Write-Through</span>
+                    <span class="item-desc">Sync write to both</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📝 Write-Back</span>
+                    <span class="item-desc">Async flush to DB</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔄 Read-Through</span>
+                    <span class="item-desc">Cache fetches on miss</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔁 Refresh-Ahead</span>
+                    <span class="item-desc">Proactive refresh</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🎯 Work Reduction → 📦 Batching Patterns</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">⏱️ Micro-Batching</span>
+                    <span class="item-desc">Collect over time window</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📊 Bulk Operations</span>
+                    <span class="item-desc">Single call, multiple items</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔗 DataLoader</span>
+                    <span class="item-desc">Batch + dedupe in tick</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📦 Nagle's Algorithm</span>
+                    <span class="item-desc">TCP packet batching</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🎯 Work Reduction → 🔂 Deduplication Patterns ⭐</div>
+            <div class="items-grid">
+                <div class="item highlight">
+                    <span class="item-name">⭐ Coalescing</span>
+                    <span class="item-desc">Merge concurrent identical requests</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">✈️ Singleflight</span>
+                    <span class="item-desc">Go's stdlib request dedup</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔑 Idempotency</span>
+                    <span class="item-desc">Same input → same output</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📭 Dedup Queue</span>
+                    <span class="item-desc">Drop duplicate messages</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔒 Exactly-Once</span>
+                    <span class="item-desc">Guaranteed single processing</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🎯 Work Reduction → 😴 Lazy Patterns</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">📷 Lazy Loading</span>
+                    <span class="item-desc">Load on first access</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📜 Virtual Scrolling</span>
+                    <span class="item-desc">Render only visible</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📄 Pagination</span>
+                    <span class="item-desc">Load in chunks</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🌊 Streaming</span>
+                    <span class="item-desc">Process incrementally</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📖 Copy-on-Write</span>
+                    <span class="item-desc">Defer copy until mutation</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🎯 Work Reduction → 🏗️ Structural Patterns</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🏊 Connection Pooling</span>
+                    <span class="item-desc">Reuse DB connections</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🧵 Thread Pooling</span>
+                    <span class="item-desc">Reuse worker threads</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🪶 Flyweight</span>
+                    <span class="item-desc">Share intrinsic state</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔤 String Interning</span>
+                    <span class="item-desc">Canonical instances</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🔀 Work Distribution → ⚡ Parallelism Patterns</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🧵 Multi-threading</span>
+                    <span class="item-desc">OS-level threads</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔄 Async/Await</span>
+                    <span class="item-desc">Cooperative concurrency</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">👷 Worker Pools</span>
+                    <span class="item-desc">Fixed thread count</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🍴 Fork-Join</span>
+                    <span class="item-desc">Divide and conquer</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">📨 Actor Model</span>
+                    <span class="item-desc">Message-passing</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🔀 Work Distribution → ⚖️ Load Balancing Patterns</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🔄 Round Robin</span>
+                    <span class="item-desc">Cycle through backends</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🎲 Random</span>
+                    <span class="item-desc">Probabilistic distribution</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">⚖️ Least Connections</span>
+                    <span class="item-desc">Route to least busy</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">#️⃣ IP Hash</span>
+                    <span class="item-desc">Sticky sessions</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">⚡ Weighted</span>
+                    <span class="item-desc">Proportional to capacity</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">📋 Work Scheduling → 🚰 Flow Control Patterns</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🪣 Token Bucket</span>
+                    <span class="item-desc">Smooth rate limiting</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🚰 Leaky Bucket</span>
+                    <span class="item-desc">Fixed outflow rate</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🚦 Rate Limiting</span>
+                    <span class="item-desc">Cap requests per time</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔙 Backpressure</span>
+                    <span class="item-desc">Slow producer when full</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">💔 Fault Tolerance → 🔁 Retry Patterns</div>
+            <div class="items-grid">
+                <div class="item rel">
+                    <span class="item-name">📈 Exponential Backoff</span>
+                    <span class="item-desc">Increasing delays</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🎲 Jitter</span>
+                    <span class="item-desc">Randomize delays</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🔢 Fixed Interval</span>
+                    <span class="item-desc">Constant delay</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🎯 Retry Budget</span>
+                    <span class="item-desc">Cap total retries</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">💔 Fault Tolerance → 🔌 Circuit Breaker Patterns</div>
+            <div class="items-grid">
+                <div class="item rel">
+                    <span class="item-name">🚫 Closed State</span>
+                    <span class="item-desc">Normal operation</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🔓 Open State</span>
+                    <span class="item-desc">Fail fast</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🔄 Half-Open State</span>
+                    <span class="item-desc">Test recovery</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- LEVEL 5 -->
+    <div class="level-section l5" id="l5">
+        <div class="level-header">
+            <span class="level-badge">Level 5</span>
+            <span class="level-title">🔩 Implementations & Tools</span>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">⭐ Coalescing Implementations</div>
+            <div class="items-grid">
+                <div class="item highlight">
+                    <span class="item-name">🔵 Go singleflight</span>
+                    <span class="item-desc">golang.org/x/sync/singleflight</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🟡 Node.js p-memoize</span>
+                    <span class="item-desc">With maxAge option</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🟣 Java Guava</span>
+                    <span class="item-desc">LoadingCache with coalescing</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🟢 Custom Promise Map</span>
+                    <span class="item-desc">In-flight tracking</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">💾 Cache Implementations</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🔴 Redis</span>
+                    <span class="item-desc">In-memory distributed cache</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🟢 Memcached</span>
+                    <span class="item-desc">Simple distributed cache</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🟡 Caffeine</span>
+                    <span class="item-desc">Java in-process cache</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🟣 lru-cache</span>
+                    <span class="item-desc">Node.js LRU</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🔗 DataLoader Implementations</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🟡 dataloader (npm)</span>
+                    <span class="item-desc">Original Node.js</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔵 graphql-java</span>
+                    <span class="item-desc">Java DataLoader</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🟣 Strawberry</span>
+                    <span class="item-desc">Python GraphQL</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔴 Absinthe</span>
+                    <span class="item-desc">Elixir GraphQL</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">🔌 Circuit Breaker Implementations</div>
+            <div class="items-grid">
+                <div class="item rel">
+                    <span class="item-name">🔵 Resilience4j</span>
+                    <span class="item-desc">Java modern resilience</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🟡 Polly</span>
+                    <span class="item-desc">.NET resilience</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🟠 opossum</span>
+                    <span class="item-desc">Node.js circuit breaker</span>
+                </div>
+                <div class="item rel">
+                    <span class="item-name">🟣 pybreaker</span>
+                    <span class="item-desc">Python circuit breaker</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">⚖️ Load Balancer Implementations</div>
+            <div class="items-grid">
+                <div class="item perf">
+                    <span class="item-name">🌐 NGINX</span>
+                    <span class="item-desc">HTTP load balancer</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🔵 HAProxy</span>
+                    <span class="item-desc">TCP/HTTP load balancer</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">☁️ AWS ALB/NLB</span>
+                    <span class="item-desc">Cloud load balancers</span>
+                </div>
+                <div class="item perf">
+                    <span class="item-name">🟢 Envoy</span>
+                    <span class="item-desc">Service mesh proxy</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="subsection">
+            <div class="subsection-title">📊 Observability Implementations</div>
+            <div class="items-grid">
+                <div class="item obs">
+                    <span class="item-name">📈 Prometheus</span>
+                    <span class="item-desc">Pull-based metrics</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">📊 Grafana</span>
+                    <span class="item-desc">Visualization</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">🔍 Jaeger</span>
+                    <span class="item-desc">Distributed tracing</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">📊 OpenTelemetry</span>
+                    <span class="item-desc">Unified observability</span>
+                </div>
+                <div class="item obs">
+                    <span class="item-name">📉 Datadog</span>
+                    <span class="item-desc">SaaS observability</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
