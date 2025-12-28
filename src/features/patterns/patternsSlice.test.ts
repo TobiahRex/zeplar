@@ -2,11 +2,16 @@ import { describe, it, expect } from 'vitest'
 import { configureStore } from '@reduxjs/toolkit'
 import patternsReducer, {
   loadPatterns,
+  generateCards,
   selectAllPatterns,
   selectPatternById,
   selectPatternsByQuality,
   selectRelatedPatterns,
   selectPatternsLoaded,
+  selectAllCards,
+  selectCardById,
+  selectCardsByPattern,
+  selectCardsGenerated,
 } from './patternsSlice'
 import type { RootState } from '@/app/store'
 
@@ -161,6 +166,121 @@ describe('patternsSlice', () => {
       Object.entries(state.patterns).forEach(([key, pattern]) => {
         expect(key).toBe(pattern.id)
       })
+    })
+  })
+
+  describe('generateCards action', () => {
+    it('should generate 30 cards from 6 patterns', () => {
+      const store = createTestStore()
+
+      // Load patterns first
+      store.dispatch(loadPatterns())
+
+      // Initially cards should be empty
+      expect(store.getState().patterns.cards).toEqual({})
+      expect(store.getState().patterns.cardsGenerated).toBe(false)
+
+      // Generate cards
+      store.dispatch(generateCards())
+
+      // Should have generated 30 cards (6 patterns × 5 cards each)
+      const state = store.getState().patterns
+      expect(Object.keys(state.cards)).toHaveLength(30)
+      expect(state.cardsGenerated).toBe(true)
+    })
+
+    it('should generate cards with correct IDs', () => {
+      const store = createTestStore()
+      store.dispatch(loadPatterns())
+      store.dispatch(generateCards())
+
+      const cards = Object.values(store.getState().patterns.cards)
+
+      // All card IDs should follow format: pattern-id-l1-question-type
+      cards.forEach(card => {
+        expect(card.id).toMatch(/^.+-l1-.+$/)
+      })
+    })
+
+    it('should normalize cards by ID', () => {
+      const store = createTestStore()
+      store.dispatch(loadPatterns())
+      store.dispatch(generateCards())
+
+      const cardsRecord = store.getState().patterns.cards
+
+      // Each key should match the card ID
+      Object.entries(cardsRecord).forEach(([key, card]) => {
+        expect(key).toBe(card.id)
+      })
+    })
+  })
+
+  describe('card selectors', () => {
+    it('selectAllCards should return array of all cards', () => {
+      const store = createTestStore()
+      store.dispatch(loadPatterns())
+      store.dispatch(generateCards())
+
+      const cards = selectAllCards(store.getState() as RootState)
+      expect(cards).toHaveLength(30)
+      expect(cards[0]).toHaveProperty('id')
+      expect(cards[0]).toHaveProperty('patternId')
+    })
+
+    it('selectCardById should return specific card', () => {
+      const store = createTestStore()
+      store.dispatch(loadPatterns())
+      store.dispatch(generateCards())
+
+      const card = selectCardById(store.getState() as RootState, 'circuit-breaker-l1-definition')
+      expect(card).toBeDefined()
+      expect(card?.id).toBe('circuit-breaker-l1-definition')
+      expect(card?.patternId).toBe('circuit-breaker')
+    })
+
+    it('selectCardById should return undefined for non-existent card', () => {
+      const store = createTestStore()
+      store.dispatch(loadPatterns())
+      store.dispatch(generateCards())
+
+      const card = selectCardById(store.getState() as RootState, 'non-existent-card')
+      expect(card).toBeUndefined()
+    })
+
+    it('selectCardsByPattern should return all cards for a pattern', () => {
+      const store = createTestStore()
+      store.dispatch(loadPatterns())
+      store.dispatch(generateCards())
+
+      const cards = selectCardsByPattern(store.getState() as RootState, 'circuit-breaker')
+      expect(cards).toHaveLength(5) // 5 L1 cards per pattern
+
+      // All cards should belong to the pattern
+      cards.forEach(card => {
+        expect(card.patternId).toBe('circuit-breaker')
+      })
+    })
+
+    it('selectCardsByPattern should return empty array for non-existent pattern', () => {
+      const store = createTestStore()
+      store.dispatch(loadPatterns())
+      store.dispatch(generateCards())
+
+      const cards = selectCardsByPattern(store.getState() as RootState, 'non-existent-pattern')
+      expect(cards).toEqual([])
+    })
+
+    it('selectCardsGenerated should return generation state', () => {
+      const store = createTestStore()
+      store.dispatch(loadPatterns())
+
+      // Initially not generated
+      expect(selectCardsGenerated(store.getState() as RootState)).toBe(false)
+
+      // After generation
+      store.dispatch(generateCards())
+      expect(selectCardsGenerated(store.getState() as RootState)).toBe(true)
     })
   })
 })

@@ -1,6 +1,8 @@
 import { createSlice, createSelector } from '@reduxjs/toolkit'
 import { patterns } from '@/data/patterns'
+import { generateAllL1Cards } from '@/lib/cardGenerator'
 import type { Pattern, Implementation, SystemQuality } from '@/data/schema'
+import type { Flashcard } from '@/lib/cardGenerator'
 import type { RootState } from '@/app/store'
 
 // =============================================================================
@@ -18,7 +20,9 @@ export interface EntitiesState {
   patterns: Record<string, Pattern>
   systems: Record<string, RealWorldSystem>
   implementations: Record<string, Implementation>
+  cards: Record<string, Flashcard>
   loaded: boolean
+  cardsGenerated: boolean
 }
 
 // =============================================================================
@@ -29,7 +33,9 @@ const initialState: EntitiesState = {
   patterns: {},
   systems: {},
   implementations: {},
+  cards: {},
   loaded: false,
+  cardsGenerated: false,
 }
 
 // =============================================================================
@@ -45,6 +51,13 @@ export const patternsSlice = createSlice({
       state.patterns = patterns
       state.loaded = true
     },
+    generateCards: (state) => {
+      // Generate all L1 cards from loaded patterns
+      const patternList = Object.values(state.patterns)
+      const cardList = generateAllL1Cards(patternList)
+      state.cards = Object.fromEntries(cardList.map(c => [c.id, c]))
+      state.cardsGenerated = true
+    },
   },
 })
 
@@ -52,7 +65,7 @@ export const patternsSlice = createSlice({
 // Actions
 // =============================================================================
 
-export const { loadPatterns } = patternsSlice.actions
+export const { loadPatterns, generateCards } = patternsSlice.actions
 
 // =============================================================================
 // Selectors
@@ -106,6 +119,40 @@ export const selectRelatedPatterns = createSelector(
 export const selectPatternsLoaded = createSelector(
   [selectPatternsState],
   (patternsState) => patternsState.loaded
+)
+
+// =============================================================================
+// Card Selectors
+// =============================================================================
+
+// Base selector for cards
+const selectCardsRecord = createSelector(
+  [selectPatternsState],
+  (patternsState) => patternsState.cards
+)
+
+// Select all cards as array
+export const selectAllCards = createSelector(
+  [selectCardsRecord],
+  (cardsRecord) => Object.values(cardsRecord)
+)
+
+// Select card by ID
+export const selectCardById = createSelector(
+  [selectCardsRecord, (_state: RootState, cardId: string) => cardId],
+  (cards, cardId) => cards[cardId]
+)
+
+// Select cards by pattern ID
+export const selectCardsByPattern = createSelector(
+  [selectAllCards, (_state: RootState, patternId: string) => patternId],
+  (cards, patternId) => cards.filter(c => c.patternId === patternId)
+)
+
+// Select cards generated state
+export const selectCardsGenerated = createSelector(
+  [selectPatternsState],
+  (patternsState) => patternsState.cardsGenerated
 )
 
 // =============================================================================
