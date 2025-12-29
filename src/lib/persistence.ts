@@ -3,14 +3,18 @@ import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import {
   selectProgress,
   selectStats,
+  selectActivityByDate,
   loadProgress,
   loadStats,
+  loadActivityByDate,
 } from "@/features/learning/learningSlice";
 import {
   loadAllCardProgress,
   loadStats as loadStatsFromDB,
   saveAllCardProgress,
   saveStats,
+  loadActivity,
+  saveActivity,
 } from "./db";
 
 /**
@@ -21,6 +25,7 @@ export function usePersistence() {
   const dispatch = useAppDispatch();
   const progress = useAppSelector(selectProgress);
   const stats = useAppSelector(selectStats);
+  const activityByDate = useAppSelector(selectActivityByDate);
   const [isHydrated, setIsHydrated] = useState(false);
   const isInitialMount = useRef(true);
 
@@ -28,10 +33,9 @@ export function usePersistence() {
   useEffect(() => {
     async function hydrate() {
       try {
-        const [storedProgress, storedStats] = await Promise.all([
-          loadAllCardProgress(),
-          loadStatsFromDB(),
-        ]);
+        const [storedProgress, storedStats, storedActivity] = await Promise.all(
+          [loadAllCardProgress(), loadStatsFromDB(), loadActivity()],
+        );
 
         if (Object.keys(storedProgress).length > 0) {
           dispatch(loadProgress(storedProgress));
@@ -39,6 +43,10 @@ export function usePersistence() {
 
         if (storedStats) {
           dispatch(loadStats(storedStats));
+        }
+
+        if (Object.keys(storedActivity).length > 0) {
+          dispatch(loadActivityByDate(storedActivity));
         }
 
         setIsHydrated(true);
@@ -83,6 +91,19 @@ export function usePersistence() {
 
     return () => clearTimeout(timer);
   }, [stats]);
+
+  // Persist activity changes to IndexedDB
+  useEffect(() => {
+    if (!isHydrated) return;
+
+    const timer = setTimeout(() => {
+      saveActivity(activityByDate).catch((err) =>
+        console.error("Failed to save activity:", err),
+      );
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [activityByDate, isHydrated]);
 
   return { isHydrated };
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,13 +8,16 @@ import { useAppSelector } from "@/app/hooks";
 import {
   selectStats,
   selectProgress,
+  selectActivityByDate,
   selectLayerUnlocks,
 } from "@/features/learning/learningSlice";
 import { patternList } from "@/data/patterns";
+import type { Pattern } from "@/data/schema";
+import { ContributionGraph } from "@/components/ContributionGraph";
 import { MasteryBreakdown } from "@/components/MasteryBreakdown";
+import { PatternCardModal } from "@/components/PatternCardModal";
 import { generateAllL1Cards } from "@/lib/cardGenerator";
 import { getMasteryPercentage } from "@/lib/sm2";
-import { getRecentSessions } from "@/lib/db";
 
 // Color mapping for quality badges
 const qualityColors: Record<string, string> = {
@@ -24,6 +27,7 @@ const qualityColors: Record<string, string> = {
   security: "bg-red-500/20 text-red-400",
   observability: "bg-purple-500/20 text-purple-400",
   maintainability: "bg-cyan-500/20 text-cyan-400",
+  consistency: "bg-emerald-500/20 text-emerald-400",
 };
 
 // Color mapping for strategy badges
@@ -33,6 +37,15 @@ const strategyColors: Record<string, string> = {
   "Work Scheduling": "bg-pink-500/20 text-pink-400",
   Redundancy: "bg-teal-500/20 text-teal-400",
   Recovery: "bg-emerald-500/20 text-emerald-400",
+  "Availability Monitoring": "bg-purple-500/20 text-purple-400",
+  "Distributed Transactions": "bg-violet-500/20 text-violet-400",
+  "Event Reliability": "bg-cyan-500/20 text-cyan-400",
+  "Flow Control": "bg-yellow-500/20 text-yellow-400",
+  "Overload Protection": "bg-red-500/20 text-red-400",
+  "Query Optimization": "bg-blue-500/20 text-blue-400",
+  "Rate Control": "bg-fuchsia-500/20 text-fuchsia-400",
+  "Safe Retries": "bg-lime-500/20 text-lime-400",
+  "State Management": "bg-rose-500/20 text-rose-400",
 };
 
 // Color mapping for family badges
@@ -44,6 +57,16 @@ const familyColors: Record<string, string> = {
   Bulkheads: "bg-violet-500/20 text-violet-400",
   Timeouts: "bg-fuchsia-500/20 text-fuchsia-400",
   "Flow Control": "bg-yellow-500/20 text-yellow-400",
+  "Data Access Patterns": "bg-blue-500/20 text-blue-400",
+  "Data Integrity": "bg-teal-500/20 text-teal-400",
+  Degradation: "bg-orange-500/20 text-orange-400",
+  "Event-Driven Architecture": "bg-purple-500/20 text-purple-400",
+  "Load Management": "bg-red-500/20 text-red-400",
+  Monitoring: "bg-cyan-500/20 text-cyan-400",
+  "Stream Processing": "bg-indigo-500/20 text-indigo-400",
+  "Traffic Management": "bg-pink-500/20 text-pink-400",
+  "Transaction Management": "bg-emerald-500/20 text-emerald-400",
+  "Transactional Messaging": "bg-amber-500/20 text-amber-400",
 };
 
 // Difficulty colors
@@ -66,8 +89,17 @@ const qualityIcons: Record<string, string> = {
 export default function Dashboard() {
   const stats = useAppSelector(selectStats);
   const progress = useAppSelector(selectProgress);
+  const activityByDate = useAppSelector(selectActivityByDate);
   const layerUnlocks = useAppSelector(selectLayerUnlocks);
-  const [heatmapData, setHeatmapData] = useState<number[]>([]);
+
+  // Modal state for pattern card viewer
+  const [selectedPattern, setSelectedPattern] = useState<Pattern | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handlePatternClick = (pattern: Pattern) => {
+    setSelectedPattern(pattern);
+    setIsModalOpen(true);
+  };
 
   // Calculate cards due
   const allCards = generateAllL1Cards(patternList);
@@ -99,31 +131,37 @@ export default function Dashboard() {
     {} as Record<string, number>,
   );
 
-  // Load 7-day heatmap data from IndexedDB
-  useEffect(() => {
-    async function loadHeatmap() {
-      const sessions = await getRecentSessions(30); // Get more than needed
-
-      // Get last 7 days
-      const last7Days: number[] = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = new Date();
-        date.setDate(date.getDate() - i);
-        const dateStr = date.toISOString().split("T")[0];
-
-        // Count cards reviewed on this day
-        const dayCount = sessions
-          .filter((s) => s.startedAt.split("T")[0] === dateStr)
-          .reduce((sum, s) => sum + s.cardsReviewed, 0);
-
-        last7Days.push(dayCount);
+  // Group patterns by quality for accordion navigation
+  const patternsByQuality = patternList.reduce(
+    (acc, pattern) => {
+      const quality = pattern.hierarchy.quality;
+      if (!acc[quality]) {
+        acc[quality] = [];
       }
+      acc[quality].push(pattern);
+      return acc;
+    },
+    {} as Record<string, typeof patternList>,
+  );
 
-      setHeatmapData(last7Days);
-    }
+  // Calculate unique patterns studied in last year
+  const patternsStudiedLastYear = Object.values(progress)
+    .filter((cardProgress) => {
+      if (!cardProgress.lastReviewDate) return false;
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      return new Date(cardProgress.lastReviewDate) >= oneYearAgo;
+    })
+    .reduce((patterns, cardProgress) => {
+      patterns.add(cardProgress.patternId);
+      return patterns;
+    }, new Set<string>()).size;
 
-    loadHeatmap();
-  }, []);
+  // Calculate total cards reviewed in last year
+  const totalCardsLastYear = Object.values(activityByDate).reduce(
+    (sum, count) => sum + count,
+    0,
+  );
 
   // Fire emoji scaling based on streak
   const getStreakEmoji = (streak: number) => {
@@ -150,15 +188,29 @@ export default function Dashboard() {
         <div className="grid gap-4 md:grid-cols-2">
           <Card>
             <CardHeader>
-              <CardTitle>Cards Due Today</CardTitle>
+              <CardTitle>Start Studying</CardTitle>
+              <p className="text-sm text-muted-foreground mt-2">
+                {cardsDue} cards due today
+              </p>
             </CardHeader>
             <CardContent>
-              <p className="text-4xl font-bold">{cardsDue}</p>
-              <Link to="/study">
-                <Button className="mt-4 w-full" size="lg">
-                  Start Study Session
-                </Button>
-              </Link>
+              <div className="space-y-3">
+                <Link to="/study" className="block">
+                  <Button className="w-full" size="lg">
+                    <span className="text-lg">🎯</span>
+                    <span className="ml-2">Study All Patterns</span>
+                  </Button>
+                </Link>
+                <Link to="/select" className="block">
+                  <Button className="w-full" variant="outline" size="lg">
+                    <span className="text-lg">✨</span>
+                    <span className="ml-2">Choose Specific Patterns</span>
+                  </Button>
+                </Link>
+                <p className="text-xs text-center text-muted-foreground mt-2">
+                  Select patterns to customize your study session
+                </p>
+              </div>
             </CardContent>
           </Card>
 
@@ -187,41 +239,14 @@ export default function Dashboard() {
           </Card>
         </div>
 
-        {/* 7-day heatmap */}
+        {/* Activity Contribution Graph */}
         <Card>
-          <CardHeader>
-            <CardTitle>Activity (Last 7 Days)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-2 justify-center">
-              {heatmapData.map((count, index) => {
-                // Determine color based on count
-                let bgColor = "bg-muted"; // 0 cards
-                if (count >= 6) bgColor = "bg-blue-600";
-                else if (count >= 1) bgColor = "bg-blue-400";
-
-                // Get day label
-                const date = new Date();
-                date.setDate(date.getDate() - (6 - index));
-                const dayLabel = date.toLocaleDateString("en-US", {
-                  weekday: "short",
-                });
-
-                return (
-                  <div key={index} className="flex flex-col items-center gap-1">
-                    <div
-                      className={`w-10 h-10 rounded ${bgColor} flex items-center justify-center text-xs font-semibold ${count === 0 ? "text-muted-foreground" : "text-white"}`}
-                      title={`${count} cards reviewed`}
-                    >
-                      {count > 0 ? count : ""}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {dayLabel}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+          <CardContent className="pt-6">
+            <ContributionGraph
+              activityByDate={activityByDate}
+              patternsStudied={patternsStudiedLastYear}
+              totalCards={totalCardsLastYear}
+            />
           </CardContent>
         </Card>
 
@@ -237,92 +262,161 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Pattern Mastery by Layer */}
-        <section className="space-y-4">
-          <h2 className="text-2xl font-bold">Pattern Mastery by Layer</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {patternList.map((pattern) => {
-              const layerStatus = layerUnlocks[pattern.id];
-              if (!layerStatus) return null;
+        {/* Pattern Mastery by Layer - Collapsed by default */}
+        <Card>
+          <CardHeader>
+            <details className="group">
+              <summary className="flex items-center gap-2 cursor-pointer list-none">
+                <svg
+                  className="w-4 h-4 transition-transform group-open:rotate-90"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+                <CardTitle>
+                  Layer-by-Layer Progression ({patternList.length} patterns)
+                </CardTitle>
+              </summary>
+              <p className="text-sm text-muted-foreground mt-2 ml-6">
+                Track your L1, L2, and L3 mastery for each pattern
+              </p>
+              <CardContent className="pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {patternList.map((pattern) => {
+                    const layerStatus = layerUnlocks[pattern.id];
+                    if (!layerStatus) return null;
 
-              return (
-                <MasteryBreakdown
-                  key={pattern.id}
-                  patternId={pattern.id}
-                  patternName={pattern.concept.name}
-                  layerUnlocks={layerStatus}
-                />
-              );
-            })}
-          </div>
-        </section>
+                    return (
+                      <MasteryBreakdown
+                        key={pattern.id}
+                        patternId={pattern.id}
+                        patternName={pattern.concept.name}
+                        patternEmoji={pattern.concept.emoji}
+                        family={pattern.hierarchy.family}
+                        layerUnlocks={layerStatus}
+                      />
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </details>
+          </CardHeader>
+        </Card>
 
         <Card>
           <CardHeader>
             <CardTitle>
               Pattern Library ({patternList.length} patterns)
             </CardTitle>
+            <p className="text-sm text-muted-foreground mt-2">
+              Patterns organized by system quality - expand to explore
+            </p>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {patternList.map((pattern) => {
-              const mastery = getPatternMastery(pattern.id);
-              const { quality, strategy, family } = pattern.hierarchy;
-
-              return (
-                <div
-                  key={pattern.id}
-                  className="p-4 rounded-lg border bg-card space-y-3"
-                >
-                  {/* Top row: emoji, name, mastery */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">{pattern.concept.emoji}</span>
-                      <div>
-                        <h3 className="font-semibold">
-                          {pattern.concept.name}
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {pattern.concept.tagline}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="w-24 text-right">
-                      <Progress value={mastery} className="h-2" />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {mastery}% mastery
+          <CardContent className="space-y-2">
+            {Object.entries(patternsByQuality).map(([quality, patterns]) => (
+              <details key={quality} className="group">
+                <summary className="flex items-center justify-between p-4 rounded-lg border bg-card cursor-pointer hover:bg-accent transition-colors">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{qualityIcons[quality]}</span>
+                    <div>
+                      <h3 className="font-semibold capitalize">{quality}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {patterns.length} patterns
                       </p>
                     </div>
                   </div>
+                  <svg
+                    className="w-5 h-5 transition-transform group-open:rotate-90"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </summary>
 
-                  {/* Bottom row: hierarchy badges */}
-                  <div className="flex flex-wrap gap-2">
-                    <Badge
-                      className={`${qualityColors[quality]} border-0 text-xs`}
-                    >
-                      {qualityIcons[quality]} {quality}
-                    </Badge>
-                    <Badge
-                      className={`${strategyColors[strategy] || "bg-slate-500 text-white"} border-0 text-xs`}
-                    >
-                      {strategy}
-                    </Badge>
-                    <Badge
-                      className={`${familyColors[family] || "bg-gray-500 text-white"} border-0 text-xs`}
-                    >
-                      {family}
-                    </Badge>
-                    <Badge
-                      className={`${difficultyColors[pattern.difficulty]} border-0 text-xs`}
-                    >
-                      {pattern.difficulty}
-                    </Badge>
-                  </div>
+                <div className="mt-2 ml-4 space-y-3 pb-2">
+                  {patterns.map((pattern) => {
+                    const mastery = getPatternMastery(pattern.id);
+                    const { strategy, family } = pattern.hierarchy;
+
+                    return (
+                      <div
+                        key={pattern.id}
+                        className="p-4 rounded-lg border bg-card space-y-3 cursor-pointer hover:bg-accent transition-colors"
+                        onClick={() => handlePatternClick(pattern)}
+                      >
+                        {/* Top row: emoji, name, mastery */}
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <span className="text-2xl">
+                              {pattern.concept.emoji}
+                            </span>
+                            <div>
+                              <h3 className="font-semibold">
+                                {pattern.concept.name}
+                              </h3>
+                              <p className="text-sm text-muted-foreground">
+                                {pattern.concept.tagline}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="w-24 text-right">
+                            <Progress value={mastery} className="h-2" />
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {mastery}% mastery
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Bottom row: hierarchy badges */}
+                        <div className="flex flex-wrap gap-2">
+                          <Badge
+                            className={`${strategyColors[strategy] || "bg-slate-500 text-white"} border-0 text-xs`}
+                          >
+                            {strategy}
+                          </Badge>
+                          <Badge
+                            className={`${familyColors[family] || "bg-gray-500 text-white"} border-0 text-xs`}
+                          >
+                            {family}
+                          </Badge>
+                          {pattern.difficulty && (
+                            <Badge
+                              className={`${difficultyColors[pattern.difficulty]} border-0 text-xs`}
+                            >
+                              {pattern.difficulty}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-              );
-            })}
+              </details>
+            ))}
           </CardContent>
         </Card>
       </div>
+
+      {/* Pattern Card Modal */}
+      <PatternCardModal
+        pattern={selectedPattern}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   );
 }

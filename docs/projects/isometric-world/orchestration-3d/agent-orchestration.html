@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Orchestration - Communication Visualization</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #0a0e14; 
+      overflow: hidden; 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    #ui-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      pointer-events: none;
+      z-index: 100;
+    }
+    
+    #info-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(10, 14, 20, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 20px;
+      border-radius: 16px;
+      color: white;
+      width: 280px;
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+      pointer-events: auto;
+    }
+    
+    .panel-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .panel-header h2 {
+      font-size: 16px;
+      background: linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(1.2); }
+    }
+    
+    .scenario-select {
+      width: 100%;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: white;
+      font-size: 13px;
+      cursor: pointer;
+      margin-bottom: 16px;
+    }
+    
+    .scenario-select option {
+      background: #1a1f2e;
+    }
+    
+    .legend {
+      display: grid;
+      gap: 8px;
+    }
+    
+    .legend-section {
+      margin-bottom: 12px;
+    }
+    
+    .legend-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+      margin-bottom: 8px;
+    }
+    
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 11px;
+      color: #9ca3af;
+    }
+    
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      flex-shrink: 0;
+    }
+    
+    .legend-icon {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+    
+    #activity-log {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 350px;
+      max-height: 200px;
+      background: rgba(10, 14, 20, 0.95);
+      backdrop-filter: blur(12px);
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      overflow: hidden;
+      pointer-events: auto;
+    }
+    
+    .log-header {
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+    }
+    
+    .log-content {
+      padding: 8px;
+      max-height: 150px;
+      overflow-y: auto;
+      font-family: 'SF Mono', Monaco, monospace;
+      font-size: 11px;
+    }
+    
+    .log-entry {
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin-bottom: 4px;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+    
+    .log-entry.send { background: rgba(34, 197, 94, 0.1); color: #4ade80; }
+    .log-entry.receive { background: rgba(59, 130, 246, 0.1); color: #60a5fa; }
+    .log-entry.blocked { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+    .log-entry.complete { background: rgba(168, 85, 247, 0.1); color: #c084fc; }
+    
+    .log-time {
+      color: #6b7280;
+      flex-shrink: 0;
+    }
+    
+    #stats-panel {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(10, 14, 20, 0.95);
+      backdrop-filter: blur(12px);
+      padding: 16px 20px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08);
+      pointer-events: auto;
+    }
+    
+    .stat-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 6px 0;
+      font-size: 12px;
+    }
+    
+    .stat-label { color: #6b7280; }
+    .stat-value { color: white; font-weight: 600; }
+    .stat-value.working { color: #22c55e; }
+    .stat-value.blocked { color: #ef4444; }
+    .stat-value.messages { color: #06b6d4; }
+    
+    .controls-hint {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(10, 14, 20, 0.8);
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 11px;
+      color: #6b7280;
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui-container">
+    <div id="info-panel">
+      <div class="panel-header">
+        <div class="status-dot"></div>
+        <h2>Agent Orchestration</h2>
+      </div>
+      
+      <select class="scenario-select" id="scenario-select">
+        <option value="active">🟢 Active Development Sprint</option>
+        <option value="blocked">🔴 Blocked Workflow</option>
+        <option value="handoff">🔄 Task Handoff Chain</option>
+        <option value="parallel">⚡ Parallel Processing</option>
+        <option value="review">👁️ Code Review Cycle</option>
+      </select>
+      
+      <div class="legend">
+        <div class="legend-section">
+          <div class="legend-title">Agent States</div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #22c55e;"></div>
+            <span>Working - Active task</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #f59e0b;"></div>
+            <span>Waiting - Pending response</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #ef4444;"></div>
+            <span>Blocked - Cannot proceed</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color" style="background: #6b7280;"></div>
+            <span>Idle - No current task</span>
+          </div>
+        </div>
+        
+        <div class="legend-section">
+          <div class="legend-title">Connection Types</div>
+          <div class="legend-item">
+            <div class="legend-icon">💬</div>
+            <span>Active message flow</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-icon">📨</div>
+            <span>Request pending</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-icon">🚧</div>
+            <span>Blocked dependency</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-icon">📦</div>
+            <span>Task handoff</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="stats-panel">
+      <div class="stat-row">
+        <span class="stat-label">Agents Working:</span>
+        <span class="stat-value working" id="stat-working">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Agents Blocked:</span>
+        <span class="stat-value blocked" id="stat-blocked">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Active Messages:</span>
+        <span class="stat-value messages" id="stat-messages">0</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Tasks Complete:</span>
+        <span class="stat-value" id="stat-complete">0</span>
+      </div>
+    </div>
+    
+    <div id="activity-log">
+      <div class="log-header">📋 Activity Log</div>
+      <div class="log-content" id="log-content"></div>
+    </div>
+    
+    <div class="controls-hint">
+      🖱️ Drag to orbit • Scroll to zoom
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // ==========================================================================
+    // AGENT CONFIGURATION
+    // ==========================================================================
+    const ROLES = {
+      pm: { name: 'PM', color: 0xfbbf24, position: { x: 0, z: -6 } },
+      architect: { name: 'Architect', color: 0x8b5cf6, position: { x: -5, z: -3 } },
+      frontend: { name: 'Frontend', color: 0x3b82f6, position: { x: -8, z: 3 } },
+      backend: { name: 'Backend', color: 0x22c55e, position: { x: -3, z: 3 } },
+      data: { name: 'Data Eng', color: 0xa855f7, position: { x: 3, z: 3 } },
+      devops: { name: 'DevOps', color: 0xf97316, position: { x: 8, z: 3 } },
+      qa: { name: 'QA', color: 0x06b6d4, position: { x: 5, z: -3 } },
+    };
+    
+    const SCENARIOS = {
+      active: {
+        name: 'Active Development Sprint',
+        agents: {
+          pm: { status: 'working', task: 'Coordinating sprint' },
+          architect: { status: 'working', task: 'Reviewing design' },
+          frontend: { status: 'working', task: 'Building components' },
+          backend: { status: 'working', task: 'API development' },
+          data: { status: 'idle', task: null },
+          devops: { status: 'working', task: 'Pipeline config' },
+          qa: { status: 'waiting', task: 'Awaiting build' },
+        },
+        connections: [
+          { from: 'pm', to: 'architect', type: 'active' },
+          { from: 'architect', to: 'frontend', type: 'active' },
+          { from: 'architect', to: 'backend', type: 'active' },
+          { from: 'backend', to: 'devops', type: 'active' },
+          { from: 'devops', to: 'qa', type: 'pending' },
+        ]
+      },
+      blocked: {
+        name: 'Blocked Workflow',
+        agents: {
+          pm: { status: 'waiting', task: 'Waiting for updates' },
+          architect: { status: 'idle', task: null },
+          frontend: { status: 'blocked', task: 'Waiting for API' },
+          backend: { status: 'blocked', task: 'Database issue' },
+          data: { status: 'blocked', task: 'Blocking backend' },
+          devops: { status: 'working', task: 'Investigating' },
+          qa: { status: 'idle', task: null },
+        },
+        connections: [
+          { from: 'frontend', to: 'backend', type: 'blocked' },
+          { from: 'backend', to: 'data', type: 'blocked' },
+          { from: 'data', to: 'devops', type: 'pending' },
+          { from: 'pm', to: 'frontend', type: 'pending' },
+        ]
+      },
+      handoff: {
+        name: 'Task Handoff Chain',
+        agents: {
+          pm: { status: 'complete', task: 'Spec complete' },
+          architect: { status: 'complete', task: 'Design complete' },
+          frontend: { status: 'working', task: 'Implementing' },
+          backend: { status: 'waiting', task: 'Next in queue' },
+          data: { status: 'idle', task: null },
+          devops: { status: 'idle', task: null },
+          qa: { status: 'idle', task: null },
+        },
+        connections: [
+          { from: 'pm', to: 'architect', type: 'handoff' },
+          { from: 'architect', to: 'frontend', type: 'handoff' },
+          { from: 'frontend', to: 'backend', type: 'pending' },
+        ]
+      },
+      parallel: {
+        name: 'Parallel Processing',
+        agents: {
+          pm: { status: 'working', task: 'Orchestrating' },
+          architect: { status: 'idle', task: null },
+          frontend: { status: 'working', task: 'UI work' },
+          backend: { status: 'working', task: 'API work' },
+          data: { status: 'working', task: 'Pipeline work' },
+          devops: { status: 'working', task: 'Infra work' },
+          qa: { status: 'waiting', task: 'Awaiting all' },
+        },
+        connections: [
+          { from: 'pm', to: 'frontend', type: 'active' },
+          { from: 'pm', to: 'backend', type: 'active' },
+          { from: 'pm', to: 'data', type: 'active' },
+          { from: 'pm', to: 'devops', type: 'active' },
+          { from: 'frontend', to: 'qa', type: 'pending' },
+          { from: 'backend', to: 'qa', type: 'pending' },
+        ]
+      },
+      review: {
+        name: 'Code Review Cycle',
+        agents: {
+          pm: { status: 'idle', task: null },
+          architect: { status: 'working', task: 'Reviewing code' },
+          frontend: { status: 'waiting', task: 'Awaiting review' },
+          backend: { status: 'waiting', task: 'Awaiting review' },
+          data: { status: 'idle', task: null },
+          devops: { status: 'idle', task: null },
+          qa: { status: 'working', task: 'Testing' },
+        },
+        connections: [
+          { from: 'frontend', to: 'architect', type: 'pending' },
+          { from: 'backend', to: 'architect', type: 'pending' },
+          { from: 'architect', to: 'qa', type: 'active' },
+        ]
+      }
+    };
+    
+    // ==========================================================================
+    // THREE.JS SETUP
+    // ==========================================================================
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x080b10);
+    scene.fog = new THREE.FogExp2(0x080b10, 0.018);
+    
+    const frustumSize = 18;
+    const aspect = window.innerWidth / window.innerHeight;
+    const camera = new THREE.OrthographicCamera(
+      -frustumSize * aspect, frustumSize * aspect,
+      frustumSize, -frustumSize, 0.1, 1000
+    );
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    document.body.appendChild(renderer.domElement);
+    
+    // ==========================================================================
+    // LIGHTING
+    // ==========================================================================
+    const ambient = new THREE.AmbientLight(0x404060, 0.4);
+    scene.add(ambient);
+    
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.6);
+    mainLight.position.set(15, 25, 15);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.set(2048, 2048);
+    mainLight.shadow.camera.near = 0.5;
+    mainLight.shadow.camera.far = 60;
+    mainLight.shadow.camera.left = -20;
+    mainLight.shadow.camera.right = 20;
+    mainLight.shadow.camera.top = 20;
+    mainLight.shadow.camera.bottom = -20;
+    scene.add(mainLight);
+    
+    // Colored accent lights
+    const cyanLight = new THREE.PointLight(0x06b6d4, 0.4, 30);
+    cyanLight.position.set(-12, 8, 12);
+    scene.add(cyanLight);
+    
+    const purpleLight = new THREE.PointLight(0x8b5cf6, 0.4, 30);
+    purpleLight.position.set(12, 8, -12);
+    scene.add(purpleLight);
+    
+    // ==========================================================================
+    // ENVIRONMENT
+    // ==========================================================================
+    function createEnvironment() {
+      // Floor grid
+      const gridSize = 20;
+      for (let x = 0; x < gridSize; x++) {
+        for (let z = 0; z < gridSize; z++) {
+          const isLight = (x + z) % 2 === 0;
+          const tile = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 0.08, 1),
+            new THREE.MeshStandardMaterial({
+              color: isLight ? 0x12161f : 0x0d1017,
+              metalness: 0.2,
+              roughness: 0.9
+            })
+          );
+          tile.position.set(x - gridSize/2 + 0.5, 0, z - gridSize/2 + 0.5);
+          tile.receiveShadow = true;
+          scene.add(tile);
+        }
+      }
+      
+      // Ambient decorations - subtle plants/objects
+      const decorPositions = [
+        [-9, 0.5, -7], [9, 0.5, -7], [-9, 0.5, 7], [9, 0.5, 7],
+        [-9, 0.5, 0], [9, 0.5, 0]
+      ];
+      
+      decorPositions.forEach(pos => {
+        const plant = new THREE.Group();
+        
+        // Pot
+        const pot = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.25, 0.2, 0.35, 8),
+          new THREE.MeshStandardMaterial({ color: 0x4a3728 })
+        );
+        pot.position.y = 0.175;
+        plant.add(pot);
+        
+        // Foliage
+        const foliage = new THREE.Mesh(
+          new THREE.SphereGeometry(0.35, 8, 6),
+          new THREE.MeshStandardMaterial({ color: 0x22543d })
+        );
+        foliage.position.y = 0.6;
+        foliage.scale.y = 1.2;
+        plant.add(foliage);
+        
+        plant.position.set(...pos);
+        scene.add(plant);
+      });
+    }
+    
+    // ==========================================================================
+    // AGENT CREATION (Enhanced)
+    // ==========================================================================
+    const agents = {};
+    const agentMeshes = [];
+    
+    function createAgent(roleId, roleConfig) {
+      const group = new THREE.Group();
+      group.position.set(roleConfig.position.x, 0.05, roleConfig.position.z);
+      
+      // Enhanced desk
+      const desk = new THREE.Group();
+      
+      // Desk surface
+      const deskTop = new THREE.Mesh(
+        new THREE.BoxGeometry(1.8, 0.08, 1),
+        new THREE.MeshStandardMaterial({ color: 0x2d3748, metalness: 0.1 })
+      );
+      deskTop.position.y = 0.7;
+      deskTop.castShadow = true;
+      desk.add(deskTop);
+      
+      // Desk legs
+      const legGeo = new THREE.BoxGeometry(0.06, 0.7, 0.06);
+      const legMat = new THREE.MeshStandardMaterial({ color: 0x1a202c });
+      [[-0.8, 0.35, 0.4], [0.8, 0.35, 0.4], [-0.8, 0.35, -0.4], [0.8, 0.35, -0.4]].forEach(pos => {
+        const leg = new THREE.Mesh(legGeo, legMat);
+        leg.position.set(...pos);
+        desk.add(leg);
+      });
+      
+      // Monitor
+      const monitorStand = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.4, 0.05),
+        new THREE.MeshStandardMaterial({ color: 0x1a202c })
+      );
+      monitorStand.position.set(0, 1.0, -0.35);
+      desk.add(monitorStand);
+      
+      const screen = new THREE.Mesh(
+        new THREE.BoxGeometry(0.9, 0.5, 0.03),
+        new THREE.MeshStandardMaterial({ color: 0x0f172a })
+      );
+      screen.position.set(0, 1.15, -0.35);
+      desk.add(screen);
+      
+      const screenGlow = new THREE.Mesh(
+        new THREE.BoxGeometry(0.85, 0.45, 0.01),
+        new THREE.MeshStandardMaterial({ 
+          color: roleConfig.color, 
+          emissive: roleConfig.color, 
+          emissiveIntensity: 0.3 
+        })
+      );
+      screenGlow.position.set(0, 1.15, -0.33);
+      desk.add(screenGlow);
+      
+      // Chair
+      const chairSeat = new THREE.Mesh(
+        new THREE.BoxGeometry(0.45, 0.08, 0.45),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b })
+      );
+      chairSeat.position.set(0, 0.45, 0.55);
+      desk.add(chairSeat);
+      
+      const chairBack = new THREE.Mesh(
+        new THREE.BoxGeometry(0.45, 0.45, 0.06),
+        new THREE.MeshStandardMaterial({ color: 0x1e293b })
+      );
+      chairBack.position.set(0, 0.7, 0.8);
+      desk.add(chairBack);
+      
+      group.add(desk);
+      
+      // Character
+      const character = new THREE.Group();
+      character.position.set(0, 0, 0.55);
+      character.rotation.y = Math.PI;
+      
+      // Head
+      const head = new THREE.Mesh(
+        new THREE.BoxGeometry(0.32, 0.32, 0.32),
+        new THREE.MeshStandardMaterial({ color: 0xfcd5b8 })
+      );
+      head.position.y = 1.5;
+      head.castShadow = true;
+      character.add(head);
+      
+      // Role indicator (hat/hair)
+      const roleIndicator = new THREE.Mesh(
+        new THREE.BoxGeometry(0.36, 0.1, 0.36),
+        new THREE.MeshStandardMaterial({ 
+          color: roleConfig.color, 
+          emissive: roleConfig.color, 
+          emissiveIntensity: 0.2 
+        })
+      );
+      roleIndicator.position.y = 1.72;
+      character.add(roleIndicator);
+      
+      // Body
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.5, 0.28),
+        new THREE.MeshStandardMaterial({ color: roleConfig.color })
+      );
+      body.position.y = 1.05;
+      body.castShadow = true;
+      character.add(body);
+      
+      // Arms
+      const armGeo = new THREE.BoxGeometry(0.1, 0.4, 0.1);
+      const armMat = new THREE.MeshStandardMaterial({ color: 0xfcd5b8 });
+      const leftArm = new THREE.Mesh(armGeo, armMat);
+      leftArm.position.set(-0.28, 1.0, 0);
+      leftArm.rotation.z = 0.15;
+      character.add(leftArm);
+      
+      const rightArm = new THREE.Mesh(armGeo, armMat);
+      rightArm.position.set(0.28, 1.0, 0);
+      rightArm.rotation.z = -0.15;
+      character.add(rightArm);
+      
+      // Legs
+      const legGeoChar = new THREE.BoxGeometry(0.13, 0.45, 0.13);
+      const legMatChar = new THREE.MeshStandardMaterial({ color: 0x1e293b });
+      const leftLeg = new THREE.Mesh(legGeoChar, legMatChar);
+      leftLeg.position.set(-0.1, 0.53, 0);
+      character.add(leftLeg);
+      
+      const rightLeg = new THREE.Mesh(legGeoChar, legMatChar);
+      rightLeg.position.set(0.1, 0.53, 0);
+      character.add(rightLeg);
+      
+      group.add(character);
+      
+      // Status orb
+      const statusOrb = new THREE.Mesh(
+        new THREE.SphereGeometry(0.1, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0x6b7280, transparent: true, opacity: 0.9 })
+      );
+      statusOrb.position.set(0, 2.1, 0.55);
+      group.add(statusOrb);
+      
+      // Floor glow
+      const floorGlow = new THREE.Mesh(
+        new THREE.CircleGeometry(1.3, 32),
+        new THREE.MeshBasicMaterial({ 
+          color: roleConfig.color, 
+          transparent: true, 
+          opacity: 0.08 
+        })
+      );
+      floorGlow.rotation.x = -Math.PI / 2;
+      floorGlow.position.y = 0.06;
+      group.add(floorGlow);
+      
+      // Name label
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#' + roleConfig.color.toString(16).padStart(6, '0');
+      ctx.font = 'bold 32px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText(roleConfig.name, 128, 42);
+      
+      const labelTex = new THREE.CanvasTexture(canvas);
+      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTex, transparent: true }));
+      label.position.set(0, 2.5, 0.55);
+      label.scale.set(2, 0.5, 1);
+      group.add(label);
+      
+      scene.add(group);
+      
+      const agentData = {
+        id: roleId,
+        group: group,
+        character: character,
+        body: body,
+        statusOrb: statusOrb,
+        floorGlow: floorGlow,
+        screenGlow: screenGlow,
+        roleConfig: roleConfig,
+        status: 'idle',
+        task: null,
+        phase: Math.random() * Math.PI * 2
+      };
+      
+      agents[roleId] = agentData;
+      agentMeshes.push(group);
+      
+      return agentData;
+    }
+    
+    // ==========================================================================
+    // CONNECTION SYSTEM
+    // ==========================================================================
+    const connections = [];
+    const messageParticles = [];
+    
+    function createConnection(fromId, toId, type) {
+      const fromAgent = agents[fromId];
+      const toAgent = agents[toId];
+      if (!fromAgent || !toAgent) return null;
+      
+      const start = new THREE.Vector3(
+        fromAgent.group.position.x,
+        1.8,
+        fromAgent.group.position.z
+      );
+      const end = new THREE.Vector3(
+        toAgent.group.position.x,
+        1.8,
+        toAgent.group.position.z
+      );
+      
+      const mid = new THREE.Vector3().lerpVectors(start, end, 0.5);
+      mid.y += 1.5 + Math.random() * 0.5;
+      
+      const curve = new THREE.QuadraticBezierCurve3(start, mid, end);
+      
+      // Connection colors by type
+      const colors = {
+        active: 0x22c55e,
+        pending: 0xf59e0b,
+        blocked: 0xef4444,
+        handoff: 0x8b5cf6
+      };
+      
+      const tubeGeo = new THREE.TubeGeometry(curve, 32, 0.025, 8, false);
+      const tubeMat = new THREE.MeshBasicMaterial({
+        color: colors[type] || 0x6b7280,
+        transparent: true,
+        opacity: type === 'blocked' ? 0.4 : 0.6
+      });
+      
+      const tube = new THREE.Mesh(tubeGeo, tubeMat);
+      scene.add(tube);
+      
+      // Dashed overlay for blocked
+      let dashedLine = null;
+      if (type === 'blocked') {
+        const points = curve.getPoints(50);
+        const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+        dashedLine = new THREE.Line(lineGeo, new THREE.LineDashedMaterial({
+          color: 0xef4444,
+          dashSize: 0.2,
+          gapSize: 0.1,
+          transparent: true,
+          opacity: 0.8
+        }));
+        dashedLine.computeLineDistances();
+        scene.add(dashedLine);
+      }
+      
+      // Blocked indicator
+      let blockedIcon = null;
+      if (type === 'blocked') {
+        blockedIcon = new THREE.Group();
+        
+        const iconBg = new THREE.Mesh(
+          new THREE.CircleGeometry(0.2, 16),
+          new THREE.MeshBasicMaterial({ color: 0xef4444 })
+        );
+        blockedIcon.add(iconBg);
+        
+        // X mark
+        const xGeo = new THREE.BufferGeometry();
+        const xVerts = new Float32Array([
+          -0.1, -0.1, 0.01, 0.1, 0.1, 0.01,
+          -0.1, 0.1, 0.01, 0.1, -0.1, 0.01
+        ]);
+        xGeo.setAttribute('position', new THREE.BufferAttribute(xVerts, 3));
+        const xLine = new THREE.LineSegments(xGeo, new THREE.LineBasicMaterial({ color: 0xffffff, linewidth: 2 }));
+        blockedIcon.add(xLine);
+        
+        blockedIcon.position.copy(mid);
+        blockedIcon.lookAt(camera.position);
+        scene.add(blockedIcon);
+      }
+      
+      const connectionData = {
+        from: fromId,
+        to: toId,
+        type: type,
+        curve: curve,
+        tube: tube,
+        dashedLine: dashedLine,
+        blockedIcon: blockedIcon,
+        particles: []
+      };
+      
+      connections.push(connectionData);
+      
+      // Create particles for active/pending/handoff
+      if (type === 'active' || type === 'pending' || type === 'handoff') {
+        const particleCount = type === 'active' ? 5 : type === 'handoff' ? 2 : 1;
+        const particleColor = colors[type];
+        const particleSize = type === 'handoff' ? 0.12 : 0.06;
+        
+        for (let i = 0; i < particleCount; i++) {
+          const particle = new THREE.Mesh(
+            type === 'handoff' 
+              ? new THREE.BoxGeometry(particleSize, particleSize, particleSize)
+              : new THREE.SphereGeometry(particleSize, 8, 8),
+            new THREE.MeshBasicMaterial({ color: particleColor })
+          );
+          
+          const particleData = {
+            mesh: particle,
+            connection: connectionData,
+            t: i / particleCount,
+            speed: type === 'active' ? 0.4 : type === 'handoff' ? 0.2 : 0.15
+          };
+          
+          connectionData.particles.push(particleData);
+          messageParticles.push(particleData);
+          scene.add(particle);
+        }
+      }
+      
+      return connectionData;
+    }
+    
+    function clearConnections() {
+      connections.forEach(conn => {
+        scene.remove(conn.tube);
+        if (conn.dashedLine) scene.remove(conn.dashedLine);
+        if (conn.blockedIcon) scene.remove(conn.blockedIcon);
+        conn.particles.forEach(p => scene.remove(p.mesh));
+      });
+      connections.length = 0;
+      messageParticles.length = 0;
+    }
+    
+    // ==========================================================================
+    // EFFECTS
+    // ==========================================================================
+    const pulseRings = [];
+    
+    function createPulseRing(position, color) {
+      const ring = new THREE.Mesh(
+        new THREE.RingGeometry(0.1, 0.15, 32),
+        new THREE.MeshBasicMaterial({ color: color, transparent: true, opacity: 0.8, side: THREE.DoubleSide })
+      );
+      ring.rotation.x = -Math.PI / 2;
+      ring.position.copy(position);
+      ring.position.y = 0.1;
+      scene.add(ring);
+      
+      pulseRings.push({ mesh: ring, age: 0, maxAge: 1.5, maxScale: 3 });
+    }
+    
+    // ==========================================================================
+    // SCENARIO MANAGEMENT
+    // ==========================================================================
+    let currentScenario = 'active';
+    let completedTasks = 0;
+    
+    function applyScenario(scenarioId) {
+      const scenario = SCENARIOS[scenarioId];
+      if (!scenario) return;
+      
+      currentScenario = scenarioId;
+      clearConnections();
+      
+      // Update agent states
+      Object.entries(scenario.agents).forEach(([roleId, state]) => {
+        const agent = agents[roleId];
+        if (!agent) return;
+        
+        agent.status = state.status;
+        agent.task = state.task;
+        
+        // Update visuals based on status
+        const statusColors = {
+          working: 0x22c55e,
+          waiting: 0xf59e0b,
+          blocked: 0xef4444,
+          idle: 0x6b7280,
+          complete: 0x3b82f6
+        };
+        
+        agent.statusOrb.material.color.setHex(statusColors[state.status] || 0x6b7280);
+        agent.floorGlow.material.opacity = state.status === 'working' ? 0.2 : 
+                                            state.status === 'blocked' ? 0.15 : 0.08;
+        agent.screenGlow.material.emissiveIntensity = state.status === 'working' ? 0.5 : 0.2;
+        
+        // Mute idle agents
+        if (state.status === 'idle') {
+          agent.body.material.color.setHex(0x4b5563);
+        } else {
+          agent.body.material.color.setHex(agent.roleConfig.color);
+        }
+      });
+      
+      // Create connections
+      scenario.connections.forEach(conn => {
+        createConnection(conn.from, conn.to, conn.type);
+      });
+      
+      // Update stats
+      updateStats();
+      
+      // Log scenario change
+      addLogEntry('complete', `Scenario: ${scenario.name}`);
+    }
+    
+    function updateStats() {
+      const scenario = SCENARIOS[currentScenario];
+      let working = 0, blocked = 0;
+      
+      Object.values(scenario.agents).forEach(state => {
+        if (state.status === 'working') working++;
+        if (state.status === 'blocked') blocked++;
+      });
+      
+      document.getElementById('stat-working').textContent = working;
+      document.getElementById('stat-blocked').textContent = blocked;
+      document.getElementById('stat-messages').textContent = messageParticles.length;
+      document.getElementById('stat-complete').textContent = completedTasks;
+    }
+    
+    // ==========================================================================
+    // ACTIVITY LOG
+    // ==========================================================================
+    function addLogEntry(type, message) {
+      const logContent = document.getElementById('log-content');
+      const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.innerHTML = `<span class="log-time">${time}</span><span>${message}</span>`;
+      
+      logContent.insertBefore(entry, logContent.firstChild);
+      
+      // Keep only last 20 entries
+      while (logContent.children.length > 20) {
+        logContent.removeChild(logContent.lastChild);
+      }
+    }
+    
+    // Simulate activity
+    function simulateActivity() {
+      if (Math.random() < 0.02) {
+        const scenario = SCENARIOS[currentScenario];
+        const workingAgents = Object.entries(scenario.agents)
+          .filter(([_, s]) => s.status === 'working')
+          .map(([id]) => id);
+        
+        if (workingAgents.length > 0) {
+          const agentId = workingAgents[Math.floor(Math.random() * workingAgents.length)];
+          const agent = agents[agentId];
+          
+          const messages = [
+            `${agent.roleConfig.name}: Processing task...`,
+            `${agent.roleConfig.name}: Sending update`,
+            `${agent.roleConfig.name}: Checkpoint reached`
+          ];
+          
+          addLogEntry('send', messages[Math.floor(Math.random() * messages.length)]);
+          createPulseRing(agent.group.position, agent.roleConfig.color);
+        }
+      }
+    }
+    
+    // ==========================================================================
+    // CAMERA CONTROLS
+    // ==========================================================================
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+    let spherical = { theta: Math.PI / 4, phi: Math.PI / 4.5, radius: 40 };
+    
+    function updateCamera() {
+      camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+      camera.position.y = spherical.radius * Math.cos(spherical.phi);
+      camera.position.z = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+      camera.lookAt(0, 0, 0);
+      
+      // Update blocked icons to face camera
+      connections.forEach(conn => {
+        if (conn.blockedIcon) {
+          conn.blockedIcon.quaternion.copy(camera.quaternion);
+        }
+      });
+    }
+    
+    renderer.domElement.addEventListener('mousedown', e => {
+      if (e.button === 0) { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; }
+    });
+    
+    renderer.domElement.addEventListener('mousemove', e => {
+      if (isDragging) {
+        spherical.theta -= (e.clientX - prevMouse.x) * 0.01;
+        spherical.phi = Math.max(0.3, Math.min(Math.PI / 2.2, spherical.phi + (e.clientY - prevMouse.y) * 0.01));
+        updateCamera();
+        prevMouse = { x: e.clientX, y: e.clientY };
+      }
+    });
+    
+    renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+    renderer.domElement.addEventListener('mouseleave', () => isDragging = false);
+    renderer.domElement.addEventListener('wheel', e => {
+      e.preventDefault();
+      spherical.radius = Math.max(20, Math.min(60, spherical.radius + e.deltaY * 0.03));
+      updateCamera();
+    }, { passive: false });
+    
+    // ==========================================================================
+    // ANIMATION LOOP
+    // ==========================================================================
+    const clock = new THREE.Clock();
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      const elapsed = clock.getElapsedTime();
+      const delta = clock.getDelta();
+      
+      // Animate agents
+      Object.values(agents).forEach(agent => {
+        // Breathing
+        const breathe = Math.sin(elapsed * 2 + agent.phase) * 0.02;
+        agent.body.scale.x = 1 + breathe;
+        
+        // Status orb bob
+        agent.statusOrb.position.y = 2.1 + Math.sin(elapsed * 2.5 + agent.phase) * 0.05;
+        
+        // Working animation - head movement
+        if (agent.status === 'working') {
+          agent.character.children[0].rotation.y = Math.sin(elapsed * 3 + agent.phase) * 0.1;
+        }
+        
+        // Blocked animation - slight shake
+        if (agent.status === 'blocked') {
+          agent.character.position.x = Math.sin(elapsed * 8 + agent.phase) * 0.02;
+        } else {
+          agent.character.position.x = 0;
+        }
+      });
+      
+      // Animate message particles
+      messageParticles.forEach(particle => {
+        particle.t += particle.speed * delta;
+        if (particle.t >= 1) particle.t -= 1;
+        
+        const point = particle.connection.curve.getPoint(particle.t);
+        particle.mesh.position.copy(point);
+        
+        // Rotation for handoff packages
+        if (particle.mesh.geometry.type === 'BoxGeometry') {
+          particle.mesh.rotation.x += delta * 2;
+          particle.mesh.rotation.y += delta * 3;
+        }
+      });
+      
+      // Animate pulse rings
+      for (let i = pulseRings.length - 1; i >= 0; i--) {
+        const ring = pulseRings[i];
+        ring.age += delta;
+        
+        if (ring.age >= ring.maxAge) {
+          scene.remove(ring.mesh);
+          pulseRings.splice(i, 1);
+          continue;
+        }
+        
+        const progress = ring.age / ring.maxAge;
+        const scale = ring.maxScale * (1 - Math.pow(1 - progress, 2));
+        ring.mesh.scale.set(scale, scale, 1);
+        ring.mesh.material.opacity = 0.8 * (1 - progress);
+      }
+      
+      // Simulate activity
+      simulateActivity();
+      
+      // Update stats
+      document.getElementById('stat-messages').textContent = messageParticles.length;
+      
+      renderer.render(scene, camera);
+    }
+    
+    // ==========================================================================
+    // INITIALIZATION
+    // ==========================================================================
+    createEnvironment();
+    Object.entries(ROLES).forEach(([id, config]) => createAgent(id, config));
+    
+    // Scenario selector
+    document.getElementById('scenario-select').addEventListener('change', e => {
+      applyScenario(e.target.value);
+    });
+    
+    applyScenario('active');
+    updateCamera();
+    animate();
+    
+    // Resize handler
+    window.addEventListener('resize', () => {
+      const aspect = window.innerWidth / window.innerHeight;
+      camera.left = -frustumSize * aspect;
+      camera.right = frustumSize * aspect;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    console.log('🎮 Agent Orchestration Visualization loaded!');
+  </script>
+</body>
+</html>

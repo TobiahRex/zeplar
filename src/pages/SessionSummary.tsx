@@ -5,7 +5,7 @@ import {
   selectSession,
   selectProgress,
   selectStats,
-  startSession,
+  startSessionRequested,
 } from "@/features/learning/learningSlice";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -56,11 +56,9 @@ export default function SessionSummary() {
   }).length;
 
   const handleContinueStudying = () => {
-    const cardKeys = allCards.map((c) => c.id);
-    if (cardKeys.length > 0) {
-      dispatch(startSession(cardKeys));
-      navigate("/study");
-    }
+    // Saga will generate cards and start session
+    dispatch(startSessionRequested());
+    navigate("/study");
   };
 
   const handleBackToDashboard = () => {

@@ -1,0 +1,424 @@
+<svg viewBox="0 0 1200 850" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="headerGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#06b6d4"/>
+      <stop offset="50%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#58a6ff"/>
+    </marker>
+    
+    <!-- Animated dash pattern for blocked -->
+    <pattern id="blockedPattern" patternUnits="userSpaceOnUse" width="10" height="10">
+      <line x1="0" y1="0" x2="10" y2="10" stroke="#ef4444" stroke-width="2"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="850" fill="#0d1117"/>
+  
+  <!-- Title -->
+  <text x="600" y="40" text-anchor="middle" fill="url(#headerGrad2)" font-size="26" font-weight="bold">Agent Communication States &amp; Visual Patterns</text>
+  <text x="600" y="65" text-anchor="middle" fill="#8b949e" font-size="14">How to visualize workflow orchestration in 3D space</text>
+  
+  <!-- ========== SECTION 1: AGENT STATES ========== -->
+  <g transform="translate(30, 100)">
+    <text x="0" y="0" fill="#06b6d4" font-size="18" font-weight="bold">1. INDIVIDUAL AGENT STATES</text>
+    
+    <g transform="translate(0, 25)">
+      <!-- IDLE -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="220" height="130" rx="10" fill="#161b22" stroke="#6b7280" stroke-width="2"/>
+        <text x="110" y="25" text-anchor="middle" fill="#9ca3af" font-size="14" font-weight="bold">😴 IDLE</text>
+        
+        <g transform="translate(20, 40)">
+          <!-- Mini character -->
+          <rect x="30" y="0" width="20" height="20" rx="3" fill="#fcd5b8"/>
+          <rect x="25" y="22" width="30" height="35" rx="2" fill="#6b7280"/>
+          <circle cx="40" cy="-8" r="6" fill="#6b7280" opacity="0.5"/>
+        </g>
+        
+        <text x="110" y="105" text-anchor="middle" fill="#8b949e" font-size="10">Muted colors</text>
+        <text x="110" y="120" text-anchor="middle" fill="#8b949e" font-size="10">Slow breathing anim</text>
+      </g>
+      
+      <!-- WORKING -->
+      <g transform="translate(240, 0)">
+        <rect x="0" y="0" width="220" height="130" rx="10" fill="#0e4429" stroke="#22c55e" stroke-width="2"/>
+        <text x="110" y="25" text-anchor="middle" fill="#22c55e" font-size="14" font-weight="bold">⚡ WORKING</text>
+        
+        <g transform="translate(20, 40)">
+          <rect x="30" y="0" width="20" height="20" rx="3" fill="#fcd5b8"/>
+          <rect x="25" y="22" width="30" height="35" rx="2" fill="#22c55e"/>
+          <circle cx="40" cy="-8" r="6" fill="#22c55e"/>
+          <!-- Activity lines -->
+          <line x1="55" y1="30" x2="70" y2="25" stroke="#22c55e" stroke-width="2"/>
+          <line x1="55" y1="38" x2="75" y2="38" stroke="#22c55e" stroke-width="2"/>
+          <line x1="55" y1="46" x2="68" y2="50" stroke="#22c55e" stroke-width="2"/>
+        </g>
+        
+        <text x="110" y="105" text-anchor="middle" fill="#8b949e" font-size="10">Bright emissive glow</text>
+        <text x="110" y="120" text-anchor="middle" fill="#8b949e" font-size="10">Typing animation + particles</text>
+      </g>
+      
+      <!-- BLOCKED -->
+      <g transform="translate(480, 0)">
+        <rect x="0" y="0" width="220" height="130" rx="10" fill="#3d1418" stroke="#ef4444" stroke-width="2"/>
+        <text x="110" y="25" text-anchor="middle" fill="#ef4444" font-size="14" font-weight="bold">🚫 BLOCKED</text>
+        
+        <g transform="translate(20, 40)">
+          <rect x="30" y="0" width="20" height="20" rx="3" fill="#fcd5b8"/>
+          <rect x="25" y="22" width="30" height="35" rx="2" fill="#ef4444"/>
+          <circle cx="40" cy="-8" r="6" fill="#ef4444"/>
+          <!-- X mark -->
+          <line x1="55" y1="25" x2="70" y2="40" stroke="#ef4444" stroke-width="3"/>
+          <line x1="70" y1="25" x2="55" y2="40" stroke="#ef4444" stroke-width="3"/>
+        </g>
+        
+        <text x="110" y="105" text-anchor="middle" fill="#8b949e" font-size="10">Pulsing red glow</text>
+        <text x="110" y="120" text-anchor="middle" fill="#8b949e" font-size="10">Frustrated gesture anim</text>
+      </g>
+      
+      <!-- WAITING -->
+      <g transform="translate(720, 0)">
+        <rect x="0" y="0" width="220" height="130" rx="10" fill="#2d2006" stroke="#f59e0b" stroke-width="2"/>
+        <text x="110" y="25" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="bold">⏳ WAITING</text>
+        
+        <g transform="translate(20, 40)">
+          <rect x="30" y="0" width="20" height="20" rx="3" fill="#fcd5b8"/>
+          <rect x="25" y="22" width="30" height="35" rx="2" fill="#f59e0b"/>
+          <circle cx="40" cy="-8" r="6" fill="#f59e0b" opacity="0.7"/>
+          <!-- Clock icon -->
+          <circle cx="62" cy="32" r="12" fill="none" stroke="#f59e0b" stroke-width="2"/>
+          <line x1="62" y1="32" x2="62" y2="24" stroke="#f59e0b" stroke-width="2"/>
+          <line x1="62" y1="32" x2="68" y2="35" stroke="#f59e0b" stroke-width="2"/>
+        </g>
+        
+        <text x="110" y="105" text-anchor="middle" fill="#8b949e" font-size="10">Amber pulse</text>
+        <text x="110" y="120" text-anchor="middle" fill="#8b949e" font-size="10">Looking around anim</text>
+      </g>
+      
+      <!-- COMPLETE -->
+      <g transform="translate(960, 0)">
+        <rect x="0" y="0" width="220" height="130" rx="10" fill="#0c2d4a" stroke="#3b82f6" stroke-width="2"/>
+        <text x="110" y="25" text-anchor="middle" fill="#3b82f6" font-size="14" font-weight="bold">✅ COMPLETE</text>
+        
+        <g transform="translate(20, 40)">
+          <rect x="30" y="0" width="20" height="20" rx="3" fill="#fcd5b8"/>
+          <rect x="25" y="22" width="30" height="35" rx="2" fill="#3b82f6"/>
+          <circle cx="40" cy="-8" r="6" fill="#3b82f6"/>
+          <!-- Checkmark -->
+          <path d="M55 35 L62 42 L75 25" stroke="#22c55e" stroke-width="3" fill="none"/>
+        </g>
+        
+        <text x="110" y="105" text-anchor="middle" fill="#8b949e" font-size="10">Celebration burst</text>
+        <text x="110" y="120" text-anchor="middle" fill="#8b949e" font-size="10">Victory pose → idle</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- ========== SECTION 2: CONNECTION STATES ========== -->
+  <g transform="translate(30, 280)">
+    <text x="0" y="0" fill="#a855f7" font-size="18" font-weight="bold">2. CONNECTION / COMMUNICATION STATES</text>
+    
+    <g transform="translate(0, 25)">
+      <!-- Active Communication -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="280" height="160" rx="10" fill="#161b22" stroke="#22c55e" stroke-width="2"/>
+        <text x="140" y="25" text-anchor="middle" fill="#22c55e" font-size="13" font-weight="bold">💬 ACTIVE COMMUNICATION</text>
+        
+        <g transform="translate(30, 45)">
+          <!-- Agent A -->
+          <rect x="0" y="20" width="30" height="40" rx="3" fill="#3b82f6"/>
+          <text x="15" y="45" text-anchor="middle" fill="white" font-size="10">A</text>
+          
+          <!-- Agent B -->
+          <rect x="180" y="20" width="30" height="40" rx="3" fill="#22c55e"/>
+          <text x="195" y="45" text-anchor="middle" fill="white" font-size="10">B</text>
+          
+          <!-- Flowing path -->
+          <path d="M35 40 Q105 10, 175 40" stroke="#22c55e" stroke-width="4" fill="none"/>
+          
+          <!-- Message particles -->
+          <circle cx="70" cy="25" r="5" fill="#22c55e"/>
+          <circle cx="105" cy="18" r="6" fill="#4ade80"/>
+          <circle cx="140" cy="25" r="5" fill="#22c55e"/>
+        </g>
+        
+        <text x="140" y="130" text-anchor="middle" fill="#8b949e" font-size="10">Flowing particles along path</text>
+        <text x="140" y="145" text-anchor="middle" fill="#8b949e" font-size="10">Bright, fast-moving energy</text>
+      </g>
+      
+      <!-- Blocked Connection -->
+      <g transform="translate(300, 0)">
+        <rect x="0" y="0" width="280" height="160" rx="10" fill="#161b22" stroke="#ef4444" stroke-width="2"/>
+        <text x="140" y="25" text-anchor="middle" fill="#ef4444" font-size="13" font-weight="bold">🚧 BLOCKED / WAITING ON</text>
+        
+        <g transform="translate(30, 45)">
+          <!-- Agent A (waiting) -->
+          <rect x="0" y="20" width="30" height="40" rx="3" fill="#f59e0b"/>
+          <text x="15" y="45" text-anchor="middle" fill="white" font-size="10">A</text>
+          
+          <!-- Agent B (blocking) -->
+          <rect x="180" y="20" width="30" height="40" rx="3" fill="#ef4444"/>
+          <text x="195" y="45" text-anchor="middle" fill="white" font-size="10">B</text>
+          
+          <!-- Blocked path -->
+          <path d="M35 40 Q105 10, 175 40" stroke="#ef4444" stroke-width="3" fill="none" stroke-dasharray="8,4"/>
+          
+          <!-- Block symbol -->
+          <rect x="90" y="15" width="30" height="20" rx="3" fill="#ef4444"/>
+          <text x="105" y="29" text-anchor="middle" fill="white" font-size="12">✕</text>
+        </g>
+        
+        <text x="140" y="130" text-anchor="middle" fill="#8b949e" font-size="10">Dashed line, red tint</text>
+        <text x="140" y="145" text-anchor="middle" fill="#8b949e" font-size="10">Blocked icon on path midpoint</text>
+      </g>
+      
+      <!-- Request Pending -->
+      <g transform="translate(600, 0)">
+        <rect x="0" y="0" width="280" height="160" rx="10" fill="#161b22" stroke="#f59e0b" stroke-width="2"/>
+        <text x="140" y="25" text-anchor="middle" fill="#f59e0b" font-size="13" font-weight="bold">📨 REQUEST PENDING</text>
+        
+        <g transform="translate(30, 45)">
+          <!-- Agent A (requesting) -->
+          <rect x="0" y="20" width="30" height="40" rx="3" fill="#3b82f6"/>
+          <text x="15" y="45" text-anchor="middle" fill="white" font-size="10">A</text>
+          
+          <!-- Agent B (hasn't responded) -->
+          <rect x="180" y="20" width="30" height="40" rx="3" fill="#6b7280"/>
+          <text x="195" y="45" text-anchor="middle" fill="white" font-size="10">B</text>
+          
+          <!-- One-way arrow with envelope -->
+          <path d="M35 40 Q105 10, 175 40" stroke="#f59e0b" stroke-width="3" fill="none"/>
+          
+          <!-- Envelope icon moving -->
+          <rect x="95" y="12" width="20" height="14" rx="2" fill="#f59e0b"/>
+          <path d="M97 14 L105 20 L113 14" stroke="#0d1117" stroke-width="1.5" fill="none"/>
+        </g>
+        
+        <text x="140" y="130" text-anchor="middle" fill="#8b949e" font-size="10">Single message traveling</text>
+        <text x="140" y="145" text-anchor="middle" fill="#8b949e" font-size="10">Pulse at destination when arrives</text>
+      </g>
+      
+      <!-- Handoff / Delegation -->
+      <g transform="translate(900, 0)">
+        <rect x="0" y="0" width="280" height="160" rx="10" fill="#161b22" stroke="#8b5cf6" stroke-width="2"/>
+        <text x="140" y="25" text-anchor="middle" fill="#a855f7" font-size="13" font-weight="bold">🔄 HANDOFF / DELEGATION</text>
+        
+        <g transform="translate(30, 45)">
+          <!-- Agent A (handing off) -->
+          <rect x="0" y="20" width="30" height="40" rx="3" fill="#22c55e"/>
+          <text x="15" y="45" text-anchor="middle" fill="white" font-size="10">A</text>
+          
+          <!-- Agent B (receiving) -->
+          <rect x="180" y="20" width="30" height="40" rx="3" fill="#a855f7"/>
+          <text x="195" y="45" text-anchor="middle" fill="white" font-size="10">B</text>
+          
+          <!-- Handoff path with package -->
+          <path d="M35 40 Q105 10, 175 40" stroke="#a855f7" stroke-width="4" fill="none"/>
+          
+          <!-- Package icon -->
+          <rect x="92" y="10" width="26" height="22" rx="3" fill="#a855f7"/>
+          <line x1="92" y1="18" x2="118" y2="18" stroke="#0d1117" stroke-width="2"/>
+          <rect x="100" y="5" width="10" height="8" rx="2" fill="#a855f7" stroke="#0d1117" stroke-width="1"/>
+        </g>
+        
+        <text x="140" y="130" text-anchor="middle" fill="#8b949e" font-size="10">Large "package" object moves</text>
+        <text x="140" y="145" text-anchor="middle" fill="#8b949e" font-size="10">Burst effect on receive</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- ========== SECTION 3: WORKFLOW PATTERNS ========== -->
+  <g transform="translate(30, 480)">
+    <text x="0" y="0" fill="#ec4899" font-size="18" font-weight="bold">3. WORKFLOW ORCHESTRATION PATTERNS</text>
+    
+    <g transform="translate(0, 25)">
+      <!-- Sequential -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="270" height="140" rx="10" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+        <text x="135" y="25" text-anchor="middle" fill="white" font-size="13" font-weight="bold">SEQUENTIAL PIPELINE</text>
+        
+        <g transform="translate(25, 45)">
+          <rect x="0" y="15" width="35" height="30" rx="3" fill="#3b82f6"/>
+          <text x="17" y="34" text-anchor="middle" fill="white" font-size="9">FE</text>
+          
+          <line x1="40" y1="30" x2="65" y2="30" stroke="#22c55e" stroke-width="3" marker-end="url(#arrow)"/>
+          
+          <rect x="70" y="15" width="35" height="30" rx="3" fill="#22c55e"/>
+          <text x="87" y="34" text-anchor="middle" fill="white" font-size="9">BE</text>
+          
+          <line x1="110" y1="30" x2="135" y2="30" stroke="#22c55e" stroke-width="3" marker-end="url(#arrow)"/>
+          
+          <rect x="140" y="15" width="35" height="30" rx="3" fill="#a855f7"/>
+          <text x="157" y="34" text-anchor="middle" fill="white" font-size="9">DB</text>
+          
+          <line x1="180" y1="30" x2="205" y2="30" stroke="#22c55e" stroke-width="3" marker-end="url(#arrow)"/>
+          
+          <rect x="210" y="15" width="35" height="30" rx="3" fill="#06b6d4"/>
+          <text x="227" y="34" text-anchor="middle" fill="white" font-size="9">QA</text>
+        </g>
+        
+        <text x="135" y="115" text-anchor="middle" fill="#8b949e" font-size="10">Energy flows left→right</text>
+        <text x="135" y="130" text-anchor="middle" fill="#8b949e" font-size="10">One active at a time</text>
+      </g>
+      
+      <!-- Parallel / Fan-out -->
+      <g transform="translate(290, 0)">
+        <rect x="0" y="0" width="270" height="140" rx="10" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+        <text x="135" y="25" text-anchor="middle" fill="white" font-size="13" font-weight="bold">PARALLEL FAN-OUT</text>
+        
+        <g transform="translate(25, 40)">
+          <!-- Orchestrator -->
+          <rect x="90" y="0" width="40" height="30" rx="3" fill="#fbbf24"/>
+          <text x="110" y="20" text-anchor="middle" fill="black" font-size="9">PM</text>
+          
+          <!-- Fan out lines -->
+          <line x1="110" y1="35" x2="30" y2="60" stroke="#22c55e" stroke-width="2"/>
+          <line x1="110" y1="35" x2="110" y2="60" stroke="#22c55e" stroke-width="2"/>
+          <line x1="110" y1="35" x2="190" y2="60" stroke="#22c55e" stroke-width="2"/>
+          
+          <!-- Workers -->
+          <rect x="10" y="62" width="40" height="25" rx="3" fill="#3b82f6"/>
+          <text x="30" y="79" text-anchor="middle" fill="white" font-size="8">FE</text>
+          
+          <rect x="90" y="62" width="40" height="25" rx="3" fill="#22c55e"/>
+          <text x="110" y="79" text-anchor="middle" fill="white" font-size="8">BE</text>
+          
+          <rect x="170" y="62" width="40" height="25" rx="3" fill="#a855f7"/>
+          <text x="190" y="79" text-anchor="middle" fill="white" font-size="8">Data</text>
+        </g>
+        
+        <text x="135" y="125" text-anchor="middle" fill="#8b949e" font-size="10">Simultaneous flows outward</text>
+      </g>
+      
+      <!-- Fan-in / Collect -->
+      <g transform="translate(580, 0)">
+        <rect x="0" y="0" width="270" height="140" rx="10" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+        <text x="135" y="25" text-anchor="middle" fill="white" font-size="13" font-weight="bold">FAN-IN / COLLECT</text>
+        
+        <g transform="translate(25, 40)">
+          <!-- Workers reporting -->
+          <rect x="10" y="0" width="40" height="25" rx="3" fill="#3b82f6"/>
+          <text x="30" y="17" text-anchor="middle" fill="white" font-size="8">FE</text>
+          
+          <rect x="90" y="0" width="40" height="25" rx="3" fill="#22c55e"/>
+          <text x="110" y="17" text-anchor="middle" fill="white" font-size="8">BE</text>
+          
+          <rect x="170" y="0" width="40" height="25" rx="3" fill="#a855f7"/>
+          <text x="190" y="17" text-anchor="middle" fill="white" font-size="8">Data</text>
+          
+          <!-- Fan in lines -->
+          <line x1="30" y1="30" x2="110" y2="55" stroke="#f59e0b" stroke-width="2"/>
+          <line x1="110" y1="30" x2="110" y2="55" stroke="#f59e0b" stroke-width="2"/>
+          <line x1="190" y1="30" x2="110" y2="55" stroke="#f59e0b" stroke-width="2"/>
+          
+          <!-- Collector -->
+          <rect x="90" y="58" width="40" height="30" rx="3" fill="#fbbf24"/>
+          <text x="110" y="78" text-anchor="middle" fill="black" font-size="9">PM</text>
+        </g>
+        
+        <text x="135" y="125" text-anchor="middle" fill="#8b949e" font-size="10">Multiple streams converge</text>
+      </g>
+      
+      <!-- Supervisory -->
+      <g transform="translate(870, 0)">
+        <rect x="0" y="0" width="270" height="140" rx="10" fill="#161b22" stroke="#30363d" stroke-width="2"/>
+        <text x="135" y="25" text-anchor="middle" fill="white" font-size="13" font-weight="bold">SUPERVISORY OVERSIGHT</text>
+        
+        <g transform="translate(25, 40)">
+          <!-- Supervisor watching -->
+          <rect x="90" y="0" width="40" height="25" rx="3" fill="#fbbf24"/>
+          <text x="110" y="16" text-anchor="middle" fill="black" font-size="8">CTO</text>
+          
+          <!-- Dotted observation lines -->
+          <line x1="90" y1="20" x2="40" y2="50" stroke="#8b949e" stroke-width="1" stroke-dasharray="3,3"/>
+          <line x1="130" y1="20" x2="180" y2="50" stroke="#8b949e" stroke-width="1" stroke-dasharray="3,3"/>
+          
+          <!-- Eye icons -->
+          <circle cx="65" cy="35" r="5" fill="none" stroke="#fbbf24" stroke-width="1"/>
+          <circle cx="155" cy="35" r="5" fill="none" stroke="#fbbf24" stroke-width="1"/>
+          
+          <!-- Working agents -->
+          <rect x="20" y="55" width="40" height="25" rx="3" fill="#3b82f6"/>
+          <rect x="160" y="55" width="40" height="25" rx="3" fill="#22c55e"/>
+          
+          <!-- Active work line between workers -->
+          <line x1="65" y1="67" x2="155" y2="67" stroke="#22c55e" stroke-width="3"/>
+        </g>
+        
+        <text x="135" y="125" text-anchor="middle" fill="#8b949e" font-size="10">Dashed lines = observing</text>
+      </g>
+    </g>
+  </g>
+  
+  <!-- ========== SECTION 4: VISUAL EFFECT TECHNIQUES ========== -->
+  <g transform="translate(30, 660)">
+    <text x="0" y="0" fill="#22c55e" font-size="18" font-weight="bold">4. VISUAL EFFECT TECHNIQUES</text>
+    
+    <g transform="translate(0, 25)">
+      <rect x="0" y="0" width="1140" height="140" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+      
+      <!-- Particle Flow -->
+      <g transform="translate(30, 20)">
+        <text x="0" y="15" fill="#22c55e" font-size="12" font-weight="bold">Particle Flow</text>
+        <rect x="0" y="25" width="180" height="90" rx="6" fill="#0e4429"/>
+        <text x="90" y="50" text-anchor="middle" fill="#c9d1d9" font-size="10">Spheres moving along path</text>
+        <text x="90" y="70" text-anchor="middle" fill="#c9d1d9" font-size="10">Speed = urgency</text>
+        <text x="90" y="90" text-anchor="middle" fill="#c9d1d9" font-size="10">Color = message type</text>
+        <text x="90" y="108" text-anchor="middle" fill="#8b949e" font-size="9">Best for: Active comms</text>
+      </g>
+      
+      <!-- Pulse Rings -->
+      <g transform="translate(230, 20)">
+        <text x="0" y="15" fill="#a855f7" font-size="12" font-weight="bold">Pulse Rings</text>
+        <rect x="0" y="25" width="180" height="90" rx="6" fill="#2d1f3d"/>
+        <text x="90" y="50" text-anchor="middle" fill="#c9d1d9" font-size="10">Expanding circles</text>
+        <text x="90" y="70" text-anchor="middle" fill="#c9d1d9" font-size="10">Emanate from agent</text>
+        <text x="90" y="90" text-anchor="middle" fill="#c9d1d9" font-size="10">Fade as they grow</text>
+        <text x="90" y="108" text-anchor="middle" fill="#8b949e" font-size="9">Best for: Status change</text>
+      </g>
+      
+      <!-- Beam Connection -->
+      <g transform="translate(430, 20)">
+        <text x="0" y="15" fill="#3b82f6" font-size="12" font-weight="bold">Beam Connection</text>
+        <rect x="0" y="25" width="180" height="90" rx="6" fill="#0c2d4a"/>
+        <text x="90" y="50" text-anchor="middle" fill="#c9d1d9" font-size="10">Solid line A→B</text>
+        <text x="90" y="70" text-anchor="middle" fill="#c9d1d9" font-size="10">Brightness = activity</text>
+        <text x="90" y="90" text-anchor="middle" fill="#c9d1d9" font-size="10">Dash pattern = blocked</text>
+        <text x="90" y="108" text-anchor="middle" fill="#8b949e" font-size="9">Best for: Dependencies</text>
+      </g>
+      
+      <!-- Speech Bubble -->
+      <g transform="translate(630, 20)">
+        <text x="0" y="15" fill="#ec4899" font-size="12" font-weight="bold">Speech Bubble</text>
+        <rect x="0" y="25" width="180" height="90" rx="6" fill="#3d1c2e"/>
+        <text x="90" y="50" text-anchor="middle" fill="#c9d1d9" font-size="10">3D floating bubble</text>
+        <text x="90" y="70" text-anchor="middle" fill="#c9d1d9" font-size="10">Shows message preview</text>
+        <text x="90" y="90" text-anchor="middle" fill="#c9d1d9" font-size="10">Typing indicator (...)</text>
+        <text x="90" y="108" text-anchor="middle" fill="#8b949e" font-size="9">Best for: Chat-like UI</text>
+      </g>
+      
+      <!-- Aura / Glow -->
+      <g transform="translate(830, 20)">
+        <text x="0" y="15" fill="#f59e0b" font-size="12" font-weight="bold">Aura / Glow</text>
+        <rect x="0" y="25" width="180" height="90" rx="6" fill="#3d2a06"/>
+        <text x="90" y="50" text-anchor="middle" fill="#c9d1d9" font-size="10">Floor/body emissive</text>
+        <text x="90" y="70" text-anchor="middle" fill="#c9d1d9" font-size="10">Color = state</text>
+        <text x="90" y="90" text-anchor="middle" fill="#c9d1d9" font-size="10">Intensity = activity</text>
+        <text x="90" y="108" text-anchor="middle" fill="#8b949e" font-size="9">Best for: At-a-glance</text>
+      </g>
+      
+      <!-- Tether -->
+      <g transform="translate(1030, 20)">
+        <text x="0" y="15" fill="#06b6d4" font-size="12" font-weight="bold">Queue Line</text>
+        <rect x="0" y="25" width="100" height="90" rx="6" fill="#0c3d4a"/>
+        <text x="50" y="50" text-anchor="middle" fill="#c9d1d9" font-size="10">Stacked icons</text>
+        <text x="50" y="70" text-anchor="middle" fill="#c9d1d9" font-size="10">Pending tasks</text>
+        <text x="50" y="90" text-anchor="middle" fill="#c9d1d9" font-size="10">above agent</text>
+      </g>
+    </g>
+  </g>
+</svg>

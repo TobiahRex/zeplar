@@ -1,0 +1,171 @@
+<svg viewBox="0 0 950 650" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#58a6ff"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#3fb950"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#f0883e"/>
+    </marker>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="950" height="650" fill="#0d1117"/>
+  
+  <!-- Title -->
+  <text x="475" y="35" text-anchor="middle" fill="white" font-size="22" font-weight="bold">React Three Fiber: Rendering &amp; Interaction Pipeline</text>
+  
+  <!-- LAYER 1: React State -->
+  <g transform="translate(50, 70)">
+    <rect x="0" y="0" width="850" height="80" rx="10" fill="#1c2128" stroke="#3fb950" stroke-width="2"/>
+    <text x="20" y="25" fill="#3fb950" font-size="14" font-weight="bold">REACT STATE LAYER</text>
+    
+    <g transform="translate(30, 40)">
+      <rect x="0" y="0" width="150" height="30" rx="5" fill="#238636"/>
+      <text x="75" y="20" text-anchor="middle" fill="white" font-size="11">gridData[ ]</text>
+    </g>
+    <g transform="translate(200, 40)">
+      <rect x="0" y="0" width="150" height="30" rx="5" fill="#238636"/>
+      <text x="75" y="20" text-anchor="middle" fill="white" font-size="11">blocks[ {x,y,z} ]</text>
+    </g>
+    <g transform="translate(370, 40)">
+      <rect x="0" y="0" width="150" height="30" rx="5" fill="#238636"/>
+      <text x="75" y="20" text-anchor="middle" fill="white" font-size="11">hoveredId: string</text>
+    </g>
+    <g transform="translate(540, 40)">
+      <rect x="0" y="0" width="150" height="30" rx="5" fill="#238636"/>
+      <text x="75" y="20" text-anchor="middle" fill="white" font-size="11">selectedId: string</text>
+    </g>
+    <g transform="translate(710, 40)">
+      <rect x="0" y="0" width="120" height="30" rx="5" fill="#238636"/>
+      <text x="60" y="20" text-anchor="middle" fill="white" font-size="11">cameraPos</text>
+    </g>
+  </g>
+  
+  <!-- Arrow down -->
+  <line x1="475" y1="155" x2="475" y2="180" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="485" y="170" fill="#8b949e" font-size="10">triggers</text>
+  
+  <!-- LAYER 2: R3F Canvas -->
+  <g transform="translate(50, 185)">
+    <rect x="0" y="0" width="850" height="150" rx="10" fill="#1c2128" stroke="#58a6ff" stroke-width="2"/>
+    <text x="20" y="25" fill="#58a6ff" font-size="14" font-weight="bold">REACT THREE FIBER LAYER</text>
+    
+    <!-- Canvas component -->
+    <g transform="translate(30, 45)">
+      <rect x="0" y="0" width="180" height="90" rx="8" fill="#1f6feb"/>
+      <text x="90" y="25" text-anchor="middle" fill="white" font-size="12" font-weight="bold">&lt;Canvas&gt;</text>
+      <text x="90" y="50" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">WebGL context</text>
+      <text x="90" y="70" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">Render loop</text>
+    </g>
+    
+    <!-- Camera -->
+    <g transform="translate(240, 45)">
+      <rect x="0" y="0" width="180" height="90" rx="8" fill="#8957e5"/>
+      <text x="90" y="25" text-anchor="middle" fill="white" font-size="11" font-weight="bold">&lt;OrthographicCamera&gt;</text>
+      <text x="90" y="50" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">position=[10, 10, 10]</text>
+      <text x="90" y="70" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">→ Creates isometric!</text>
+    </g>
+    
+    <!-- Grid -->
+    <g transform="translate(450, 45)">
+      <rect x="0" y="0" width="180" height="90" rx="8" fill="#da3633"/>
+      <text x="90" y="25" text-anchor="middle" fill="white" font-size="12" font-weight="bold">&lt;Grid /&gt;</text>
+      <text x="90" y="50" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">Instanced meshes</text>
+      <text x="90" y="70" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">1000 tiles = 1 draw</text>
+    </g>
+    
+    <!-- Blocks -->
+    <g transform="translate(660, 45)">
+      <rect x="0" y="0" width="170" height="90" rx="8" fill="#f0883e"/>
+      <text x="85" y="25" text-anchor="middle" fill="white" font-size="12" font-weight="bold">&lt;Block /&gt; × N</text>
+      <text x="85" y="50" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">onPointerOver</text>
+      <text x="85" y="70" text-anchor="middle" fill="rgba(255,255,255,0.7)" font-size="10">onClick</text>
+    </g>
+  </g>
+  
+  <!-- Arrow down -->
+  <line x1="475" y1="340" x2="475" y2="365" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <!-- LAYER 3: Three.js Scene Graph -->
+  <g transform="translate(50, 370)">
+    <rect x="0" y="0" width="850" height="100" rx="10" fill="#1c2128" stroke="#f0883e" stroke-width="2"/>
+    <text x="20" y="25" fill="#f0883e" font-size="14" font-weight="bold">THREE.JS SCENE GRAPH</text>
+    
+    <g transform="translate(80, 45)">
+      <rect x="0" y="0" width="100" height="40" rx="5" fill="#21262d" stroke="#f0883e"/>
+      <text x="50" y="25" text-anchor="middle" fill="white" font-size="11">Scene</text>
+    </g>
+    
+    <line x1="180" y1="65" x2="230" y2="65" stroke="#f0883e" stroke-width="1"/>
+    
+    <g transform="translate(230, 45)">
+      <rect x="0" y="0" width="100" height="40" rx="5" fill="#21262d" stroke="#f0883e"/>
+      <text x="50" y="25" text-anchor="middle" fill="white" font-size="11">Camera</text>
+    </g>
+    
+    <line x1="330" y1="65" x2="380" y2="65" stroke="#f0883e" stroke-width="1"/>
+    
+    <g transform="translate(380, 45)">
+      <rect x="0" y="0" width="130" height="40" rx="5" fill="#21262d" stroke="#f0883e"/>
+      <text x="65" y="25" text-anchor="middle" fill="white" font-size="11">InstancedMesh</text>
+    </g>
+    
+    <line x1="510" y1="65" x2="560" y2="65" stroke="#f0883e" stroke-width="1"/>
+    
+    <g transform="translate(560, 45)">
+      <rect x="0" y="0" width="100" height="40" rx="5" fill="#21262d" stroke="#f0883e"/>
+      <text x="50" y="25" text-anchor="middle" fill="white" font-size="11">Mesh[]</text>
+    </g>
+    
+    <line x1="660" y1="65" x2="710" y2="65" stroke="#f0883e" stroke-width="1"/>
+    
+    <g transform="translate(710, 45)">
+      <rect x="0" y="0" width="100" height="40" rx="5" fill="#21262d" stroke="#f0883e"/>
+      <text x="50" y="25" text-anchor="middle" fill="white" font-size="11">Raycaster</text>
+    </g>
+  </g>
+  
+  <!-- Arrow down -->
+  <line x1="475" y1="475" x2="475" y2="500" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  
+  <!-- LAYER 4: GPU -->
+  <g transform="translate(50, 505)">
+    <rect x="0" y="0" width="850" height="60" rx="10" fill="#1c2128" stroke="#bd93f9" stroke-width="2"/>
+    <text x="20" y="25" fill="#bd93f9" font-size="14" font-weight="bold">GPU LAYER</text>
+    
+    <g transform="translate(200, 15)">
+      <rect x="0" y="0" width="160" height="30" rx="5" fill="#6e40c9"/>
+      <text x="80" y="20" text-anchor="middle" fill="white" font-size="11">Vertex Shader</text>
+    </g>
+    
+    <line x1="360" y1="30" x2="410" y2="30" stroke="#bd93f9" stroke-width="1"/>
+    <text x="385" y="25" fill="#bd93f9" font-size="10">→</text>
+    
+    <g transform="translate(410, 15)">
+      <rect x="0" y="0" width="160" height="30" rx="5" fill="#6e40c9"/>
+      <text x="80" y="20" text-anchor="middle" fill="white" font-size="11">Fragment Shader</text>
+    </g>
+    
+    <line x1="570" y1="30" x2="620" y2="30" stroke="#bd93f9" stroke-width="1"/>
+    <text x="595" y="25" fill="#bd93f9" font-size="10">→</text>
+    
+    <g transform="translate(620, 15)">
+      <rect x="0" y="0" width="100" height="30" rx="5" fill="#6e40c9"/>
+      <text x="50" y="20" text-anchor="middle" fill="white" font-size="11">Pixels!</text>
+    </g>
+  </g>
+  
+  <!-- Interaction feedback loop -->
+  <g transform="translate(50, 580)">
+    <rect x="0" y="0" width="850" height="55" rx="10" fill="#0e4429" stroke="#3fb950" stroke-width="2" stroke-dasharray="5,3"/>
+    <text x="20" y="20" fill="#3fb950" font-size="12" font-weight="bold">INTERACTION FEEDBACK LOOP</text>
+    
+    <text x="30" y="42" fill="white" font-size="11">Mouse Event → Raycaster → Intersection Test → onPointerOver/onClick → setState() → Re-render</text>
+    
+    <line x1="780" y1="25" x2="780" y2="-490" stroke="#3fb950" stroke-width="1" stroke-dasharray="4"/>
+    <line x1="780" y1="-490" x2="500" y2="-490" stroke="#3fb950" stroke-width="1" stroke-dasharray="4" marker-end="url(#arrow-green)"/>
+  </g>
+</svg>

@@ -1,23 +1,19 @@
 import { useEffect } from "react";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { StudySession } from "@/features/learning/components/StudySession";
-import { selectSession, startSession } from "@/features/learning/learningSlice";
-import { generateAllL1Cards } from "@/lib/cardGenerator";
-import { patternList } from "@/data/patterns";
+import {
+  selectSession,
+  startSessionRequested,
+} from "@/features/learning/learningSlice";
 
 export default function Study() {
   const dispatch = useAppDispatch();
   const session = useAppSelector(selectSession);
 
-  // Start session if not active
+  // Start session if not active (saga handles card generation)
   useEffect(() => {
     if (!session.isActive) {
-      const cards = generateAllL1Cards(patternList);
-      const cardKeys = cards.map((c) => c.id);
-
-      if (cardKeys.length > 0) {
-        dispatch(startSession(cardKeys));
-      }
+      dispatch(startSessionRequested());
     }
   }, [dispatch, session.isActive]);
 

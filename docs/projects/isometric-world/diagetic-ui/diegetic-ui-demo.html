@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agent Startup - Diegetic UI Demo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #0a0a12; 
+      overflow: hidden; 
+      font-family: 'Trebuchet MS', 'Lucida Sans', Arial, sans-serif;
+    }
+    
+    /* Early 2000s style UI panel */
+    #ui-panel {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      background: linear-gradient(180deg, #2a2a4a 0%, #1a1a2e 100%);
+      border: 3px solid #4a4a7a;
+      border-radius: 0;
+      padding: 15px;
+      color: white;
+      width: 260px;
+      box-shadow: 4px 4px 0 #000, inset 0 0 20px rgba(100,100,200,0.1);
+      z-index: 100;
+    }
+    
+    #ui-panel h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: #fbbf24;
+      text-shadow: 2px 2px 0 #000;
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #4a4a7a;
+    }
+    
+    .ui-section {
+      margin-bottom: 15px;
+    }
+    
+    .ui-section-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #8888aa;
+      margin-bottom: 8px;
+    }
+    
+    .ui-button {
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      margin: 4px 0;
+      background: linear-gradient(180deg, #3a3a5a 0%, #2a2a4a 100%);
+      border: 2px solid #5a5a8a;
+      color: white;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.1s;
+    }
+    
+    .ui-button:hover {
+      background: linear-gradient(180deg, #4a4a7a 0%, #3a3a5a 100%);
+      border-color: #7a7aaa;
+    }
+    
+    .ui-button:active {
+      transform: translate(2px, 2px);
+    }
+    
+    .ui-button.active {
+      background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+      border-color: #fcd34d;
+      color: #1a1a2e;
+    }
+    
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0;
+      font-size: 11px;
+      color: #aaa;
+    }
+    
+    .legend-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    
+    #tooltip {
+      position: fixed;
+      background: linear-gradient(180deg, #2a2a4a 0%, #1a1a2e 100%);
+      border: 2px solid #fbbf24;
+      padding: 10px 14px;
+      color: white;
+      font-size: 11px;
+      pointer-events: none;
+      z-index: 1000;
+      display: none;
+      max-width: 200px;
+      box-shadow: 3px 3px 0 #000;
+    }
+    
+    #tooltip h4 {
+      color: #fbbf24;
+      font-size: 12px;
+      margin-bottom: 5px;
+    }
+    
+    #tooltip p {
+      color: #aaa;
+      line-height: 1.4;
+    }
+    
+    .controls-hint {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      background: rgba(20, 20, 40, 0.9);
+      border: 2px solid #4a4a7a;
+      padding: 10px 15px;
+      color: #888;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+  <div id="ui-panel">
+    <h2>🎮 Agent Startup</h2>
+    
+    <div class="ui-section">
+      <div class="ui-section-title">Trigger Bubbles</div>
+      <button class="ui-button" onclick="triggerThought()">💭 Thought Bubble</button>
+      <button class="ui-button" onclick="triggerSpeech()">💬 Speech Bubble</button>
+      <button class="ui-button" onclick="triggerEmote()">😤 Emote Pop</button>
+      <button class="ui-button" onclick="triggerTyping()">⌨️ Typing Indicator</button>
+    </div>
+    
+    <div class="ui-section">
+      <div class="ui-section-title">Notifications</div>
+      <button class="ui-button" onclick="triggerFloatingText()">📊 Floating Text</button>
+      <button class="ui-button" onclick="triggerTaskComplete()">✅ Task Complete</button>
+      <button class="ui-button" onclick="triggerPing()">🔔 Alert Ping</button>
+      <button class="ui-button" onclick="triggerQuestMarker()">❗ Quest Marker</button>
+    </div>
+    
+    <div class="ui-section">
+      <div class="ui-section-title">Legend</div>
+      <div class="legend-row">
+        <span class="legend-icon">💎</span>
+        <span>Plumbob = Agent mood</span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-icon">📋</span>
+        <span>Task Stack = Pending queue</span>
+      </div>
+      <div class="legend-row">
+        <span class="legend-icon">🔗</span>
+        <span>Tethers = Communication</span>
+      </div>
+    </div>
+  </div>
+  
+  <div id="tooltip">
+    <h4 id="tooltip-title">Agent Name</h4>
+    <p id="tooltip-content">Status info here</p>
+  </div>
+  
+  <div class="controls-hint">
+    🖱️ Drag to orbit • Scroll to zoom • Hover agents for info
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // ==========================================================================
+    // CONFIGURATION
+    // ==========================================================================
+    const AGENTS_CONFIG = [
+      { id: 'pm', name: 'PM', color: 0xfbbf24, x: 0, z: -5, status: 'working', mood: 0.9, tasks: 2 },
+      { id: 'frontend', name: 'Frontend', color: 0x3b82f6, x: -6, z: 2, status: 'working', mood: 0.7, tasks: 4 },
+      { id: 'backend', name: 'Backend', color: 0x22c55e, x: 0, z: 3, status: 'blocked', mood: 0.3, tasks: 1 },
+      { id: 'designer', name: 'Designer', color: 0xec4899, x: 6, z: 2, status: 'idle', mood: 0.8, tasks: 0 },
+      { id: 'devops', name: 'DevOps', color: 0xf97316, x: -4, z: -2, status: 'working', mood: 0.6, tasks: 3 },
+      { id: 'qa', name: 'QA', color: 0x06b6d4, x: 4, z: -2, status: 'waiting', mood: 0.5, tasks: 5 },
+    ];
+    
+    // ==========================================================================
+    // THREE.JS SETUP
+    // ==========================================================================
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a15);
+    scene.fog = new THREE.FogExp2(0x0a0a15, 0.025);
+    
+    const frustumSize = 14;
+    const aspect = window.innerWidth / window.innerHeight;
+    const camera = new THREE.OrthographicCamera(
+      -frustumSize * aspect, frustumSize * aspect,
+      frustumSize, -frustumSize, 0.1, 1000
+    );
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    document.body.appendChild(renderer.domElement);
+    
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    
+    // ==========================================================================
+    // LIGHTING
+    // ==========================================================================
+    scene.add(new THREE.AmbientLight(0x404060, 0.5));
+    
+    const mainLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    mainLight.position.set(10, 20, 10);
+    mainLight.castShadow = true;
+    mainLight.shadow.mapSize.set(2048, 2048);
+    mainLight.shadow.camera.near = 0.5;
+    mainLight.shadow.camera.far = 50;
+    mainLight.shadow.camera.left = -15;
+    mainLight.shadow.camera.right = 15;
+    mainLight.shadow.camera.top = 15;
+    mainLight.shadow.camera.bottom = -15;
+    scene.add(mainLight);
+    
+    // Colored accent lights
+    const purpleLight = new THREE.PointLight(0x8b5cf6, 0.4, 25);
+    purpleLight.position.set(-8, 6, 8);
+    scene.add(purpleLight);
+    
+    const cyanLight = new THREE.PointLight(0x06b6d4, 0.4, 25);
+    cyanLight.position.set(8, 6, -8);
+    scene.add(cyanLight);
+    
+    // ==========================================================================
+    // FLOOR
+    // ==========================================================================
+    function createFloor() {
+      const size = 16;
+      for (let x = 0; x < size; x++) {
+        for (let z = 0; z < size; z++) {
+          const isLight = (x + z) % 2 === 0;
+          const tile = new THREE.Mesh(
+            new THREE.BoxGeometry(1, 0.1, 1),
+            new THREE.MeshStandardMaterial({
+              color: isLight ? 0x18182a : 0x12121f,
+              metalness: 0.2,
+              roughness: 0.9
+            })
+          );
+          tile.position.set(x - size/2 + 0.5, 0, z - size/2 + 0.5);
+          tile.receiveShadow = true;
+          scene.add(tile);
+        }
+      }
+    }
+    
+    // ==========================================================================
+    // SPRITE TEXTURE GENERATORS
+    // ==========================================================================
+    function createBubbleTexture(type, content, color = '#ffffff') {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.clearRect(0, 0, 256, 256);
+      
+      if (type === 'thought') {
+        // Cloud-like thought bubble
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 4;
+        
+        // Main cloud
+        ctx.beginPath();
+        ctx.ellipse(128, 100, 90, 60, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Bubbles leading down
+        ctx.beginPath();
+        ctx.arc(80, 175, 18, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.arc(60, 210, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Icon
+        ctx.font = 'bold 60px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#333';
+        ctx.fillText(content, 128, 120);
+        
+      } else if (type === 'speech') {
+        // Speech bubble with pointer
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 4;
+        
+        // Main bubble
+        ctx.beginPath();
+        ctx.roundRect(20, 20, 216, 140, 20);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Pointer
+        ctx.beginPath();
+        ctx.moveTo(60, 160);
+        ctx.lineTo(40, 220);
+        ctx.lineTo(100, 160);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Cover internal stroke
+        ctx.fillStyle = 'white';
+        ctx.fillRect(62, 155, 36, 10);
+        
+        // Icon/text
+        ctx.font = 'bold 50px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#333';
+        ctx.fillText(content, 128, 110);
+        
+      } else if (type === 'emote') {
+        // Starburst emote
+        const cx = 128, cy = 128;
+        ctx.fillStyle = color;
+        ctx.strokeStyle = '#b45309';
+        ctx.lineWidth = 4;
+        
+        // Star shape
+        ctx.beginPath();
+        for (let i = 0; i < 12; i++) {
+          const angle = (i * Math.PI * 2) / 12 - Math.PI / 2;
+          const r = i % 2 === 0 ? 100 : 60;
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Emoji
+        ctx.font = 'bold 70px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(content, 128, 150);
+        
+      } else if (type === 'typing') {
+        // Typing indicator
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 4;
+        
+        // Pill shape
+        ctx.beginPath();
+        ctx.roundRect(40, 70, 176, 80, 40);
+        ctx.fill();
+        ctx.stroke();
+        
+        // Dots
+        ctx.fillStyle = '#8b5cf6';
+        ctx.beginPath();
+        ctx.arc(90, 110, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(128, 110, 15, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(166, 110, 15, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Small tail bubble
+        ctx.fillStyle = 'white';
+        ctx.strokeStyle = '#333';
+        ctx.beginPath();
+        ctx.ellipse(60, 170, 18, 14, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      }
+      
+      return new THREE.CanvasTexture(canvas);
+    }
+    
+    function createPlumbobTexture(mood) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      
+      // Color based on mood (green = good, red = bad)
+      const hue = mood * 120; // 0 = red, 120 = green
+      const color = `hsl(${hue}, 80%, 50%)`;
+      const lightColor = `hsl(${hue}, 80%, 70%)`;
+      const darkColor = `hsl(${hue}, 80%, 30%)`;
+      
+      ctx.clearRect(0, 0, 64, 128);
+      
+      // Diamond shape
+      ctx.beginPath();
+      ctx.moveTo(32, 5);
+      ctx.lineTo(60, 50);
+      ctx.lineTo(32, 95);
+      ctx.lineTo(4, 50);
+      ctx.closePath();
+      
+      // Gradient fill
+      const grad = ctx.createLinearGradient(4, 5, 60, 95);
+      grad.addColorStop(0, lightColor);
+      grad.addColorStop(0.5, color);
+      grad.addColorStop(1, darkColor);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      
+      // Highlight
+      ctx.beginPath();
+      ctx.moveTo(32, 10);
+      ctx.lineTo(45, 45);
+      ctx.lineTo(32, 60);
+      ctx.lineTo(20, 45);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fill();
+      
+      return new THREE.CanvasTexture(canvas);
+    }
+    
+    function createTaskStackTexture(count) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 128;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.clearRect(0, 0, 128, 128);
+      
+      if (count === 0) return new THREE.CanvasTexture(canvas);
+      
+      // Stacked cards
+      const cardHeight = 20;
+      const stackCount = Math.min(count, 5);
+      
+      for (let i = stackCount - 1; i >= 0; i--) {
+        const y = 50 + i * 8;
+        const shade = 60 + i * 30;
+        
+        ctx.fillStyle = i === 0 ? '#f59e0b' : `rgb(${shade}, ${shade}, ${shade + 20})`;
+        ctx.strokeStyle = i === 0 ? '#b45309' : '#555';
+        ctx.lineWidth = 2;
+        
+        ctx.beginPath();
+        ctx.roundRect(20 + i * 3, y, 80, cardHeight, 4);
+        ctx.fill();
+        ctx.stroke();
+      }
+      
+      // Count badge
+      if (count > 0) {
+        ctx.beginPath();
+        ctx.arc(105, 40, 18, 0, Math.PI * 2);
+        ctx.fillStyle = '#ef4444';
+        ctx.fill();
+        ctx.strokeStyle = '#b91c1c';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        ctx.font = 'bold 18px Arial';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.fillText(count.toString(), 105, 46);
+      }
+      
+      return new THREE.CanvasTexture(canvas);
+    }
+    
+    function createFloatingTextTexture(text, color) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 256;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.clearRect(0, 0, 256, 64);
+      
+      // Bold chunky text with outline
+      ctx.font = 'bold 36px Impact, Arial';
+      ctx.textAlign = 'center';
+      
+      // Outline
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 6;
+      ctx.strokeText(text, 128, 45);
+      
+      // Fill
+      ctx.fillStyle = color;
+      ctx.fillText(text, 128, 45);
+      
+      return new THREE.CanvasTexture(canvas);
+    }
+    
+    function createQuestMarkerTexture() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 128;
+      const ctx = canvas.getContext('2d');
+      
+      ctx.clearRect(0, 0, 64, 128);
+      
+      // Circle background
+      ctx.beginPath();
+      ctx.arc(32, 40, 28, 0, Math.PI * 2);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fill();
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      
+      // Exclamation mark
+      ctx.font = 'bold 40px Arial';
+      ctx.fillStyle = '#1a1a2e';
+      ctx.textAlign = 'center';
+      ctx.fillText('!', 32, 52);
+      
+      // Bounce lines
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(10, 80);
+      ctx.lineTo(18, 95);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(32, 75);
+      ctx.lineTo(32, 95);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(54, 80);
+      ctx.lineTo(46, 95);
+      ctx.stroke();
+      
+      return new THREE.CanvasTexture(canvas);
+    }
+    
+    // ==========================================================================
+    // AGENT CREATION
+    // ==========================================================================
+    const agents = {};
+    const agentMeshes = [];
+    
+    function createAgent(config) {
+      const group = new THREE.Group();
+      group.position.set(config.x, 0.05, config.z);
+      
+      // Simple desk
+      const desk = new THREE.Mesh(
+        new THREE.BoxGeometry(1.4, 0.6, 0.8),
+        new THREE.MeshStandardMaterial({ color: 0x2d3748 })
+      );
+      desk.position.set(0, 0.35, -0.5);
+      desk.castShadow = true;
+      group.add(desk);
+      
+      // Monitor
+      const monitor = new THREE.Mesh(
+        new THREE.BoxGeometry(0.7, 0.5, 0.05),
+        new THREE.MeshStandardMaterial({ 
+          color: config.color, 
+          emissive: config.color, 
+          emissiveIntensity: 0.3 
+        })
+      );
+      monitor.position.set(0, 0.95, -0.6);
+      group.add(monitor);
+      
+      // Character body
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(0.4, 0.55, 0.3),
+        new THREE.MeshStandardMaterial({ color: config.color })
+      );
+      body.position.set(0, 0.85, 0.2);
+      body.castShadow = true;
+      group.add(body);
+      
+      // Head
+      const head = new THREE.Mesh(
+        new THREE.BoxGeometry(0.3, 0.3, 0.3),
+        new THREE.MeshStandardMaterial({ color: 0xfcd5b8 })
+      );
+      head.position.set(0, 1.3, 0.2);
+      head.castShadow = true;
+      group.add(head);
+      
+      // Plumbob (Sims-style mood indicator)
+      const plumbobTexture = createPlumbobTexture(config.mood);
+      const plumbob = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: plumbobTexture, transparent: true })
+      );
+      plumbob.position.set(0, 1.9, 0.2);
+      plumbob.scale.set(0.4, 0.8, 1);
+      group.add(plumbob);
+      
+      // Task stack (if has tasks)
+      let taskStack = null;
+      if (config.tasks > 0) {
+        const taskTexture = createTaskStackTexture(config.tasks);
+        taskStack = new THREE.Sprite(
+          new THREE.SpriteMaterial({ map: taskTexture, transparent: true })
+        );
+        taskStack.position.set(0.7, 1.5, 0.2);
+        taskStack.scale.set(0.8, 0.8, 1);
+        group.add(taskStack);
+      }
+      
+      // Name label
+      const labelCanvas = document.createElement('canvas');
+      labelCanvas.width = 256;
+      labelCanvas.height = 64;
+      const lctx = labelCanvas.getContext('2d');
+      lctx.fillStyle = '#' + config.color.toString(16).padStart(6, '0');
+      lctx.font = 'bold 28px Trebuchet MS';
+      lctx.textAlign = 'center';
+      lctx.strokeStyle = '#000';
+      lctx.lineWidth = 4;
+      lctx.strokeText(config.name, 128, 40);
+      lctx.fillText(config.name, 128, 40);
+      
+      const labelTexture = new THREE.CanvasTexture(labelCanvas);
+      const label = new THREE.Sprite(new THREE.SpriteMaterial({ map: labelTexture, transparent: true }));
+      label.position.set(0, 2.3, 0.2);
+      label.scale.set(1.5, 0.4, 1);
+      group.add(label);
+      
+      // Floor glow
+      const glow = new THREE.Mesh(
+        new THREE.CircleGeometry(1, 32),
+        new THREE.MeshBasicMaterial({ 
+          color: config.color, 
+          transparent: true, 
+          opacity: config.status === 'blocked' ? 0.2 : 0.1 
+        })
+      );
+      glow.rotation.x = -Math.PI / 2;
+      glow.position.y = 0.06;
+      group.add(glow);
+      
+      scene.add(group);
+      
+      const agentData = {
+        ...config,
+        group: group,
+        body: body,
+        head: head,
+        plumbob: plumbob,
+        taskStack: taskStack,
+        glow: glow,
+        bubbles: [],
+        floatingTexts: [],
+        phase: Math.random() * Math.PI * 2
+      };
+      
+      agents[config.id] = agentData;
+      agentMeshes.push(body);
+      
+      return agentData;
+    }
+    
+    // ==========================================================================
+    // BUBBLE SYSTEM
+    // ==========================================================================
+    const activeBubbles = [];
+    
+    function showBubble(agentId, type, content, color, duration = 3) {
+      const agent = agents[agentId];
+      if (!agent) return;
+      
+      // Remove existing bubble of same type
+      agent.bubbles = agent.bubbles.filter(b => {
+        if (b.type === type) {
+          agent.group.remove(b.sprite);
+          return false;
+        }
+        return true;
+      });
+      
+      const texture = createBubbleTexture(type, content, color);
+      const sprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: texture, transparent: true })
+      );
+      
+      const yOffset = type === 'emote' ? 2.8 : 2.5;
+      sprite.position.set(0.3, yOffset, 0.2);
+      sprite.scale.set(0, 0, 1);
+      
+      agent.group.add(sprite);
+      
+      const bubbleData = {
+        sprite: sprite,
+        type: type,
+        age: 0,
+        duration: duration,
+        state: 'appearing' // appearing, visible, disappearing
+      };
+      
+      agent.bubbles.push(bubbleData);
+      activeBubbles.push({ agent: agent, bubble: bubbleData });
+    }
+    
+    // ==========================================================================
+    // FLOATING TEXT SYSTEM
+    // ==========================================================================
+    const activeFloatingTexts = [];
+    
+    function showFloatingText(agentId, text, color) {
+      const agent = agents[agentId];
+      if (!agent) return;
+      
+      const texture = createFloatingTextTexture(text, color);
+      const sprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: texture, transparent: true })
+      );
+      
+      sprite.position.set(
+        agent.group.position.x + (Math.random() - 0.5) * 0.5,
+        1.8,
+        agent.group.position.z + 0.2
+      );
+      sprite.scale.set(1.5, 0.4, 1);
+      
+      scene.add(sprite);
+      
+      activeFloatingTexts.push({
+        sprite: sprite,
+        velocity: 1.5 + Math.random() * 0.5,
+        age: 0,
+        duration: 2
+      });
+    }
+    
+    // ==========================================================================
+    // QUEST MARKER SYSTEM
+    // ==========================================================================
+    const activeMarkers = [];
+    
+    function showQuestMarker(agentId, duration = 5) {
+      const agent = agents[agentId];
+      if (!agent) return;
+      
+      const texture = createQuestMarkerTexture();
+      const sprite = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: texture, transparent: true })
+      );
+      
+      sprite.position.set(0, 2.8, 0.2);
+      sprite.scale.set(0.6, 1.2, 1);
+      
+      agent.group.add(sprite);
+      
+      activeMarkers.push({
+        agent: agent,
+        sprite: sprite,
+        age: 0,
+        duration: duration,
+        bouncePhase: 0
+      });
+    }
+    
+    // ==========================================================================
+    // PING EFFECT
+    // ==========================================================================
+    const activePings = [];
+    
+    function createPing(agentId) {
+      const agent = agents[agentId];
+      if (!agent) return;
+      
+      const rings = [];
+      for (let i = 0; i < 3; i++) {
+        const ring = new THREE.Mesh(
+          new THREE.RingGeometry(0.1, 0.15, 32),
+          new THREE.MeshBasicMaterial({ 
+            color: agent.color, 
+            transparent: true, 
+            opacity: 0.8,
+            side: THREE.DoubleSide 
+          })
+        );
+        ring.rotation.x = -Math.PI / 2;
+        ring.position.set(agent.group.position.x, 0.1, agent.group.position.z);
+        scene.add(ring);
+        rings.push({ mesh: ring, delay: i * 0.15 });
+      }
+      
+      activePings.push({
+        rings: rings,
+        age: 0,
+        duration: 1.5,
+        maxScale: 3
+      });
+    }
+    
+    // ==========================================================================
+    // UI TRIGGER FUNCTIONS
+    // ==========================================================================
+    function getRandomAgent() {
+      const ids = Object.keys(agents);
+      return ids[Math.floor(Math.random() * ids.length)];
+    }
+    
+    function triggerThought() {
+      const icons = ['💡', '❓', '💭', '🤔', '⚡', '🔧', '📊'];
+      showBubble(getRandomAgent(), 'thought', icons[Math.floor(Math.random() * icons.length)], null, 4);
+    }
+    
+    function triggerSpeech() {
+      const icons = ['👋', '✨', '🗣️', '📢', '💬', '...'];
+      showBubble(getRandomAgent(), 'speech', icons[Math.floor(Math.random() * icons.length)], null, 3);
+    }
+    
+    function triggerEmote() {
+      const emotes = [
+        { icon: '😤', color: '#ef4444' },
+        { icon: '😊', color: '#22c55e' },
+        { icon: '🎉', color: '#fbbf24' },
+        { icon: '😱', color: '#3b82f6' },
+        { icon: '💪', color: '#f97316' }
+      ];
+      const emote = emotes[Math.floor(Math.random() * emotes.length)];
+      showBubble(getRandomAgent(), 'emote', emote.icon, emote.color, 2);
+    }
+    
+    function triggerTyping() {
+      showBubble(getRandomAgent(), 'typing', '', null, 3);
+    }
+    
+    function triggerFloatingText() {
+      const texts = [
+        { text: '+50 XP', color: '#22c55e' },
+        { text: '-10 HP', color: '#ef4444' },
+        { text: 'CRIT!', color: '#fbbf24' },
+        { text: '+1 Task', color: '#3b82f6' },
+        { text: 'SYNCED', color: '#a855f7' }
+      ];
+      const t = texts[Math.floor(Math.random() * texts.length)];
+      showFloatingText(getRandomAgent(), t.text, t.color);
+    }
+    
+    function triggerTaskComplete() {
+      const agentId = getRandomAgent();
+      showFloatingText(agentId, '✓ COMPLETE', '#22c55e');
+      showBubble(agentId, 'emote', '🎉', '#22c55e', 2);
+      createPing(agentId);
+    }
+    
+    function triggerPing() {
+      createPing(getRandomAgent());
+    }
+    
+    function triggerQuestMarker() {
+      showQuestMarker(getRandomAgent(), 6);
+    }
+    
+    // ==========================================================================
+    // CAMERA CONTROLS
+    // ==========================================================================
+    let isDragging = false;
+    let prevMouse = { x: 0, y: 0 };
+    let spherical = { theta: Math.PI / 4, phi: Math.PI / 4.5, radius: 28 };
+    
+    function updateCamera() {
+      camera.position.x = spherical.radius * Math.sin(spherical.phi) * Math.cos(spherical.theta);
+      camera.position.y = spherical.radius * Math.cos(spherical.phi);
+      camera.position.z = spherical.radius * Math.sin(spherical.phi) * Math.sin(spherical.theta);
+      camera.lookAt(0, 0, 0);
+    }
+    
+    renderer.domElement.addEventListener('mousedown', e => {
+      if (e.button === 0) { isDragging = true; prevMouse = { x: e.clientX, y: e.clientY }; }
+    });
+    
+    renderer.domElement.addEventListener('mousemove', e => {
+      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.y = -(e.clientY / window.innerHeight) * 2 + 1;
+      
+      if (isDragging) {
+        spherical.theta -= (e.clientX - prevMouse.x) * 0.01;
+        spherical.phi = Math.max(0.3, Math.min(Math.PI / 2.2, spherical.phi + (e.clientY - prevMouse.y) * 0.01));
+        updateCamera();
+        prevMouse = { x: e.clientX, y: e.clientY };
+      } else {
+        // Hover tooltip
+        raycaster.setFromCamera(mouse, camera);
+        const intersects = raycaster.intersectObjects(agentMeshes);
+        
+        const tooltip = document.getElementById('tooltip');
+        if (intersects.length > 0) {
+          const agent = Object.values(agents).find(a => a.body === intersects[0].object);
+          if (agent) {
+            tooltip.style.display = 'block';
+            tooltip.style.left = e.clientX + 15 + 'px';
+            tooltip.style.top = e.clientY + 15 + 'px';
+            document.getElementById('tooltip-title').textContent = agent.name;
+            document.getElementById('tooltip-content').textContent = 
+              `Status: ${agent.status}\nMood: ${Math.round(agent.mood * 100)}%\nTasks: ${agent.tasks}`;
+          }
+        } else {
+          tooltip.style.display = 'none';
+        }
+      }
+    });
+    
+    renderer.domElement.addEventListener('mouseup', () => isDragging = false);
+    renderer.domElement.addEventListener('mouseleave', () => {
+      isDragging = false;
+      document.getElementById('tooltip').style.display = 'none';
+    });
+    
+    renderer.domElement.addEventListener('wheel', e => {
+      e.preventDefault();
+      spherical.radius = Math.max(15, Math.min(50, spherical.radius + e.deltaY * 0.03));
+      updateCamera();
+    }, { passive: false });
+    
+    // ==========================================================================
+    // ANIMATION
+    // ==========================================================================
+    const clock = new THREE.Clock();
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      const elapsed = clock.getElapsedTime();
+      const delta = clock.getDelta();
+      
+      // Animate agents
+      Object.values(agents).forEach(agent => {
+        // Plumbob rotation and bob
+        agent.plumbob.material.rotation += delta * 2;
+        agent.plumbob.position.y = 1.9 + Math.sin(elapsed * 2 + agent.phase) * 0.1;
+        
+        // Character idle animation
+        agent.head.rotation.y = Math.sin(elapsed * 1.5 + agent.phase) * 0.1;
+        agent.body.scale.x = 1 + Math.sin(elapsed * 2 + agent.phase) * 0.02;
+        
+        // Blocked shake
+        if (agent.status === 'blocked') {
+          agent.group.position.x = agent.x + Math.sin(elapsed * 10) * 0.02;
+        }
+      });
+      
+      // Animate bubbles
+      for (let i = activeBubbles.length - 1; i >= 0; i--) {
+        const { agent, bubble } = activeBubbles[i];
+        bubble.age += delta;
+        
+        if (bubble.state === 'appearing') {
+          const scale = Math.min(1, bubble.age * 5);
+          bubble.sprite.scale.set(scale * 1.2, scale * 1.2, 1);
+          if (scale >= 1) bubble.state = 'visible';
+        } else if (bubble.state === 'visible') {
+          // Subtle bob
+          bubble.sprite.position.y = (bubble.type === 'emote' ? 2.8 : 2.5) + Math.sin(elapsed * 3) * 0.05;
+          
+          if (bubble.age > bubble.duration - 0.3) {
+            bubble.state = 'disappearing';
+          }
+        } else if (bubble.state === 'disappearing') {
+          const fade = 1 - (bubble.age - bubble.duration + 0.3) / 0.3;
+          bubble.sprite.scale.set(fade * 1.2, fade * 1.2, 1);
+          bubble.sprite.material.opacity = fade;
+          
+          if (fade <= 0) {
+            agent.group.remove(bubble.sprite);
+            agent.bubbles = agent.bubbles.filter(b => b !== bubble);
+            activeBubbles.splice(i, 1);
+          }
+        }
+      }
+      
+      // Animate floating texts
+      for (let i = activeFloatingTexts.length - 1; i >= 0; i--) {
+        const ft = activeFloatingTexts[i];
+        ft.age += delta;
+        ft.sprite.position.y += ft.velocity * delta;
+        
+        const progress = ft.age / ft.duration;
+        ft.sprite.material.opacity = 1 - progress;
+        
+        if (progress >= 1) {
+          scene.remove(ft.sprite);
+          activeFloatingTexts.splice(i, 1);
+        }
+      }
+      
+      // Animate quest markers
+      for (let i = activeMarkers.length - 1; i >= 0; i--) {
+        const marker = activeMarkers[i];
+        marker.age += delta;
+        marker.bouncePhase += delta * 8;
+        
+        // Bouncing
+        marker.sprite.position.y = 2.8 + Math.abs(Math.sin(marker.bouncePhase)) * 0.2;
+        
+        // Fade out at end
+        if (marker.age > marker.duration - 0.5) {
+          marker.sprite.material.opacity = (marker.duration - marker.age) / 0.5;
+        }
+        
+        if (marker.age >= marker.duration) {
+          marker.agent.group.remove(marker.sprite);
+          activeMarkers.splice(i, 1);
+        }
+      }
+      
+      // Animate pings
+      for (let i = activePings.length - 1; i >= 0; i--) {
+        const ping = activePings[i];
+        ping.age += delta;
+        
+        ping.rings.forEach(ring => {
+          const ringAge = Math.max(0, ping.age - ring.delay);
+          const progress = ringAge / (ping.duration - ring.delay);
+          
+          if (progress > 0 && progress < 1) {
+            const scale = ping.maxScale * (1 - Math.pow(1 - progress, 2));
+            ring.mesh.scale.set(scale, scale, 1);
+            ring.mesh.material.opacity = 0.8 * (1 - progress);
+          }
+        });
+        
+        if (ping.age >= ping.duration) {
+          ping.rings.forEach(ring => scene.remove(ring.mesh));
+          activePings.splice(i, 1);
+        }
+      }
+      
+      renderer.render(scene, camera);
+    }
+    
+    // ==========================================================================
+    // INITIALIZATION
+    // ==========================================================================
+    createFloor();
+    AGENTS_CONFIG.forEach(config => createAgent(config));
+    updateCamera();
+    animate();
+    
+    // Auto-trigger some effects on load
+    setTimeout(() => triggerThought(), 1000);
+    setTimeout(() => triggerSpeech(), 2000);
+    setTimeout(() => showQuestMarker('pm', 8), 500);
+    
+    window.addEventListener('resize', () => {
+      const aspect = window.innerWidth / window.innerHeight;
+      camera.left = -frustumSize * aspect;
+      camera.right = frustumSize * aspect;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    console.log('🎮 Diegetic UI Demo loaded!');
+  </script>
+</body>
+</html>

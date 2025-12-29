@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kenney Mini-Characters Viewer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      background: #1a1a2e; 
+      overflow: hidden; 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    #ui {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      background: rgba(20, 20, 40, 0.95);
+      padding: 20px;
+      border-radius: 12px;
+      color: white;
+      z-index: 100;
+      min-width: 280px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    #ui h2 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      color: #fbbf24;
+    }
+    
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #6b7280;
+      margin: 15px 0 8px 0;
+    }
+    
+    .character-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 6px;
+    }
+    
+    .char-btn {
+      width: 36px;
+      height: 36px;
+      border: 2px solid #374151;
+      background: #1f2937;
+      color: white;
+      font-size: 10px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .char-btn:hover {
+      border-color: #6b7280;
+      background: #374151;
+    }
+    
+    .char-btn.active {
+      border-color: #fbbf24;
+      background: #f59e0b;
+      color: #1a1a2e;
+    }
+    
+    .char-btn.male { color: #60a5fa; }
+    .char-btn.female { color: #f472b6; }
+    .char-btn.male.active, .char-btn.female.active { color: #1a1a2e; }
+    
+    #model-info {
+      margin-top: 15px;
+      padding: 12px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 8px;
+      font-size: 12px;
+    }
+    
+    #model-info p {
+      margin: 4px 0;
+      color: #9ca3af;
+    }
+    
+    #model-info span {
+      color: #e5e7eb;
+    }
+    
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .ctrl-btn {
+      padding: 8px 12px;
+      background: #374151;
+      border: 1px solid #4b5563;
+      color: white;
+      font-size: 11px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    .ctrl-btn:hover {
+      background: #4b5563;
+    }
+    
+    .ctrl-btn.active {
+      background: #22c55e;
+      border-color: #16a34a;
+    }
+    
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 18px;
+      z-index: 50;
+    }
+    
+    #animation-list {
+      max-height: 150px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    
+    .anim-btn {
+      display: block;
+      width: 100%;
+      padding: 6px 10px;
+      margin: 3px 0;
+      background: #1f2937;
+      border: 1px solid #374151;
+      color: #9ca3af;
+      font-size: 11px;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    
+    .anim-btn:hover {
+      background: #374151;
+      color: white;
+    }
+    
+    .anim-btn.playing {
+      background: #065f46;
+      border-color: #10b981;
+      color: #34d399;
+    }
+    
+    #texture-warning {
+      background: #7c2d12;
+      border: 1px solid #ea580c;
+      padding: 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      font-size: 11px;
+      color: #fed7aa;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">Loading character models...</div>
+  
+  <div id="ui">
+    <h2>🎮 Kenney Mini-Characters</h2>
+    
+    <div class="section-title">Male Characters</div>
+    <div class="character-grid">
+      <button class="char-btn male" data-model="character-male-a">A</button>
+      <button class="char-btn male" data-model="character-male-b">B</button>
+      <button class="char-btn male" data-model="character-male-c">C</button>
+      <button class="char-btn male" data-model="character-male-d">D</button>
+      <button class="char-btn male" data-model="character-male-e">E</button>
+      <button class="char-btn male" data-model="character-male-f">F</button>
+    </div>
+    
+    <div class="section-title">Female Characters</div>
+    <div class="character-grid">
+      <button class="char-btn female" data-model="character-female-a">A</button>
+      <button class="char-btn female" data-model="character-female-b">B</button>
+      <button class="char-btn female" data-model="character-female-c">C</button>
+      <button class="char-btn female" data-model="character-female-d">D</button>
+      <button class="char-btn female" data-model="character-female-e">E</button>
+      <button class="char-btn female" data-model="character-female-f">F</button>
+    </div>
+    
+    <div id="texture-warning">
+      ⚠️ Texture not found. Using fallback colors. Upload <code>colormap.png</code> for proper textures.
+    </div>
+    
+    <div id="model-info">
+      <p>Model: <span id="info-name">-</span></p>
+      <p>Meshes: <span id="info-meshes">-</span></p>
+      <p>Animations: <span id="info-anims">-</span></p>
+      <p>Vertices: <span id="info-verts">-</span></p>
+    </div>
+    
+    <div class="section-title">Animations</div>
+    <div id="animation-list">
+      <p style="color: #6b7280; font-size: 11px;">Select a character...</p>
+    </div>
+    
+    <div class="controls">
+      <button class="ctrl-btn" onclick="toggleRotate()">🔄 Auto Rotate</button>
+      <button class="ctrl-btn" onclick="resetCamera()">📷 Reset View</button>
+      <button class="ctrl-btn" onclick="toggleWireframe()">📐 Wireframe</button>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    // ==========================================================================
+    // SCENE SETUP
+    // ==========================================================================
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+    
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(3, 2, 3);
+    
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = true;
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    document.body.appendChild(renderer.domElement);
+    
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controls.target.set(0, 0.5, 0);
+    
+    // ==========================================================================
+    // LIGHTING
+    // ==========================================================================
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    scene.add(ambientLight);
+    
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, 5);
+    directionalLight.castShadow = true;
+    directionalLight.shadow.mapSize.set(1024, 1024);
+    scene.add(directionalLight);
+    
+    const fillLight = new THREE.DirectionalLight(0x8888ff, 0.3);
+    fillLight.position.set(-5, 5, -5);
+    scene.add(fillLight);
+    
+    // ==========================================================================
+    // GROUND
+    // ==========================================================================
+    const groundGeo = new THREE.CircleGeometry(3, 32);
+    const groundMat = new THREE.MeshStandardMaterial({ 
+      color: 0x2a2a4a, 
+      roughness: 0.8 
+    });
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+    
+    // Grid helper
+    const gridHelper = new THREE.GridHelper(6, 12, 0x444466, 0x333355);
+    scene.add(gridHelper);
+    
+    // ==========================================================================
+    // MODEL LOADING
+    // ==========================================================================
+    const loader = new THREE.GLTFLoader();
+    let currentModel = null;
+    let currentMixer = null;
+    let currentAnimations = [];
+    let isWireframe = false;
+    let autoRotate = false;
+    let textureLoaded = false;
+    
+    // Try to load the colormap texture
+    const textureLoader = new THREE.TextureLoader();
+    let colormap = null;
+    
+    // Character color schemes for fallback
+    const characterColors = {
+      'character-male-a': { skin: 0xffdbac, shirt: 0x3b82f6, pants: 0x1e3a5f },
+      'character-male-b': { skin: 0xffdbac, shirt: 0x22c55e, pants: 0x14532d },
+      'character-male-c': { skin: 0xffdbac, shirt: 0xf59e0b, pants: 0x78350f },
+      'character-male-d': { skin: 0xc68642, shirt: 0x8b5cf6, pants: 0x3b0764 },
+      'character-male-e': { skin: 0xffdbac, shirt: 0xef4444, pants: 0x7f1d1d },
+      'character-male-f': { skin: 0xc68642, shirt: 0x06b6d4, pants: 0x164e63 },
+      'character-female-a': { skin: 0xffdbac, shirt: 0xec4899, pants: 0x831843 },
+      'character-female-b': { skin: 0xffdbac, shirt: 0xa855f7, pants: 0x581c87 },
+      'character-female-c': { skin: 0xc68642, shirt: 0x14b8a6, pants: 0x134e4a },
+      'character-female-d': { skin: 0xffdbac, shirt: 0xf97316, pants: 0x7c2d12 },
+      'character-female-e': { skin: 0xc68642, shirt: 0x84cc16, pants: 0x365314 },
+      'character-female-f': { skin: 0xffdbac, shirt: 0x0ea5e9, pants: 0x0c4a6e },
+    };
+    
+    function loadCharacter(modelName) {
+      // Remove existing model
+      if (currentModel) {
+        scene.remove(currentModel);
+        currentModel = null;
+      }
+      if (currentMixer) {
+        currentMixer.stopAllAction();
+        currentMixer = null;
+      }
+      
+      document.getElementById('loading').style.display = 'block';
+      
+      // Update UI
+      document.querySelectorAll('.char-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.model === modelName);
+      });
+      
+      const modelPath = `${modelName}.glb`;
+      
+      loader.load(
+        modelPath,
+        (gltf) => {
+          document.getElementById('loading').style.display = 'none';
+          
+          const model = gltf.scene;
+          currentModel = model;
+          
+          // Process the model
+          let meshCount = 0;
+          let vertexCount = 0;
+          
+          model.traverse((child) => {
+            if (child.isMesh) {
+              meshCount++;
+              if (child.geometry.attributes.position) {
+                vertexCount += child.geometry.attributes.position.count;
+              }
+              
+              child.castShadow = true;
+              child.receiveShadow = true;
+              
+              // Apply fallback material if texture missing
+              if (!textureLoaded) {
+                const colors = characterColors[modelName] || { skin: 0xffdbac, shirt: 0x888888, pants: 0x444444 };
+                
+                // Kenney models usually have body parts named
+                const name = child.name.toLowerCase();
+                let color = colors.shirt;
+                
+                if (name.includes('head') || name.includes('hand') || name.includes('arm')) {
+                  color = colors.skin;
+                } else if (name.includes('leg') || name.includes('foot') || name.includes('pant')) {
+                  color = colors.pants;
+                }
+                
+                child.material = new THREE.MeshStandardMaterial({
+                  color: color,
+                  roughness: 0.7,
+                  metalness: 0.1,
+                  wireframe: isWireframe
+                });
+              }
+            }
+          });
+          
+          // Scale and position
+          model.scale.set(1, 1, 1);
+          model.position.set(0, 0, 0);
+          
+          scene.add(model);
+          
+          // Setup animations
+          currentAnimations = gltf.animations;
+          if (currentAnimations.length > 0) {
+            currentMixer = new THREE.AnimationMixer(model);
+            updateAnimationList(currentAnimations);
+          } else {
+            document.getElementById('animation-list').innerHTML = 
+              '<p style="color: #6b7280; font-size: 11px;">No animations found</p>';
+          }
+          
+          // Update info
+          document.getElementById('info-name').textContent = modelName;
+          document.getElementById('info-meshes').textContent = meshCount;
+          document.getElementById('info-anims').textContent = currentAnimations.length;
+          document.getElementById('info-verts').textContent = vertexCount.toLocaleString();
+          
+          // Show texture warning if needed
+          document.getElementById('texture-warning').style.display = textureLoaded ? 'none' : 'block';
+        },
+        (progress) => {
+          // Loading progress
+        },
+        (error) => {
+          console.error('Error loading model:', error);
+          document.getElementById('loading').textContent = 'Error loading model';
+        }
+      );
+    }
+    
+    function updateAnimationList(animations) {
+      const container = document.getElementById('animation-list');
+      container.innerHTML = '';
+      
+      animations.forEach((clip, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'anim-btn';
+        btn.textContent = `▶ ${clip.name} (${clip.duration.toFixed(2)}s)`;
+        btn.onclick = () => playAnimation(index);
+        container.appendChild(btn);
+      });
+    }
+    
+    function playAnimation(index) {
+      if (!currentMixer || !currentAnimations[index]) return;
+      
+      // Stop all current actions
+      currentMixer.stopAllAction();
+      
+      // Play selected animation
+      const action = currentMixer.clipAction(currentAnimations[index]);
+      action.reset();
+      action.play();
+      
+      // Update UI
+      document.querySelectorAll('.anim-btn').forEach((btn, i) => {
+        btn.classList.toggle('playing', i === index);
+      });
+    }
+    
+    // ==========================================================================
+    // CONTROLS
+    // ==========================================================================
+    function toggleRotate() {
+      autoRotate = !autoRotate;
+      event.target.classList.toggle('active', autoRotate);
+    }
+    
+    function resetCamera() {
+      camera.position.set(3, 2, 3);
+      controls.target.set(0, 0.5, 0);
+      controls.update();
+    }
+    
+    function toggleWireframe() {
+      isWireframe = !isWireframe;
+      event.target.classList.toggle('active', isWireframe);
+      
+      if (currentModel) {
+        currentModel.traverse((child) => {
+          if (child.isMesh && child.material) {
+            child.material.wireframe = isWireframe;
+          }
+        });
+      }
+    }
+    
+    // ==========================================================================
+    // CHARACTER BUTTONS
+    // ==========================================================================
+    document.querySelectorAll('.char-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        loadCharacter(btn.dataset.model);
+      });
+    });
+    
+    // ==========================================================================
+    // ANIMATION LOOP
+    // ==========================================================================
+    const clock = new THREE.Clock();
+    
+    function animate() {
+      requestAnimationFrame(animate);
+      
+      const delta = clock.getDelta();
+      
+      if (currentMixer) {
+        currentMixer.update(delta);
+      }
+      
+      if (autoRotate && currentModel) {
+        currentModel.rotation.y += delta * 0.5;
+      }
+      
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    
+    // ==========================================================================
+    // RESIZE
+    // ==========================================================================
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+    
+    // ==========================================================================
+    // INIT
+    // ==========================================================================
+    animate();
+    
+    // Load first character
+    setTimeout(() => {
+      loadCharacter('character-male-a');
+    }, 100);
+    
+    console.log('🎮 Kenney Mini-Characters Viewer loaded!');
+  </script>
+</body>
+</html>

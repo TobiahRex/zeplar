@@ -11,6 +11,7 @@ export const SystemQualitySchema = z.enum([
   "security",
   "observability",
   "maintainability",
+  "consistency",
 ]);
 
 export const DifficultySchema = z.enum([
@@ -108,10 +109,10 @@ export const CodeExampleSchema = z.object({
   title: z.string(),
   description: z.string(),
   code: z.string(),
-  runnable: z.boolean(),
-  contextDilation: ContextDilationSchema,
-  annotations: z.array(ActionReasonAnnotationSchema),
-  highlights: z.array(CodeHighlightSchema),
+  runnable: z.boolean().optional(),
+  contextDilation: ContextDilationSchema.optional(),
+  annotations: z.array(ActionReasonAnnotationSchema).optional(),
+  highlights: z.array(CodeHighlightSchema).optional(),
 });
 
 // =============================================================================
@@ -187,7 +188,18 @@ export const HierarchySchema = z.object({
   quality: SystemQualitySchema,
   strategy: z.string(),
   family: z.string(),
-  level: z.union([z.literal(4), z.literal(5)]),
+  level: z.union([
+    z.literal(1),
+    z.literal(2),
+    z.literal(3),
+    z.literal(4),
+    z.literal(5),
+    z.literal(6),
+    z.literal(7),
+    z.literal(8),
+    z.literal(9),
+    z.literal(10),
+  ]),
   parentId: z.string().optional(),
 });
 
@@ -198,17 +210,19 @@ export const HierarchySchema = z.object({
 export const PatternSchema = z.object({
   id: z.string(),
   slug: z.string(),
+  corpusPath: z.string(),
+  corpusLineNumber: z.number().optional(),
   hierarchy: HierarchySchema,
   concept: ConceptSchema,
   structure: StructureSchema,
   codeExamples: z.array(CodeExampleSchema),
-  systemContext: SystemContextSchema,
-  implementations: z.array(ImplementationSchema),
-  usedInSystems: z.array(SystemReferenceSchema),
-  philosophy: PhilosophySchema,
-  visualization: VisualizationSchema,
-  tags: z.array(z.string()),
-  difficulty: DifficultySchema,
+  systemContext: SystemContextSchema.optional(),
+  implementations: z.array(ImplementationSchema).optional(),
+  usedInSystems: z.array(SystemReferenceSchema).optional(),
+  philosophy: PhilosophySchema.optional(),
+  visualization: VisualizationSchema.optional(),
+  tags: z.array(z.string()).optional(),
+  difficulty: DifficultySchema.optional(),
 });
 
 // =============================================================================

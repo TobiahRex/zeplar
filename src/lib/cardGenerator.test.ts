@@ -143,7 +143,9 @@ describe("cardGenerator", () => {
         expect(problemCard?.sbvpDomain).toBe("philosophy");
         expect(problemCard?.front.text).toContain("problem");
         expect(problemCard?.back.text).toBe(pattern.concept.problemSolved);
-        expect(problemCard?.hints).toContain(pattern.philosophy.coreProblem);
+        if (pattern.philosophy?.coreProblem) {
+          expect(problemCard?.hints).toContain(pattern.philosophy.coreProblem);
+        }
         expect(problemCard?.grammarCoordinates.facet).toBe("problem");
       });
     });
@@ -196,17 +198,17 @@ describe("cardGenerator", () => {
   });
 
   describe("generateAllL1Cards", () => {
-    it("should generate 30 cards for 6 patterns", () => {
+    it("should generate 80 cards for 16 patterns", () => {
       const cards = generateAllL1Cards(patternList);
-      expect(cards).toHaveLength(30); // 6 patterns × 5 cards each
+      expect(cards).toHaveLength(80); // 16 patterns × 5 cards each
     });
 
     it("should generate cards for all patterns", () => {
       const cards = generateAllL1Cards(patternList);
       const patternIds = new Set(cards.map((c) => c.patternId));
 
-      // All 6 patterns should have cards
-      expect(patternIds.size).toBe(6);
+      // All 16 patterns should have cards
+      expect(patternIds.size).toBe(16);
       expect(patternIds).toContain("circuit-breaker");
       expect(patternIds).toContain("retry");
       expect(patternIds).toContain("cache-aside");
@@ -236,13 +238,13 @@ describe("cardGenerator", () => {
       );
 
       // Should have definition cards (structure)
-      expect(domainCounts.structure).toBe(6); // 1 per pattern
+      expect(domainCounts.structure).toBe(16); // 1 per pattern
 
       // Should have problem and tradeoff cards (philosophy)
-      expect(domainCounts.philosophy).toBe(18); // 3 per pattern (problem, pros, cons)
+      expect(domainCounts.philosophy).toBe(48); // 3 per pattern (problem, pros, cons)
 
       // Should have recognition cards (visualization)
-      expect(domainCounts.visualization).toBe(6); // 1 per pattern
+      expect(domainCounts.visualization).toBe(16); // 1 per pattern
     });
 
     it("should include all required fields on all cards", () => {
@@ -410,16 +412,16 @@ describe("cardGenerator", () => {
   });
 
   describe("generateAllL2Cards", () => {
-    it("should generate 30 cards for 6 patterns", () => {
+    it("should generate 80 cards for 16 patterns", () => {
       const cards = generateAllL2Cards(patternList);
-      expect(cards).toHaveLength(30); // 6 patterns × 5 cards each
+      expect(cards).toHaveLength(80); // 16 patterns × 5 cards each
     });
 
     it("should generate cards for all patterns", () => {
       const cards = generateAllL2Cards(patternList);
       const patternIds = new Set(cards.map((c) => c.patternId));
 
-      expect(patternIds.size).toBe(6);
+      expect(patternIds.size).toBe(16);
       expect(patternIds).toContain("circuit-breaker");
       expect(patternIds).toContain("retry");
       expect(patternIds).toContain("cache-aside");
@@ -447,12 +449,12 @@ describe("cardGenerator", () => {
         {} as Record<string, number>,
       );
 
-      // Participants cards: 6 (structure)
-      // Role cards: 18 (structure)
-      expect(domainCounts.structure).toBe(24);
+      // Participants cards: 16 (structure)
+      // Role cards: 48 (structure)
+      expect(domainCounts.structure).toBe(64);
 
-      // Flow sequence cards: 6 (behavior)
-      expect(domainCounts.behavior).toBe(6);
+      // Flow sequence cards: 16 (behavior)
+      expect(domainCounts.behavior).toBe(16);
     });
 
     it("should include all required fields on all cards", () => {
@@ -596,16 +598,19 @@ describe("cardGenerator", () => {
   });
 
   describe("generateAllL3Cards", () => {
-    it("should generate 30 cards for 6 patterns", () => {
+    it("should generate 60 cards for 16 patterns (some without annotations)", () => {
       const cards = generateAllL3Cards(patternList);
-      expect(cards).toHaveLength(30); // 6 patterns × 5 cards each
+      // 6 old patterns with annotations × 5 cards = 30
+      // 10 new patterns without annotations × 3 cards = 30
+      // Total = 60 cards
+      expect(cards).toHaveLength(60);
     });
 
     it("should generate cards for all patterns", () => {
       const cards = generateAllL3Cards(patternList);
       const patternIds = new Set(cards.map((c) => c.patternId));
 
-      expect(patternIds.size).toBe(6);
+      expect(patternIds.size).toBe(16);
       expect(patternIds).toContain("circuit-breaker");
       expect(patternIds).toContain("retry");
       expect(patternIds).toContain("cache-aside");
@@ -633,14 +638,14 @@ describe("cardGenerator", () => {
         {} as Record<string, number>,
       );
 
-      // Code identification + fill-in-blank: 12 (structure)
-      expect(domainCounts.structure).toBe(12);
+      // Code identification + fill-in-blank: 2 per pattern × 16 = 32 (structure)
+      expect(domainCounts.structure).toBe(32);
 
-      // Action-reason cards: 12 (behavior)
+      // Action-reason cards: only for patterns with annotations (6 patterns × 2 = 12) (behavior)
       expect(domainCounts.behavior).toBe(12);
 
-      // Context dilation: 6 (philosophy)
-      expect(domainCounts.philosophy).toBe(6);
+      // Context dilation: 1 per pattern × 16 = 16 (philosophy)
+      expect(domainCounts.philosophy).toBe(16);
     });
 
     it("should include all required fields on all cards", () => {
@@ -668,12 +673,12 @@ describe("cardGenerator", () => {
       const l2Cards = generateAllL2Cards(patternList);
       const l3Cards = generateAllL3Cards(patternList);
 
-      expect(l1Cards).toHaveLength(30);
-      expect(l2Cards).toHaveLength(30);
-      expect(l3Cards).toHaveLength(30);
+      expect(l1Cards).toHaveLength(80);
+      expect(l2Cards).toHaveLength(80);
+      expect(l3Cards).toHaveLength(60); // 10 new patterns have fewer L3 cards (no annotations)
 
       const totalCards = l1Cards.length + l2Cards.length + l3Cards.length;
-      expect(totalCards).toBe(90);
+      expect(totalCards).toBe(220); // 80 + 80 + 60
     });
 
     it("should have unique IDs across all layers", () => {
@@ -685,7 +690,7 @@ describe("cardGenerator", () => {
       const ids = allCards.map((c) => c.id);
       const uniqueIds = new Set(ids);
 
-      expect(uniqueIds.size).toBe(90);
+      expect(uniqueIds.size).toBe(220); // Total unique cards across all layers
     });
   });
 });

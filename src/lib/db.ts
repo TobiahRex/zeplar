@@ -29,10 +29,16 @@ interface StudySessionRecord {
   correctCount: number;
 }
 
+interface StoredActivity {
+  date: string; // YYYY-MM-DD
+  cardsReviewed: number;
+}
+
 class ZeplarDB extends Dexie {
   cardProgress!: EntityTable<StoredCardProgress, "cardKey">;
   stats!: EntityTable<StoredStats, "id">;
   sessions!: EntityTable<StudySessionRecord, "id">;
+  activity!: EntityTable<StoredActivity, "date">;
 
   constructor() {
     super("zeplar");
@@ -41,6 +47,14 @@ class ZeplarDB extends Dexie {
       cardProgress: "cardKey, nextReviewDate, state",
       stats: "id",
       sessions: "++id, startedAt",
+    });
+
+    // Version 2: Add activity tracking
+    this.version(2).stores({
+      cardProgress: "cardKey, nextReviewDate, state",
+      stats: "id",
+      sessions: "++id, startedAt",
+      activity: "date",
     });
   }
 }
@@ -170,4 +184,27 @@ export async function getRecentSessions(
   limit = 10,
 ): Promise<StudySessionRecord[]> {
   return db.sessions.orderBy("startedAt").reverse().limit(limit).toArray();
+}
+
+// =============================================================================
+// Activity Operations
+// =============================================================================
+
+export async function saveActivity(
+  activityByDate: Record<string, number>,
+): Promise<void> {
+  const items = Object.entries(activityByDate).map(([date, cardsReviewed]) => ({
+    date,
+    cardsReviewed,
+  }));
+  await db.activity.bulkPut(items);
+}
+
+export async function loadActivity(): Promise<Record<string, number>> {
+  const items = await db.activity.toArray();
+  const result: Record<string, number> = {};
+  for (const item of items) {
+    result[item.date] = item.cardsReviewed;
+  }
+  return result;
 }

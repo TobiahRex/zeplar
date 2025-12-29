@@ -1,16 +1,9 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import {
-  type CardProgress,
-  type Quality,
-  calculateSM2,
-  createInitialProgress,
-} from "@/lib/sm2";
+import { type CardProgress, type Quality } from "@/lib/sm2";
 import {
   type LayerUnlockStatus,
-  updateAllLayerUnlocks,
   initializeLayerUnlockStatus,
 } from "@/lib/layerUnlock";
-import { parseCardKey } from "@/lib/cardGenerator";
 
 interface StudySession {
   isActive: boolean;
@@ -40,6 +33,15 @@ interface LearningState {
     streak: number;
     lastStudyDate?: string;
   };
+
+  // Activity tracking - cards reviewed per day (YYYY-MM-DD -> count)
+  activityByDate: Record<string, number>;
+
+  // Loading states
+  isHydrating: boolean;
+  isHydrated: boolean;
+  sessionLoading: boolean;
+  error: string | null;
 }
 
 const initialState: LearningState = {
@@ -55,14 +57,47 @@ const initialState: LearningState = {
     totalReviews: 0,
     streak: 0,
   },
+  activityByDate: {},
+  isHydrating: false,
+  isHydrated: false,
+  sessionLoading: false,
+  error: null,
 };
 
 const learningSlice = createSlice({
   name: "learning",
   initialState,
   reducers: {
-    // Start a new study session with given card keys
-    startSession(state, action: PayloadAction<string[]>) {
+    // =============================================================================
+    // Hydration Actions
+    // =============================================================================
+
+    hydrateRequested(state) {
+      state.isHydrating = true;
+      state.error = null;
+    },
+
+    hydrateSucceeded(state) {
+      state.isHydrating = false;
+      state.isHydrated = true;
+    },
+
+    hydrateFailed(state, action: PayloadAction<string>) {
+      state.isHydrating = false;
+      state.isHydrated = true; // Still mark as hydrated to not block app
+      state.error = action.payload;
+    },
+
+    // =============================================================================
+    // Start Session Actions
+    // =============================================================================
+
+    startSessionRequested(state) {
+      state.sessionLoading = true;
+      state.error = null;
+    },
+
+    startSessionSucceeded(state, action: PayloadAction<string[]>) {
       state.session = {
         isActive: true,
         queue: action.payload,
@@ -70,56 +105,68 @@ const learningSlice = createSlice({
         startedAt: new Date().toISOString(),
         results: [],
       };
+      state.sessionLoading = false;
     },
 
-    // Submit a review for the current card
-    submitReview(
+    startSessionFailed(state, action: PayloadAction<string>) {
+      state.sessionLoading = false;
+      state.error = action.payload;
+    },
+
+    // =============================================================================
+    // Submit Review Actions
+    // =============================================================================
+
+    submitReviewRequested(state) {
+      // Just mark the action as requested - saga will handle it
+      state.error = null;
+    },
+
+    submitReviewSucceeded(
       state,
-      action: PayloadAction<{ cardKey: string; quality: Quality }>,
+      action: PayloadAction<{
+        cardKey: string;
+        progress: CardProgress;
+        quality: Quality;
+        timestamp: string;
+        today: string;
+        layerUnlocks: Record<string, LayerUnlockStatus>;
+      }>,
     ) {
-      const { cardKey, quality } = action.payload;
+      const { cardKey, progress, quality, timestamp, today, layerUnlocks } =
+        action.payload;
 
-      // Parse card key to get pattern and layer info
-      const parsed = parseCardKey(cardKey);
-      if (!parsed) return;
-
-      // Get or create progress
-      const current =
-        state.progress[cardKey] ||
-        createInitialProgress(
-          cardKey,
-          parsed.patternId,
-          `L${parsed.layer}` as "L1" | "L2" | "L3",
-        );
-
-      // Calculate new progress
-      const result = calculateSM2(current, quality);
-
-      // Update progress
-      state.progress[cardKey] = {
-        ...current,
-        ...result,
-        lastReviewDate: new Date().toISOString() as unknown as Date,
-        nextReviewDate: result.nextReviewDate,
-      };
+      // Update progress (pure state update - no logic)
+      state.progress[cardKey] = progress;
 
       // Record in session
       state.session.results.push({
         cardKey,
         quality,
-        timestamp: new Date().toISOString(),
+        timestamp,
       });
 
       // Update stats
       state.stats.totalReviews += 1;
 
-      // Recalculate layer unlocks for this pattern
-      const patternIds = [parsed.patternId];
-      state.layerUnlocks = updateAllLayerUnlocks(
-        patternIds,
-        state.progress,
-        state.layerUnlocks,
-      );
+      // Update activity for today
+      state.activityByDate[today] = (state.activityByDate[today] || 0) + 1;
+
+      // Update layer unlocks
+      state.layerUnlocks = layerUnlocks;
+    },
+
+    submitReviewFailed(
+      state,
+      action: PayloadAction<{ cardKey: string; error: string }>,
+    ) {
+      state.error = action.payload.error;
+    },
+
+    // Keep internal action for persistence watcher
+    submitReview() {
+      // This is now just a marker action for persistence
+      // The saga will handle the actual logic
     },
 
     // Advance to next card
@@ -180,16 +227,6 @@ const learningSlice = createSlice({
       });
     },
 
-    // Update layer unlocks for all patterns
-    updateLayerUnlocks(state, action: PayloadAction<string[]>) {
-      const patternIds = action.payload;
-      state.layerUnlocks = updateAllLayerUnlocks(
-        patternIds,
-        state.progress,
-        state.layerUnlocks,
-      );
-    },
-
     // Load persisted layer unlocks
     loadLayerUnlocks(
       state,
@@ -197,19 +234,38 @@ const learningSlice = createSlice({
     ) {
       state.layerUnlocks = action.payload;
     },
+
+    // Load persisted activity data
+    loadActivityByDate(state, action: PayloadAction<Record<string, number>>) {
+      state.activityByDate = action.payload;
+    },
   },
 });
 
 export const {
-  startSession,
-  submitReview,
+  // Hydration actions
+  hydrateRequested,
+  hydrateSucceeded,
+  hydrateFailed,
+  // Session actions
+  startSessionRequested,
+  startSessionSucceeded,
+  startSessionFailed,
+  // Review actions
+  submitReviewRequested,
+  submitReviewSucceeded,
+  submitReviewFailed,
+  submitReview, // Internal action for persistence watcher
+  // Navigation actions
   nextCard,
   endSession,
+  // Load actions (for hydration)
   loadProgress,
   loadStats,
-  initializeLayerUnlocks,
-  updateLayerUnlocks,
   loadLayerUnlocks,
+  loadActivityByDate,
+  // Initialization
+  initializeLayerUnlocks,
 } = learningSlice.actions;
 
 export default learningSlice.reducer;
@@ -281,3 +337,7 @@ export const selectIsLayerUnlocked =
     if (layer === "L3") return status.l3Unlocked;
     return false;
   };
+
+// Activity selectors
+export const selectActivityByDate = (state: { learning: LearningState }) =>
+  state.learning.activityByDate;

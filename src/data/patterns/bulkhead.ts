@@ -3,6 +3,7 @@ import type { Pattern } from "../schema";
 export const bulkhead: Pattern = {
   id: "bulkhead",
   slug: "bulkhead",
+  corpusPath: "🛡️ RELIABILITY → 💔 Fault Tolerance → 🧱 Bulkheads",
 
   hierarchy: {
     quality: "reliability",
@@ -16,9 +17,9 @@ export const bulkhead: Pattern = {
     emoji: "🧱",
     tagline: "Isolate failures to contain the blast radius",
     definition:
-      "A pattern that isolates components or resources into separate pools, preventing a failure in one area from cascading and consuming all available resources.",
+      "The Bulkhead pattern isolates system components by partitioning resources—threads, connections, memory, CPU quotas—into separate pools, preventing failures in one area from consuming all available capacity and cascading to unrelated functionality. Named after the watertight compartments in ship hulls that prevent a single breach from sinking the entire vessel, bulkheads create isolated failure domains within applications. Each critical dependency or service boundary receives its own dedicated resource pool with enforced limits. When one dependency becomes slow, unresponsive, or fails completely, it can only exhaust its allocated pool—other services continue operating with their reserved resources. This isolation transforms potentially catastrophic system-wide failures into contained, localized degradation. The pattern operates through resource allocation strategies: thread pool isolation assigns dedicated thread pools per dependency; connection pool isolation limits database or HTTP connections per service; semaphore-based isolation controls concurrent access through permit-based gates. When a pool reaches capacity, new requests are either queued (with bounded wait times) or rejected immediately, preventing resource starvation. Bulkheads enable graceful degradation under partial failure, ensure critical paths maintain availability even when non-critical features fail, and provide clear resource consumption boundaries for monitoring and capacity planning.",
     problemSolved:
-      "When all requests share the same resource pool (threads, connections), one slow or failing dependency can exhaust the entire pool, bringing down unrelated functionality.",
+      "In systems where all operations share a global resource pool, a single slow or failing dependency can trigger complete system failure. Consider a web application with a shared thread pool serving requests to payment processing, product catalog, user authentication, and reporting services. If the reporting service starts executing slow database queries (perhaps due to a missing index or sudden load spike), threads become blocked waiting for responses. As more requests arrive, additional threads are consumed by the slow reporting service until the entire pool is exhausted. Now payment processing, catalog browsing, and authentication—completely unrelated to reporting—all fail because no threads are available to handle their requests. This cascading resource exhaustion creates tight coupling between unrelated components, violates the principle of fault isolation, and makes the entire system as fragile as its weakest dependency. Bulkheads solve this by partitioning resources: allocating 5 threads exclusively to reporting, 20 to the product catalog, 10 to payments, and 10 to authentication. When reporting degrades, it can only consume its 5 dedicated threads—the other 40 threads continue serving critical functionality. This isolation prevents noisy neighbor problems, ensures critical paths have guaranteed capacity, and enables independent scaling of resource pools based on actual usage patterns.",
     tradeoffs: {
       pros: [
         "Contains failures to isolated compartments",
@@ -227,6 +228,491 @@ await inventoryBulkhead.execute(() => inventoryService.reserve(items));`,
           lines: [36, 41],
           label: "Isolated pools per service",
           sbvpDomain: "structure",
+        },
+      ],
+    },
+    {
+      id: "bulkhead-thread-pool",
+      language: "typescript",
+      title: "Thread Pool Bulkhead with Per-Service Isolation",
+      description:
+        "Production-grade bulkhead using dedicated worker pools per external dependency",
+      code: `interface WorkerPoolConfig {
+  name: string;
+  maxWorkers: number;
+  queueSize: number;
+  timeout: number;
+}
+
+class WorkerPool {
+  private activeWorkers = 0;
+  private queue: Array<{
+    task: () => Promise<any>;
+    resolve: (value: any) => void;
+    reject: (error: any) => void;
+  }> = [];
+
+  constructor(private config: WorkerPoolConfig) {}
+
+  async execute<T>(task: () => Promise<T>): Promise<T> {
+    // Fast path: worker available, execute immediately
+    if (this.activeWorkers < this.config.maxWorkers) {
+      this.activeWorkers++;
+      try {
+        const result = await this.executeWithTimeout(task);
+        return result;
+      } finally {
+        this.activeWorkers--;
+        this.processQueue();
+      }
+    }
+
+    // Slow path: queue is full, reject immediately (fail-fast)
+    if (this.queue.length >= this.config.queueSize) {
+      throw new BulkheadRejectedException(
+        \`\${this.config.name} bulkhead exhausted (queue: \${this.queue.length})\`
+      );
+    }
+
+    // Queue the request
+    return new Promise<T>((resolve, reject) => {
+      this.queue.push({
+        task: task as () => Promise<any>,
+        resolve,
+        reject,
+      });
+    });
+  }
+
+  private async executeWithTimeout<T>(task: () => Promise<T>): Promise<T> {
+    return Promise.race([
+      task(),
+      new Promise<T>((_, reject) =>
+        setTimeout(
+          () => reject(new TimeoutError('Task timeout')),
+          this.config.timeout
+        )
+      ),
+    ]);
+  }
+
+  private processQueue(): void {
+    if (this.queue.length === 0 || this.activeWorkers >= this.config.maxWorkers) {
+      return;
+    }
+
+    const item = this.queue.shift()!;
+    this.activeWorkers++;
+
+    this.executeWithTimeout(item.task)
+      .then(item.resolve)
+      .catch(item.reject)
+      .finally(() => {
+        this.activeWorkers--;
+        this.processQueue();
+      });
+  }
+
+  getMetrics() {
+    return {
+      activeWorkers: this.activeWorkers,
+      queuedTasks: this.queue.length,
+      utilization: this.activeWorkers / this.config.maxWorkers,
+    };
+  }
+}
+
+class BulkheadRejectedException extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'BulkheadRejectedException';
+  }
+}
+
+class TimeoutError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'TimeoutError';
+  }
+}
+
+// Isolation: separate pools for each external dependency
+const paymentPool = new WorkerPool({
+  name: 'PaymentService',
+  maxWorkers: 5,
+  queueSize: 10,
+  timeout: 3000,
+});
+
+const inventoryPool = new WorkerPool({
+  name: 'InventoryService',
+  maxWorkers: 10,
+  queueSize: 20,
+  timeout: 5000,
+});
+
+const emailPool = new WorkerPool({
+  name: 'EmailService',
+  maxWorkers: 2,
+  queueSize: 50,
+  timeout: 10000,
+});
+
+// Usage: payment failures cannot affect inventory operations
+async function processOrder(order: Order) {
+  try {
+    // Each operation uses its isolated pool
+    const paymentResult = await paymentPool.execute(() =>
+      paymentService.charge(order.total)
+    );
+
+    const inventoryResult = await inventoryPool.execute(() =>
+      inventoryService.reserve(order.items)
+    );
+
+    // Low-priority email uses small pool, won't block critical paths
+    await emailPool.execute(() =>
+      emailService.sendConfirmation(order.email, paymentResult)
+    );
+
+    return { success: true, paymentResult, inventoryResult };
+  } catch (error) {
+    if (error instanceof BulkheadRejectedException) {
+      // Pool exhausted: log and return degraded response
+      logger.warn('Bulkhead rejection', { error });
+      return { success: false, reason: 'service_overloaded' };
+    }
+    throw error;
+  }
+}
+
+interface Order {
+  total: number;
+  items: any[];
+  email: string;
+}`,
+      runnable: true,
+      contextDilation: {
+        level: "system",
+        scope:
+          "Production bulkhead implementation with per-service thread pools, queuing, and metrics",
+        prerequisites: [
+          "Worker pools",
+          "Promise queuing",
+          "Resource isolation patterns",
+          "Graceful degradation",
+        ],
+        systemPosition:
+          "Service layer isolating critical paths (payment, inventory) from non-critical services (email)",
+      },
+      annotations: [
+        {
+          id: "bulkhead-fast-path",
+          lines: [12, 19],
+          action: "Fast path: execute immediately if workers available",
+          reason:
+            "Avoid queuing overhead when resources are available; most requests should hit this path under normal load",
+          contextLevel: "local",
+          relatedConcepts: ["fast-path-optimization"],
+        },
+        {
+          id: "bulkhead-reject",
+          lines: [22, 27],
+          action: "Reject immediately when queue is full (fail-fast)",
+          reason:
+            "Bounded queues prevent unbounded memory growth and provide backpressure signal to callers; fail-fast is better than slow degradation",
+          contextLevel: "module",
+          relatedConcepts: ["backpressure", "bounded-queues"],
+        },
+        {
+          id: "bulkhead-isolation",
+          lines: [67, 81],
+          action: "Create separate worker pools for each external dependency",
+          reason:
+            "Isolation means slow payment service (5 workers blocked) cannot affect inventory service (10 workers available)",
+          contextLevel: "system",
+          relatedConcepts: ["fault-isolation", "resource-partitioning"],
+        },
+        {
+          id: "bulkhead-priority",
+          lines: [75, 81],
+          action: "Allocate pool sizes based on criticality and expected load",
+          reason:
+            "Critical paths (payment, inventory) get larger pools; non-critical (email) gets minimal resources to prevent blocking",
+          contextLevel: "system",
+          relatedConcepts: ["resource-allocation", "priority-queuing"],
+        },
+      ],
+      highlights: [
+        {
+          lines: [12, 35],
+          label: "Fast path and queue management",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [67, 81],
+          label: "Per-service pool isolation",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [96, 107],
+          label: "Usage with graceful degradation",
+          sbvpDomain: "philosophy",
+        },
+      ],
+    },
+    {
+      id: "bulkhead-java-executor",
+      language: "java",
+      title: "Bulkhead with Java ThreadPoolExecutor",
+      description:
+        "Production Java implementation using bounded thread pools with rejection policies",
+      code: `import java.util.concurrent.*;
+import java.util.HashMap;
+import java.util.Map;
+
+public class BulkheadManager {
+    private final Map<String, ThreadPoolExecutor> bulkheads = new HashMap<>();
+
+    /**
+     * Creates isolated bulkheads for different services.
+     * Each bulkhead has its own thread pool and queue.
+     */
+    public BulkheadManager() {
+        // Critical payment service: small pool, fail fast
+        bulkheads.put("payment", createBulkhead(
+            5,      // core threads
+            5,      // max threads (no scaling)
+            10,     // queue size (bounded)
+            "PaymentBulkhead",
+            new ThreadPoolExecutor.AbortPolicy() // reject when full
+        ));
+
+        // High-volume inventory service: larger pool
+        bulkheads.put("inventory", createBulkhead(
+            10,     // core threads
+            20,     // max threads (can scale under load)
+            50,     // larger queue
+            "InventoryBulkhead",
+            new ThreadPoolExecutor.CallerRunsPolicy() // backpressure
+        ));
+
+        // Non-critical analytics: minimal resources
+        bulkheads.put("analytics", createBulkhead(
+            2,      // minimal threads
+            2,      // no scaling
+            100,    // large queue (batch processing)
+            "AnalyticsBulkhead",
+            new ThreadPoolExecutor.DiscardOldestPolicy() // shed load
+        ));
+    }
+
+    private ThreadPoolExecutor createBulkhead(
+        int corePoolSize,
+        int maxPoolSize,
+        int queueSize,
+        String name,
+        RejectedExecutionHandler rejectionPolicy
+    ) {
+        ThreadPoolExecutor executor = new ThreadPoolExecutor(
+            corePoolSize,
+            maxPoolSize,
+            60L, TimeUnit.SECONDS,
+            new ArrayBlockingQueue<>(queueSize),
+            new NamedThreadFactory(name),
+            rejectionPolicy
+        );
+
+        // Prestart core threads for predictable performance
+        executor.prestartAllCoreThreads();
+
+        return executor;
+    }
+
+    /**
+     * Execute task in isolated bulkhead for the given service.
+     * If bulkhead is exhausted, task is rejected per configured policy.
+     */
+    public <T> Future<T> execute(String service, Callable<T> task) {
+        ThreadPoolExecutor bulkhead = bulkheads.get(service);
+        if (bulkhead == null) {
+            throw new IllegalArgumentException("Unknown service: " + service);
+        }
+
+        try {
+            return bulkhead.submit(task);
+        } catch (RejectedExecutionException e) {
+            // Bulkhead exhausted - handle gracefully
+            throw new BulkheadExhaustedException(
+                String.format("%s bulkhead exhausted (active: %d, queue: %d)",
+                    service,
+                    bulkhead.getActiveCount(),
+                    bulkhead.getQueue().size()),
+                e
+            );
+        }
+    }
+
+    /**
+     * Get metrics for monitoring and alerting
+     */
+    public BulkheadMetrics getMetrics(String service) {
+        ThreadPoolExecutor bulkhead = bulkheads.get(service);
+        return new BulkheadMetrics(
+            service,
+            bulkhead.getActiveCount(),
+            bulkhead.getQueue().size(),
+            bulkhead.getCompletedTaskCount(),
+            (double) bulkhead.getActiveCount() / bulkhead.getMaximumPoolSize()
+        );
+    }
+
+    public void shutdown() {
+        bulkheads.values().forEach(ThreadPoolExecutor::shutdown);
+    }
+}
+
+// Usage example: isolation in action
+public class OrderService {
+    private final BulkheadManager bulkheads = new BulkheadManager();
+
+    public OrderResult processOrder(Order order) {
+        try {
+            // Critical operations use isolated pools
+            Future<PaymentResult> payment = bulkheads.execute("payment",
+                () -> paymentClient.charge(order.getTotal())
+            );
+
+            Future<InventoryResult> inventory = bulkheads.execute("inventory",
+                () -> inventoryClient.reserve(order.getItems())
+            );
+
+            // Non-critical analytics uses separate pool (won't block above)
+            bulkheads.execute("analytics",
+                () -> analyticsClient.trackOrder(order)
+            );
+
+            // Wait for critical operations only
+            PaymentResult paymentResult = payment.get(3, TimeUnit.SECONDS);
+            InventoryResult inventoryResult = inventory.get(5, TimeUnit.SECONDS);
+
+            return OrderResult.success(paymentResult, inventoryResult);
+
+        } catch (BulkheadExhaustedException e) {
+            logger.warn("Bulkhead exhausted: {}", e.getMessage());
+            return OrderResult.rejected("Service overloaded, try again later");
+        } catch (TimeoutException e) {
+            logger.error("Operation timeout: {}", e.getMessage());
+            return OrderResult.failed("Request timeout");
+        } catch (Exception e) {
+            logger.error("Order processing failed", e);
+            return OrderResult.failed(e.getMessage());
+        }
+    }
+}
+
+class NamedThreadFactory implements ThreadFactory {
+    private final String prefix;
+    private int counter = 0;
+
+    public NamedThreadFactory(String prefix) {
+        this.prefix = prefix;
+    }
+
+    @Override
+    public Thread newThread(Runnable r) {
+        Thread thread = new Thread(r);
+        thread.setName(prefix + "-" + counter++);
+        return thread;
+    }
+}
+
+class BulkheadExhaustedException extends RuntimeException {
+    public BulkheadExhaustedException(String message, Throwable cause) {
+        super(message, cause);
+    }
+}
+
+record BulkheadMetrics(
+    String service,
+    int activeThreads,
+    int queueSize,
+    long completedTasks,
+    double utilization
+) {}`,
+      runnable: false,
+      contextDilation: {
+        level: "system",
+        scope:
+          "Enterprise-grade bulkhead using Java's ThreadPoolExecutor with different rejection policies per service criticality",
+        prerequisites: [
+          "Java Executors framework",
+          "Concurrency primitives",
+          "Thread pool tuning",
+          "Rejection policies",
+        ],
+        systemPosition:
+          "Service layer in high-throughput e-commerce system isolating payment, inventory, and analytics services",
+      },
+      annotations: [
+        {
+          id: "bulkhead-java-rejection-policies",
+          lines: [11, 28],
+          action:
+            "Use different rejection policies based on service criticality",
+          reason:
+            "Critical services (payment) use AbortPolicy to fail-fast; high-volume services (inventory) use CallerRunsPolicy for backpressure; non-critical (analytics) use DiscardOldestPolicy to shed load",
+          contextLevel: "system",
+          relatedConcepts: [
+            "rejection-policies",
+            "backpressure",
+            "load-shedding",
+          ],
+        },
+        {
+          id: "bulkhead-java-bounded-queue",
+          lines: [42, 44],
+          action: "Use bounded ArrayBlockingQueue to prevent unbounded growth",
+          reason:
+            "Bounded queues provide memory safety and clear capacity limits; when queue fills, rejection policy determines behavior",
+          contextLevel: "module",
+          relatedConcepts: ["bounded-queues", "memory-safety"],
+        },
+        {
+          id: "bulkhead-java-prestart",
+          lines: [49, 50],
+          action: "Prestart core threads for predictable latency",
+          reason:
+            "Thread creation has overhead; prestarting ensures first requests don't pay thread initialization cost",
+          contextLevel: "local",
+          relatedConcepts: ["performance-optimization", "cold-start"],
+        },
+        {
+          id: "bulkhead-java-metrics",
+          lines: [76, 86],
+          action:
+            "Expose metrics for active threads, queue size, and utilization",
+          reason:
+            "Monitoring bulkhead utilization is critical for capacity planning and detecting resource exhaustion before failures",
+          contextLevel: "system",
+          relatedConcepts: ["observability", "capacity-planning"],
+        },
+      ],
+      highlights: [
+        {
+          lines: [11, 33],
+          label: "Per-service bulkhead configuration with rejection policies",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [56, 73],
+          label: "Graceful rejection handling with context",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [76, 86],
+          label: "Metrics exposure for observability",
+          sbvpDomain: "philosophy",
         },
       ],
     },

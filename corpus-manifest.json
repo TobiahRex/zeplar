@@ -1,0 +1,2095 @@
+[
+  {
+    "name": "Debouncing",
+    "emoji": "⏸️",
+    "tagline": "Wait for silence before executing",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → ⏱️ Temporal → ⏸️ Debouncing",
+    "lineNumber": 258,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Temporal",
+      "level": 4
+    }
+  },
+  {
+    "name": "Throttling",
+    "emoji": "🚦",
+    "tagline": "Max one execution per time window",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → ⏱️ Temporal → 🚦 Throttling",
+    "lineNumber": 259,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Temporal",
+      "level": 4
+    }
+  },
+  {
+    "name": "Sampling",
+    "emoji": "📊",
+    "tagline": "Take periodic snapshots",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → ⏱️ Temporal → 📊 Sampling",
+    "lineNumber": 260,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Temporal",
+      "level": 4
+    }
+  },
+  {
+    "name": "Windowing",
+    "emoji": "⏰",
+    "tagline": "Group by time intervals",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → ⏱️ Temporal → ⏰ Windowing",
+    "lineNumber": 261,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Temporal",
+      "level": 4
+    }
+  },
+  {
+    "name": "Memoization",
+    "emoji": "🧠",
+    "tagline": "Function-level cache by arguments",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 💾 Caching → 🧠 Memoization",
+    "lineNumber": 265,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Caching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Cache-Aside (Lazy Loading)",
+    "emoji": "📖",
+    "tagline": "App manages cache + DB",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 💾 Caching → 📖 Cache-Aside (Lazy Loading)",
+    "lineNumber": 266,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Caching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Write-Through",
+    "emoji": "✍️",
+    "tagline": "Write to cache and DB synchronously",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 💾 Caching → ✍️ Write-Through",
+    "lineNumber": 267,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Caching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Write-Back (Write-Behind)",
+    "emoji": "📝",
+    "tagline": "Write to cache, async flush",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 💾 Caching → 📝 Write-Back (Write-Behind)",
+    "lineNumber": 268,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Caching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Read-Through",
+    "emoji": "🔄",
+    "tagline": "Cache fetches from DB on miss",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 💾 Caching → 🔄 Read-Through",
+    "lineNumber": 269,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Caching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Refresh-Ahead",
+    "emoji": "🔁",
+    "tagline": "Proactively refresh before expiry",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 💾 Caching → 🔁 Refresh-Ahead",
+    "lineNumber": 270,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Caching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Micro-Batching",
+    "emoji": "⏱️",
+    "tagline": "Collect over time window",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → ⏱️ Micro-Batching",
+    "lineNumber": 274,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Bulk Operations",
+    "emoji": "📊",
+    "tagline": "Single call for multiple items",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → 📊 Bulk Operations",
+    "lineNumber": 275,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "DataLoader",
+    "emoji": "🔗",
+    "tagline": "Batch + dedupe in single tick",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → 🔗 DataLoader",
+    "lineNumber": 276,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Nagle's Algorithm",
+    "emoji": "📦",
+    "tagline": "TCP batching small packets",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → 📦 Nagle's Algorithm",
+    "lineNumber": 277,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Write Buffering",
+    "emoji": "💾",
+    "tagline": "Accumulate before flush",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → 💾 Write Buffering",
+    "lineNumber": 278,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Coalescing",
+    "emoji": "⭐",
+    "tagline": "Merge concurrent identical requests",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → ⭐ Coalescing",
+    "lineNumber": 282,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Singleflight",
+    "emoji": "✈️",
+    "tagline": "Go's stdlib request dedup",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → ✈️ Singleflight",
+    "lineNumber": 283,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Idempotency",
+    "emoji": "🔑",
+    "tagline": "Same input → same output",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → 🔑 Idempotency",
+    "lineNumber": 284,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Dedup Queue",
+    "emoji": "📭",
+    "tagline": "Drop duplicate messages",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → 📭 Dedup Queue",
+    "lineNumber": 285,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Exactly-Once Delivery",
+    "emoji": "🔒",
+    "tagline": "Guaranteed single processing",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 📦 Batching → 🔒 Exactly-Once Delivery",
+    "lineNumber": 286,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Batching",
+      "level": 4
+    }
+  },
+  {
+    "name": "Lazy Loading",
+    "emoji": "📷",
+    "tagline": "Load on first access",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 😴 Lazy → 📷 Lazy Loading",
+    "lineNumber": 290,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Lazy",
+      "level": 4
+    }
+  },
+  {
+    "name": "Virtual Scrolling",
+    "emoji": "📜",
+    "tagline": "Render only visible items",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 😴 Lazy → 📜 Virtual Scrolling",
+    "lineNumber": 291,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Lazy",
+      "level": 4
+    }
+  },
+  {
+    "name": "Pagination",
+    "emoji": "📄",
+    "tagline": "Load data in chunks",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 😴 Lazy → 📄 Pagination",
+    "lineNumber": 292,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Lazy",
+      "level": 4
+    }
+  },
+  {
+    "name": "Streaming",
+    "emoji": "🌊",
+    "tagline": "Process incrementally",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 😴 Lazy → 🌊 Streaming",
+    "lineNumber": 293,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Lazy",
+      "level": 4
+    }
+  },
+  {
+    "name": "Lazy Initialization",
+    "emoji": "🦥",
+    "tagline": "Create on first use",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 😴 Lazy → 🦥 Lazy Initialization",
+    "lineNumber": 294,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Lazy",
+      "level": 4
+    }
+  },
+  {
+    "name": "Copy-on-Write",
+    "emoji": "📖",
+    "tagline": "Defer copy until mutation",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 😴 Lazy → 📖 Copy-on-Write",
+    "lineNumber": 295,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Lazy",
+      "level": 4
+    }
+  },
+  {
+    "name": "Connection Pooling",
+    "emoji": "🏊",
+    "tagline": "Reuse database connections",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 🏗️ Structural → 🏊 Connection Pooling",
+    "lineNumber": 299,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Structural",
+      "level": 4
+    }
+  },
+  {
+    "name": "Thread Pooling",
+    "emoji": "🧵",
+    "tagline": "Reuse worker threads",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 🏗️ Structural → 🧵 Thread Pooling",
+    "lineNumber": 300,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Structural",
+      "level": 4
+    }
+  },
+  {
+    "name": "Flyweight",
+    "emoji": "🪶",
+    "tagline": "Share intrinsic state",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 🏗️ Structural → 🪶 Flyweight",
+    "lineNumber": 301,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Structural",
+      "level": 4
+    }
+  },
+  {
+    "name": "String Interning",
+    "emoji": "🔤",
+    "tagline": "Canonical string instances",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 🏗️ Structural → 🔤 String Interning",
+    "lineNumber": 302,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Structural",
+      "level": 4
+    }
+  },
+  {
+    "name": "Object Pooling",
+    "emoji": "♻️",
+    "tagline": "Reuse expensive objects",
+    "corpusPath": "⚡ PERFORMANCE → 🎯 Work Reduction → 🏗️ Structural → ♻️ Object Pooling",
+    "lineNumber": 303,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Reduction",
+      "family": "Structural",
+      "level": 4
+    }
+  },
+  {
+    "name": "Multi-threading",
+    "emoji": "🧵",
+    "tagline": "OS-level threads",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚡ Parallelism → 🧵 Multi-threading",
+    "lineNumber": 309,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Parallelism",
+      "level": 4
+    }
+  },
+  {
+    "name": "Async/Await",
+    "emoji": "🔄",
+    "tagline": "Cooperative concurrency",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚡ Parallelism → 🔄 Async/Await",
+    "lineNumber": 310,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Parallelism",
+      "level": 4
+    }
+  },
+  {
+    "name": "Worker Pools",
+    "emoji": "👷",
+    "tagline": "Fixed thread count",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚡ Parallelism → 👷 Worker Pools",
+    "lineNumber": 311,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Parallelism",
+      "level": 4
+    }
+  },
+  {
+    "name": "Fork-Join",
+    "emoji": "🍴",
+    "tagline": "Divide and conquer",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚡ Parallelism → 🍴 Fork-Join",
+    "lineNumber": 312,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Parallelism",
+      "level": 4
+    }
+  },
+  {
+    "name": "Actor Model",
+    "emoji": "📨",
+    "tagline": "Message-passing concurrency",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚡ Parallelism → 📨 Actor Model",
+    "lineNumber": 313,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Parallelism",
+      "level": 4
+    }
+  },
+  {
+    "name": "SIMD",
+    "emoji": "🔀",
+    "tagline": "Single instruction, multiple data",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚡ Parallelism → 🔀 SIMD",
+    "lineNumber": 314,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Parallelism",
+      "level": 4
+    }
+  },
+  {
+    "name": "Hash Sharding",
+    "emoji": "#️⃣",
+    "tagline": "Consistent hashing",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → 🧩 Sharding → #️⃣ Hash Sharding",
+    "lineNumber": 318,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Sharding",
+      "level": 4
+    }
+  },
+  {
+    "name": "Range Sharding",
+    "emoji": "📏",
+    "tagline": "Key ranges to shards",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → 🧩 Sharding → 📏 Range Sharding",
+    "lineNumber": 319,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Sharding",
+      "level": 4
+    }
+  },
+  {
+    "name": "Directory-Based",
+    "emoji": "🗺️",
+    "tagline": "Lookup table for routing",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → 🧩 Sharding → 🗺️ Directory-Based",
+    "lineNumber": 320,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Sharding",
+      "level": 4
+    }
+  },
+  {
+    "name": "Geographic Sharding",
+    "emoji": "🌍",
+    "tagline": "By user location",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → 🧩 Sharding → 🌍 Geographic Sharding",
+    "lineNumber": 321,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Sharding",
+      "level": 4
+    }
+  },
+  {
+    "name": "Round Robin",
+    "emoji": "🔄",
+    "tagline": "Cycle through backends",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚖️ Load Balancing → 🔄 Round Robin",
+    "lineNumber": 325,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Load Balancing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Random",
+    "emoji": "🎲",
+    "tagline": "Probabilistic distribution",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚖️ Load Balancing → 🎲 Random",
+    "lineNumber": 326,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Load Balancing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Least Connections",
+    "emoji": "⚖️",
+    "tagline": "Route to least busy",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚖️ Load Balancing → ⚖️ Least Connections",
+    "lineNumber": 327,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Load Balancing",
+      "level": 4
+    }
+  },
+  {
+    "name": "IP Hash",
+    "emoji": "#️⃣",
+    "tagline": "Sticky sessions by IP",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚖️ Load Balancing → #️⃣ IP Hash",
+    "lineNumber": 328,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Load Balancing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Weighted",
+    "emoji": "⚡",
+    "tagline": "Proportional to capacity",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → ⚖️ Load Balancing → ⚡ Weighted",
+    "lineNumber": 329,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Load Balancing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Leader-Follower",
+    "emoji": "👑",
+    "tagline": "Single writer, multiple readers",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → 📋 Replication → 👑 Leader-Follower",
+    "lineNumber": 333,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Replication",
+      "level": 4
+    }
+  },
+  {
+    "name": "Multi-Leader",
+    "emoji": "👥",
+    "tagline": "Multiple writers",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → 📋 Replication → 👥 Multi-Leader",
+    "lineNumber": 334,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Replication",
+      "level": 4
+    }
+  },
+  {
+    "name": "Leaderless",
+    "emoji": "🔗",
+    "tagline": "Any node accepts writes",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → 📋 Replication → 🔗 Leaderless",
+    "lineNumber": 335,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Replication",
+      "level": 4
+    }
+  },
+  {
+    "name": "Read Replicas",
+    "emoji": "📖",
+    "tagline": "Scale reads horizontally",
+    "corpusPath": "⚡ PERFORMANCE → 🔀 Work Distribution → 📋 Replication → 📖 Read Replicas",
+    "lineNumber": 336,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Distribution",
+      "family": "Replication",
+      "level": 4
+    }
+  },
+  {
+    "name": "Divide and Conquer",
+    "emoji": "➗",
+    "tagline": "Break into subproblems",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🧮 Algorithmic → ➗ Divide and Conquer",
+    "lineNumber": 342,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Algorithmic",
+      "level": 4
+    }
+  },
+  {
+    "name": "Dynamic Programming",
+    "emoji": "📈",
+    "tagline": "Cache subproblem results",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🧮 Algorithmic → 📈 Dynamic Programming",
+    "lineNumber": 343,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Algorithmic",
+      "level": 4
+    }
+  },
+  {
+    "name": "Greedy",
+    "emoji": "🎯",
+    "tagline": "Local optimal choices",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🧮 Algorithmic → 🎯 Greedy",
+    "lineNumber": 344,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Algorithmic",
+      "level": 4
+    }
+  },
+  {
+    "name": "Backtracking",
+    "emoji": "🔙",
+    "tagline": "Explore and prune",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🧮 Algorithmic → 🔙 Backtracking",
+    "lineNumber": 345,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Algorithmic",
+      "level": 4
+    }
+  },
+  {
+    "name": "Approximation",
+    "emoji": "🧬",
+    "tagline": "Good-enough solutions",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🧮 Algorithmic → 🧬 Approximation",
+    "lineNumber": 346,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Algorithmic",
+      "level": 4
+    }
+  },
+  {
+    "name": "Trees",
+    "emoji": "🌳",
+    "tagline": "Hierarchical access (BST, B-Tree)",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 📊 Data Structure → 🌳 Trees",
+    "lineNumber": 350,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Data Structure",
+      "level": 4
+    }
+  },
+  {
+    "name": "Hash Tables",
+    "emoji": "#️⃣",
+    "tagline": "O(1) key lookup",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 📊 Data Structure → #️⃣ Hash Tables",
+    "lineNumber": 351,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Data Structure",
+      "level": 4
+    }
+  },
+  {
+    "name": "Heaps",
+    "emoji": "📊",
+    "tagline": "Priority access",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 📊 Data Structure → 📊 Heaps",
+    "lineNumber": 352,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Data Structure",
+      "level": 4
+    }
+  },
+  {
+    "name": "Graphs",
+    "emoji": "🔗",
+    "tagline": "Relationship modeling",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 📊 Data Structure → 🔗 Graphs",
+    "lineNumber": 353,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Data Structure",
+      "level": 4
+    }
+  },
+  {
+    "name": "Bloom Filters",
+    "emoji": "📝",
+    "tagline": "Probabilistic membership",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 📊 Data Structure → 📝 Bloom Filters",
+    "lineNumber": 354,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Data Structure",
+      "level": 4
+    }
+  },
+  {
+    "name": "Skip Lists",
+    "emoji": "📊",
+    "tagline": "Probabilistic balanced structure",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 📊 Data Structure → 📊 Skip Lists",
+    "lineNumber": 355,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Data Structure",
+      "level": 4
+    }
+  },
+  {
+    "name": "B-Tree Index",
+    "emoji": "🌳",
+    "tagline": "Balanced tree for range queries",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🔍 Indexing → 🌳 B-Tree Index",
+    "lineNumber": 359,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Indexing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Hash Index",
+    "emoji": "#️⃣",
+    "tagline": "Direct key lookup",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🔍 Indexing → #️⃣ Hash Index",
+    "lineNumber": 360,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Indexing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Inverted Index",
+    "emoji": "📝",
+    "tagline": "Full-text search",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🔍 Indexing → 📝 Inverted Index",
+    "lineNumber": 361,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Indexing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Spatial Index",
+    "emoji": "🗺️",
+    "tagline": "R-Tree, Quadtree",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🔍 Indexing → 🗺️ Spatial Index",
+    "lineNumber": 362,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Indexing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Bitmap Index",
+    "emoji": "📊",
+    "tagline": "Low-cardinality columns",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🔍 Indexing → 📊 Bitmap Index",
+    "lineNumber": 363,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Indexing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Composite Index",
+    "emoji": "🔗",
+    "tagline": "Multi-column",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🔍 Indexing → 🔗 Composite Index",
+    "lineNumber": 364,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Indexing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Lossless",
+    "emoji": "📉",
+    "tagline": "gzip, LZ4, zstd",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🗜️ Compression → 📉 Lossless",
+    "lineNumber": 368,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Compression",
+      "level": 4
+    }
+  },
+  {
+    "name": "Lossy",
+    "emoji": "📊",
+    "tagline": "JPEG, MP3 (acceptable quality loss)",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🗜️ Compression → 📊 Lossy",
+    "lineNumber": 369,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Compression",
+      "level": 4
+    }
+  },
+  {
+    "name": "Dictionary Coding",
+    "emoji": "📋",
+    "tagline": "Replace repeated values",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🗜️ Compression → 📋 Dictionary Coding",
+    "lineNumber": 370,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Compression",
+      "level": 4
+    }
+  },
+  {
+    "name": "Run-Length Encoding",
+    "emoji": "📏",
+    "tagline": "Compress sequences",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🗜️ Compression → 📏 Run-Length Encoding",
+    "lineNumber": 371,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Compression",
+      "level": 4
+    }
+  },
+  {
+    "name": "Delta Encoding",
+    "emoji": "🔢",
+    "tagline": "Store differences",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🗜️ Compression → 🔢 Delta Encoding",
+    "lineNumber": 372,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Compression",
+      "level": 4
+    }
+  },
+  {
+    "name": "Protocol Buffers",
+    "emoji": "📦",
+    "tagline": "Binary serialization",
+    "corpusPath": "⚡ PERFORMANCE → ⚙️ Work Optimization → 🗜️ Compression → 📦 Protocol Buffers",
+    "lineNumber": 373,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Optimization",
+      "family": "Compression",
+      "level": 4
+    }
+  },
+  {
+    "name": "Priority Queue",
+    "emoji": "📊",
+    "tagline": "Heap-based ordering",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🔝 Prioritization → 📊 Priority Queue",
+    "lineNumber": 379,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Prioritization",
+      "level": 4
+    }
+  },
+  {
+    "name": "Deadline Scheduling",
+    "emoji": "🎯",
+    "tagline": "Earliest deadline first",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🔝 Prioritization → 🎯 Deadline Scheduling",
+    "lineNumber": 380,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Prioritization",
+      "level": 4
+    }
+  },
+  {
+    "name": "Shortest Job First",
+    "emoji": "⏱️",
+    "tagline": "Minimize wait time",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🔝 Prioritization → ⏱️ Shortest Job First",
+    "lineNumber": 381,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Prioritization",
+      "level": 4
+    }
+  },
+  {
+    "name": "Multi-Level Queue",
+    "emoji": "🔢",
+    "tagline": "Class-based priorities",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🔝 Prioritization → 🔢 Multi-Level Queue",
+    "lineNumber": 382,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Prioritization",
+      "level": 4
+    }
+  },
+  {
+    "name": "Token Bucket",
+    "emoji": "🪣",
+    "tagline": "Smooth rate limiting",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🚰 Flow Control → 🪣 Token Bucket",
+    "lineNumber": 386,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Flow Control",
+      "level": 4
+    }
+  },
+  {
+    "name": "Leaky Bucket",
+    "emoji": "🚰",
+    "tagline": "Fixed outflow rate",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🚰 Flow Control → 🚰 Leaky Bucket",
+    "lineNumber": 387,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Flow Control",
+      "level": 4
+    }
+  },
+  {
+    "name": "Rate Limiting",
+    "emoji": "🚦",
+    "tagline": "Cap requests per time",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🚰 Flow Control → 🚦 Rate Limiting",
+    "lineNumber": 388,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Flow Control",
+      "level": 4
+    }
+  },
+  {
+    "name": "Backpressure",
+    "emoji": "🔙",
+    "tagline": "Slow producer when consumer full",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🚰 Flow Control → 🔙 Backpressure",
+    "lineNumber": 389,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Flow Control",
+      "level": 4
+    }
+  },
+  {
+    "name": "Adaptive Concurrency",
+    "emoji": "📊",
+    "tagline": "Dynamic parallelism limits",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → 🚰 Flow Control → 📊 Adaptive Concurrency",
+    "lineNumber": 390,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Flow Control",
+      "level": 4
+    }
+  },
+  {
+    "name": "Time Slicing",
+    "emoji": "⏱️",
+    "tagline": "Round-robin CPU time",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → ⏸️ Preemption → ⏱️ Time Slicing",
+    "lineNumber": 394,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Preemption",
+      "level": 4
+    }
+  },
+  {
+    "name": "Priority Preemption",
+    "emoji": "🔝",
+    "tagline": "Higher priority interrupts",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → ⏸️ Preemption → 🔝 Priority Preemption",
+    "lineNumber": 395,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Preemption",
+      "level": 4
+    }
+  },
+  {
+    "name": "Cooperative Yielding",
+    "emoji": "🎯",
+    "tagline": "Voluntary context switch",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → ⏸️ Preemption → 🎯 Cooperative Yielding",
+    "lineNumber": 396,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Preemption",
+      "level": 4
+    }
+  },
+  {
+    "name": "Weighted Fair Queuing",
+    "emoji": "🎰",
+    "tagline": "Proportional bandwidth",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → ⚖️ Fairness → 🎰 Weighted Fair Queuing",
+    "lineNumber": 400,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Fairness",
+      "level": 4
+    }
+  },
+  {
+    "name": "Max-Min Fairness",
+    "emoji": "🔄",
+    "tagline": "Maximize minimum allocation",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → ⚖️ Fairness → 🔄 Max-Min Fairness",
+    "lineNumber": 401,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Fairness",
+      "level": 4
+    }
+  },
+  {
+    "name": "Lottery Scheduling",
+    "emoji": "🎟️",
+    "tagline": "Probabilistic fairness",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → ⚖️ Fairness → 🎟️ Lottery Scheduling",
+    "lineNumber": 402,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Fairness",
+      "level": 4
+    }
+  },
+  {
+    "name": "Aging",
+    "emoji": "⏳",
+    "tagline": "Increase priority over time",
+    "corpusPath": "⚡ PERFORMANCE → 📋 Work Scheduling → ⚖️ Fairness → ⏳ Aging",
+    "lineNumber": 403,
+    "hierarchy": {
+      "quality": "performance",
+      "strategy": "Work Scheduling",
+      "family": "Fairness",
+      "level": 4
+    }
+  },
+  {
+    "name": "Closed State",
+    "emoji": "🚫",
+    "tagline": "Normal operation",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🔌 Circuit Breaker → 🚫 Closed State",
+    "lineNumber": 409,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Circuit Breaker",
+      "level": 4
+    }
+  },
+  {
+    "name": "Open State",
+    "emoji": "🔓",
+    "tagline": "Fail fast",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🔌 Circuit Breaker → 🔓 Open State",
+    "lineNumber": 410,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Circuit Breaker",
+      "level": 4
+    }
+  },
+  {
+    "name": "Half-Open State",
+    "emoji": "🔄",
+    "tagline": "Test recovery",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🔌 Circuit Breaker → 🔄 Half-Open State",
+    "lineNumber": 411,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Circuit Breaker",
+      "level": 4
+    }
+  },
+  {
+    "name": "Adaptive Thresholds",
+    "emoji": "📊",
+    "tagline": "Dynamic trip conditions",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🔌 Circuit Breaker → 📊 Adaptive Thresholds",
+    "lineNumber": 412,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Circuit Breaker",
+      "level": 4
+    }
+  },
+  {
+    "name": "Exponential Backoff",
+    "emoji": "📈",
+    "tagline": "Increasing delays",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🔁 Retry → 📈 Exponential Backoff",
+    "lineNumber": 416,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Retry",
+      "level": 4
+    }
+  },
+  {
+    "name": "Jitter",
+    "emoji": "🎲",
+    "tagline": "Randomize to prevent thundering herd",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🔁 Retry → 🎲 Jitter",
+    "lineNumber": 417,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Retry",
+      "level": 4
+    }
+  },
+  {
+    "name": "Fixed Interval",
+    "emoji": "🔢",
+    "tagline": "Constant delay",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🔁 Retry → 🔢 Fixed Interval",
+    "lineNumber": 418,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Retry",
+      "level": 4
+    }
+  },
+  {
+    "name": "Retry Budget",
+    "emoji": "🎯",
+    "tagline": "Cap total retries",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🔁 Retry → 🎯 Retry Budget",
+    "lineNumber": 419,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Retry",
+      "level": 4
+    }
+  },
+  {
+    "name": "Connection Timeout",
+    "emoji": "🔗",
+    "tagline": "Max time to establish",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → ⏱️ Timeout → 🔗 Connection Timeout",
+    "lineNumber": 423,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Timeout",
+      "level": 4
+    }
+  },
+  {
+    "name": "Read Timeout",
+    "emoji": "📖",
+    "tagline": "Max time waiting for data",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → ⏱️ Timeout → 📖 Read Timeout",
+    "lineNumber": 424,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Timeout",
+      "level": 4
+    }
+  },
+  {
+    "name": "Write Timeout",
+    "emoji": "✍️",
+    "tagline": "Max time sending data",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → ⏱️ Timeout → ✍️ Write Timeout",
+    "lineNumber": 425,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Timeout",
+      "level": 4
+    }
+  },
+  {
+    "name": "Request Timeout",
+    "emoji": "🎯",
+    "tagline": "Total operation time",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → ⏱️ Timeout → 🎯 Request Timeout",
+    "lineNumber": 426,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Timeout",
+      "level": 4
+    }
+  },
+  {
+    "name": "Deadline Propagation",
+    "emoji": "⏰",
+    "tagline": "Pass remaining time downstream",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → ⏱️ Timeout → ⏰ Deadline Propagation",
+    "lineNumber": 427,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Timeout",
+      "level": 4
+    }
+  },
+  {
+    "name": "Thread Pool Isolation",
+    "emoji": "🧵",
+    "tagline": "Separate pools per dependency",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🧱 Bulkhead → 🧵 Thread Pool Isolation",
+    "lineNumber": 431,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Bulkhead",
+      "level": 4
+    }
+  },
+  {
+    "name": "Connection Pool Isolation",
+    "emoji": "🔗",
+    "tagline": "Separate DB pools",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🧱 Bulkhead → 🔗 Connection Pool Isolation",
+    "lineNumber": 432,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Bulkhead",
+      "level": 4
+    }
+  },
+  {
+    "name": "Process Isolation",
+    "emoji": "📦",
+    "tagline": "Separate processes",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🧱 Bulkhead → 📦 Process Isolation",
+    "lineNumber": 433,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Bulkhead",
+      "level": 4
+    }
+  },
+  {
+    "name": "Server Isolation",
+    "emoji": "🖥️",
+    "tagline": "Dedicated infrastructure",
+    "corpusPath": "🛡️ RELIABILITY → 💔 Fault Tolerance → 🧱 Bulkhead → 🖥️ Server Isolation",
+    "lineNumber": 434,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Fault Tolerance",
+      "family": "Bulkhead",
+      "level": 4
+    }
+  },
+  {
+    "name": "Active-Active",
+    "emoji": "🔥",
+    "tagline": "All nodes serve traffic",
+    "corpusPath": "🛡️ RELIABILITY → 📋 Redundancy → Hot/Warm/Cold Standby → 🔥 Active-Active",
+    "lineNumber": 440,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Redundancy",
+      "family": "Standby",
+      "level": 4
+    }
+  },
+  {
+    "name": "Active-Passive",
+    "emoji": "🔥",
+    "tagline": "One active, one standby",
+    "corpusPath": "🛡️ RELIABILITY → 📋 Redundancy → Hot/Warm/Cold Standby → 🔥 Active-Passive",
+    "lineNumber": 441,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Redundancy",
+      "family": "Standby",
+      "level": 4
+    }
+  },
+  {
+    "name": "Pilot Light",
+    "emoji": "🌡️",
+    "tagline": "Minimal standby infrastructure",
+    "corpusPath": "🛡️ RELIABILITY → 📋 Redundancy → Hot/Warm/Cold Standby → 🌡️ Pilot Light",
+    "lineNumber": 442,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Redundancy",
+      "family": "Standby",
+      "level": 4
+    }
+  },
+  {
+    "name": "Backup & Restore",
+    "emoji": "❄️",
+    "tagline": "Periodic snapshots",
+    "corpusPath": "🛡️ RELIABILITY → 📋 Redundancy → Hot/Warm/Cold Standby → ❄️ Backup & Restore",
+    "lineNumber": 443,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Redundancy",
+      "family": "Standby",
+      "level": 4
+    }
+  },
+  {
+    "name": "Simple Majority",
+    "emoji": "📊",
+    "tagline": "(N/2)+1 agreement",
+    "corpusPath": "🛡️ RELIABILITY → 📋 Redundancy → 🗳️ Quorum → 📊 Simple Majority",
+    "lineNumber": 447,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Redundancy",
+      "family": "Quorum",
+      "level": 4
+    }
+  },
+  {
+    "name": "Write Quorum",
+    "emoji": "✍️",
+    "tagline": "W nodes must acknowledge",
+    "corpusPath": "🛡️ RELIABILITY → 📋 Redundancy → 🗳️ Quorum → ✍️ Write Quorum",
+    "lineNumber": 448,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Redundancy",
+      "family": "Quorum",
+      "level": 4
+    }
+  },
+  {
+    "name": "Read Quorum",
+    "emoji": "📖",
+    "tagline": "R nodes must respond",
+    "corpusPath": "🛡️ RELIABILITY → 📋 Redundancy → 🗳️ Quorum → 📖 Read Quorum",
+    "lineNumber": 449,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Redundancy",
+      "family": "Quorum",
+      "level": 4
+    }
+  },
+  {
+    "name": "R + W > N",
+    "emoji": "🔗",
+    "tagline": "Overlap guarantees consistency",
+    "corpusPath": "🛡️ RELIABILITY → 📋 Redundancy → 🗳️ Quorum → 🔗 R + W > N",
+    "lineNumber": 450,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Redundancy",
+      "family": "Quorum",
+      "level": 4
+    }
+  },
+  {
+    "name": "Periodic Checkpoint",
+    "emoji": "⏱️",
+    "tagline": "Time-based snapshots",
+    "corpusPath": "🛡️ RELIABILITY → 🔄 Recovery → 📸 Checkpointing → ⏱️ Periodic Checkpoint",
+    "lineNumber": 454,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Recovery",
+      "family": "Checkpointing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Transaction Checkpoint",
+    "emoji": "📊",
+    "tagline": "After N transactions",
+    "corpusPath": "🛡️ RELIABILITY → 🔄 Recovery → 📸 Checkpointing → 📊 Transaction Checkpoint",
+    "lineNumber": 455,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Recovery",
+      "family": "Checkpointing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Incremental Checkpoint",
+    "emoji": "🔄",
+    "tagline": "Only changed state",
+    "corpusPath": "🛡️ RELIABILITY → 🔄 Recovery → 📸 Checkpointing → 🔄 Incremental Checkpoint",
+    "lineNumber": 456,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Recovery",
+      "family": "Checkpointing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Coordinated Checkpoint",
+    "emoji": "📋",
+    "tagline": "Distributed consistent",
+    "corpusPath": "🛡️ RELIABILITY → 🔄 Recovery → 📸 Checkpointing → 📋 Coordinated Checkpoint",
+    "lineNumber": 457,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Recovery",
+      "family": "Checkpointing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Physical Logging",
+    "emoji": "📝",
+    "tagline": "Byte-level changes",
+    "corpusPath": "🛡️ RELIABILITY → 🔄 Recovery → 📜 Write-Ahead Logging → 📝 Physical Logging",
+    "lineNumber": 461,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Recovery",
+      "family": "Write-Ahead Logging",
+      "level": 4
+    }
+  },
+  {
+    "name": "Logical Logging",
+    "emoji": "🔣",
+    "tagline": "Operation-level changes",
+    "corpusPath": "🛡️ RELIABILITY → 🔄 Recovery → 📜 Write-Ahead Logging → 🔣 Logical Logging",
+    "lineNumber": 462,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Recovery",
+      "family": "Write-Ahead Logging",
+      "level": 4
+    }
+  },
+  {
+    "name": "Physiological Logging",
+    "emoji": "🔀",
+    "tagline": "Hybrid approach",
+    "corpusPath": "🛡️ RELIABILITY → 🔄 Recovery → 📜 Write-Ahead Logging → 🔀 Physiological Logging",
+    "lineNumber": 463,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Recovery",
+      "family": "Write-Ahead Logging",
+      "level": 4
+    }
+  },
+  {
+    "name": "Log-Structured",
+    "emoji": "📊",
+    "tagline": "Append-only storage",
+    "corpusPath": "🛡️ RELIABILITY → 🔄 Recovery → 📜 Write-Ahead Logging → 📊 Log-Structured",
+    "lineNumber": 464,
+    "hierarchy": {
+      "quality": "reliability",
+      "strategy": "Recovery",
+      "family": "Write-Ahead Logging",
+      "level": 4
+    }
+  },
+  {
+    "name": "Docker Swarm",
+    "emoji": "🐳",
+    "tagline": "Native Docker clustering",
+    "corpusPath": "📈 SCALABILITY → ↔️ Horizontal → 🎼 Orchestration → 🐳 Docker Swarm",
+    "lineNumber": 470,
+    "hierarchy": {
+      "quality": "scalability",
+      "strategy": "Horizontal",
+      "family": "Orchestration",
+      "level": 4
+    }
+  },
+  {
+    "name": "Kubernetes",
+    "emoji": "☸️",
+    "tagline": "Container orchestration",
+    "corpusPath": "📈 SCALABILITY → ↔️ Horizontal → 🎼 Orchestration → ☸️ Kubernetes",
+    "lineNumber": 471,
+    "hierarchy": {
+      "quality": "scalability",
+      "strategy": "Horizontal",
+      "family": "Orchestration",
+      "level": 4
+    }
+  },
+  {
+    "name": "Nomad",
+    "emoji": "🎼",
+    "tagline": "HashiCorp orchestrator",
+    "corpusPath": "📈 SCALABILITY → ↔️ Horizontal → 🎼 Orchestration → 🎼 Nomad",
+    "lineNumber": 472,
+    "hierarchy": {
+      "quality": "scalability",
+      "strategy": "Horizontal",
+      "family": "Orchestration",
+      "level": 4
+    }
+  },
+  {
+    "name": "ECS/Fargate",
+    "emoji": "🌊",
+    "tagline": "AWS container services",
+    "corpusPath": "📈 SCALABILITY → ↔️ Horizontal → 🎼 Orchestration → 🌊 ECS/Fargate",
+    "lineNumber": 473,
+    "hierarchy": {
+      "quality": "scalability",
+      "strategy": "Horizontal",
+      "family": "Orchestration",
+      "level": 4
+    }
+  },
+  {
+    "name": "Consistent Hashing",
+    "emoji": "🔵",
+    "tagline": "Minimize rebalancing",
+    "corpusPath": "📈 SCALABILITY → 🧩 Partitioning → #️⃣ Hash Partitioning → 🔵 Consistent Hashing",
+    "lineNumber": 477,
+    "hierarchy": {
+      "quality": "scalability",
+      "strategy": "Partitioning",
+      "family": "Hash Partitioning",
+      "level": 4
+    }
+  },
+  {
+    "name": "Hash Ring",
+    "emoji": "💍",
+    "tagline": "Virtual nodes",
+    "corpusPath": "📈 SCALABILITY → 🧩 Partitioning → #️⃣ Hash Partitioning → 💍 Hash Ring",
+    "lineNumber": 478,
+    "hierarchy": {
+      "quality": "scalability",
+      "strategy": "Partitioning",
+      "family": "Hash Partitioning",
+      "level": 4
+    }
+  },
+  {
+    "name": "Rendezvous Hashing",
+    "emoji": "🎯",
+    "tagline": "Highest random weight",
+    "corpusPath": "📈 SCALABILITY → 🧩 Partitioning → #️⃣ Hash Partitioning → 🎯 Rendezvous Hashing",
+    "lineNumber": 479,
+    "hierarchy": {
+      "quality": "scalability",
+      "strategy": "Partitioning",
+      "family": "Hash Partitioning",
+      "level": 4
+    }
+  },
+  {
+    "name": "Jump Hash",
+    "emoji": "🔀",
+    "tagline": "Fast, minimal memory",
+    "corpusPath": "📈 SCALABILITY → 🧩 Partitioning → #️⃣ Hash Partitioning → 🔀 Jump Hash",
+    "lineNumber": 480,
+    "hierarchy": {
+      "quality": "scalability",
+      "strategy": "Partitioning",
+      "family": "Hash Partitioning",
+      "level": 4
+    }
+  },
+  {
+    "name": "JWT",
+    "emoji": "🎫",
+    "tagline": "Self-contained tokens",
+    "corpusPath": "🔒 SECURITY → 🎟️ Token-Based Auth → 🎫 JWT",
+    "lineNumber": 486,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Token-Based Auth",
+      "level": 4
+    }
+  },
+  {
+    "name": "OAuth 2.0",
+    "emoji": "🔑",
+    "tagline": "Delegated authorization",
+    "corpusPath": "🔒 SECURITY → 🎟️ Token-Based Auth → 🔑 OAuth 2.0",
+    "lineNumber": 487,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Token-Based Auth",
+      "level": 4
+    }
+  },
+  {
+    "name": "OIDC",
+    "emoji": "🆔",
+    "tagline": "Identity layer on OAuth",
+    "corpusPath": "🔒 SECURITY → 🎟️ Token-Based Auth → 🆔 OIDC",
+    "lineNumber": 488,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Token-Based Auth",
+      "level": 4
+    }
+  },
+  {
+    "name": "SAML",
+    "emoji": "🎟️",
+    "tagline": "Enterprise SSO",
+    "corpusPath": "🔒 SECURITY → 🎟️ Token-Based Auth → 🎟️ SAML",
+    "lineNumber": 489,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Token-Based Auth",
+      "level": 4
+    }
+  },
+  {
+    "name": "Refresh Tokens",
+    "emoji": "🔄",
+    "tagline": "Long-lived session renewal",
+    "corpusPath": "🔒 SECURITY → 🎟️ Token-Based Auth → 🔄 Refresh Tokens",
+    "lineNumber": 490,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Token-Based Auth",
+      "level": 4
+    }
+  },
+  {
+    "name": "TLS/SSL",
+    "emoji": "🔒",
+    "tagline": "Transport encryption",
+    "corpusPath": "🔒 SECURITY → 🔐 Encryption → 🔒 TLS/SSL",
+    "lineNumber": 494,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Encryption",
+      "level": 4
+    }
+  },
+  {
+    "name": "Encryption at Rest",
+    "emoji": "💾",
+    "tagline": "Storage encryption",
+    "corpusPath": "🔒 SECURITY → 🔐 Encryption → 💾 Encryption at Rest",
+    "lineNumber": 495,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Encryption",
+      "level": 4
+    }
+  },
+  {
+    "name": "E2E Encryption",
+    "emoji": "🔐",
+    "tagline": "Client-to-client",
+    "corpusPath": "🔒 SECURITY → 🔐 Encryption → 🔐 E2E Encryption",
+    "lineNumber": 496,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Encryption",
+      "level": 4
+    }
+  },
+  {
+    "name": "Envelope Encryption",
+    "emoji": "🏠",
+    "tagline": "Key hierarchy",
+    "corpusPath": "🔒 SECURITY → 🔐 Encryption → 🏠 Envelope Encryption",
+    "lineNumber": 497,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Encryption",
+      "level": 4
+    }
+  },
+  {
+    "name": "Key Rotation",
+    "emoji": "🔑",
+    "tagline": "Periodic key updates",
+    "corpusPath": "🔒 SECURITY → 🔐 Encryption → 🔑 Key Rotation",
+    "lineNumber": 498,
+    "hierarchy": {
+      "quality": "security",
+      "strategy": "",
+      "family": "Encryption",
+      "level": 4
+    }
+  },
+  {
+    "name": "OpenTelemetry",
+    "emoji": "📊",
+    "tagline": "Unified observability",
+    "corpusPath": "👁️ OBSERVABILITY → 🔗 Distributed Tracing → 📊 OpenTelemetry",
+    "lineNumber": 504,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Distributed Tracing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Jaeger",
+    "emoji": "🔍",
+    "tagline": "Uber's tracing system",
+    "corpusPath": "👁️ OBSERVABILITY → 🔗 Distributed Tracing → 🔍 Jaeger",
+    "lineNumber": 505,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Distributed Tracing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Zipkin",
+    "emoji": "📈",
+    "tagline": "Twitter's tracing system",
+    "corpusPath": "👁️ OBSERVABILITY → 🔗 Distributed Tracing → 📈 Zipkin",
+    "lineNumber": 506,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Distributed Tracing",
+      "level": 4
+    }
+  },
+  {
+    "name": "X-Ray",
+    "emoji": "☁️",
+    "tagline": "AWS tracing",
+    "corpusPath": "👁️ OBSERVABILITY → 🔗 Distributed Tracing → ☁️ X-Ray",
+    "lineNumber": 507,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Distributed Tracing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Tempo",
+    "emoji": "📊",
+    "tagline": "Grafana's tracing backend",
+    "corpusPath": "👁️ OBSERVABILITY → 🔗 Distributed Tracing → 📊 Tempo",
+    "lineNumber": 508,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Distributed Tracing",
+      "level": 4
+    }
+  },
+  {
+    "name": "Prometheus",
+    "emoji": "📈",
+    "tagline": "Pull-based metrics",
+    "corpusPath": "👁️ OBSERVABILITY → 📊 Metrics → 📈 Prometheus",
+    "lineNumber": 512,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Metrics",
+      "level": 4
+    }
+  },
+  {
+    "name": "StatsD",
+    "emoji": "📊",
+    "tagline": "Push-based metrics",
+    "corpusPath": "👁️ OBSERVABILITY → 📊 Metrics → 📊 StatsD",
+    "lineNumber": 513,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Metrics",
+      "level": 4
+    }
+  },
+  {
+    "name": "Graphite",
+    "emoji": "📉",
+    "tagline": "Time-series database",
+    "corpusPath": "👁️ OBSERVABILITY → 📊 Metrics → 📉 Graphite",
+    "lineNumber": 514,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Metrics",
+      "level": 4
+    }
+  },
+  {
+    "name": "InfluxDB",
+    "emoji": "📊",
+    "tagline": "Time-series database",
+    "corpusPath": "👁️ OBSERVABILITY → 📊 Metrics → 📊 InfluxDB",
+    "lineNumber": 515,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Metrics",
+      "level": 4
+    }
+  },
+  {
+    "name": "RED Method",
+    "emoji": "🔴",
+    "tagline": "Rate, Errors, Duration",
+    "corpusPath": "👁️ OBSERVABILITY → 📊 Metrics → 🔴 RED Method",
+    "lineNumber": 516,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Metrics",
+      "level": 4
+    }
+  },
+  {
+    "name": "USE Method",
+    "emoji": "🔵",
+    "tagline": "Utilization, Saturation, Errors",
+    "corpusPath": "👁️ OBSERVABILITY → 📊 Metrics → 🔵 USE Method",
+    "lineNumber": 517,
+    "hierarchy": {
+      "quality": "observability",
+      "strategy": "",
+      "family": "Metrics",
+      "level": 4
+    }
+  },
+  {
+    "name": "Microservices",
+    "emoji": "🧩",
+    "tagline": "Independent deployable services",
+    "corpusPath": "🔧 MAINTAINABILITY → 📦 Modularity → 🧩 Microservices",
+    "lineNumber": 523,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Modularity",
+      "level": 4
+    }
+  },
+  {
+    "name": "Plugin Architecture",
+    "emoji": "🔌",
+    "tagline": "Extensible via plugins",
+    "corpusPath": "🔧 MAINTAINABILITY → 📦 Modularity → 🔌 Plugin Architecture",
+    "lineNumber": 524,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Modularity",
+      "level": 4
+    }
+  },
+  {
+    "name": "Modular Monolith",
+    "emoji": "📦",
+    "tagline": "Monolith with clear boundaries",
+    "corpusPath": "🔧 MAINTAINABILITY → 📦 Modularity → 📦 Modular Monolith",
+    "lineNumber": 525,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Modularity",
+      "level": 4
+    }
+  },
+  {
+    "name": "Micro-Frontends",
+    "emoji": "🌐",
+    "tagline": "Frontend microservices",
+    "corpusPath": "🔧 MAINTAINABILITY → 📦 Modularity → 🌐 Micro-Frontends",
+    "lineNumber": 526,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Modularity",
+      "level": 4
+    }
+  },
+  {
+    "name": "Shared Libraries",
+    "emoji": "📚",
+    "tagline": "Common code extraction",
+    "corpusPath": "🔧 MAINTAINABILITY → 📦 Modularity → 📚 Shared Libraries",
+    "lineNumber": 527,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Modularity",
+      "level": 4
+    }
+  },
+  {
+    "name": "Mocking",
+    "emoji": "🎭",
+    "tagline": "Fake dependencies",
+    "corpusPath": "🔧 MAINTAINABILITY → 🧪 Testability → 🎭 Mocking",
+    "lineNumber": 531,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Testability",
+      "level": 4
+    }
+  },
+  {
+    "name": "Dependency Injection",
+    "emoji": "📦",
+    "tagline": "Inject collaborators",
+    "corpusPath": "🔧 MAINTAINABILITY → 🧪 Testability → 📦 Dependency Injection",
+    "lineNumber": 532,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Testability",
+      "level": 4
+    }
+  },
+  {
+    "name": "Contract Testing",
+    "emoji": "🔗",
+    "tagline": "Pact, Spring Cloud Contract",
+    "corpusPath": "🔧 MAINTAINABILITY → 🧪 Testability → 🔗 Contract Testing",
+    "lineNumber": 533,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Testability",
+      "level": 4
+    }
+  },
+  {
+    "name": "Test Fixtures",
+    "emoji": "🎬",
+    "tagline": "Reusable test data",
+    "corpusPath": "🔧 MAINTAINABILITY → 🧪 Testability → 🎬 Test Fixtures",
+    "lineNumber": 534,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Testability",
+      "level": 4
+    }
+  },
+  {
+    "name": "Property-Based Testing",
+    "emoji": "📊",
+    "tagline": "Generate test cases",
+    "corpusPath": "🔧 MAINTAINABILITY → 🧪 Testability → 📊 Property-Based Testing",
+    "lineNumber": 535,
+    "hierarchy": {
+      "quality": "maintainability",
+      "strategy": "",
+      "family": "Testability",
+      "level": 4
+    }
+  }
+]

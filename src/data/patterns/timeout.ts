@@ -3,6 +3,7 @@ import type { Pattern } from "../schema";
 export const timeout: Pattern = {
   id: "timeout",
   slug: "timeout",
+  corpusPath: "🛡️ RELIABILITY → 💔 Fault Tolerance → ⏱️ Timeouts",
 
   hierarchy: {
     quality: "reliability",
@@ -16,9 +17,9 @@ export const timeout: Pattern = {
     emoji: "⏱️",
     tagline: "Bound the wait, free the resources",
     definition:
-      "A pattern that sets a maximum time limit for operations to complete, preventing indefinite waits and ensuring resources are released even when dependencies hang.",
+      "The Timeout pattern establishes a maximum time boundary for operations to complete, acting as a protective guard that prevents indefinite waiting and ensures timely resource recovery. Like a kitchen timer that rings to remind you to check on your cooking—regardless of whether the dish is actually done—a timeout provides a forcing function that ensures your system doesn't wait forever for a response that may never arrive. The pattern wraps potentially long-running operations (network calls, database queries, external API requests) with a timer mechanism that races against the actual work. If the operation completes before the timer expires, the result flows through normally. If the timer wins the race, the operation is cancelled or abandoned, and an explicit timeout error is returned to the caller. This fail-fast behavior is crucial in distributed systems where network partitions, overloaded services, or crashed processes can cause requests to hang silently. Without timeouts, these hung operations would accumulate like a traffic jam, consuming threads, connections, and memory until the entire system grinds to a halt. Timeouts provide predictable maximum latency, enable rapid failure detection, and ensure that resources are freed for productive work rather than being trapped in endless waiting. The pattern requires careful tuning—too aggressive and you abort operations that would have succeeded; too lenient and you fail to protect against genuine hangs—making timeout selection both an art and a science based on operation characteristics and system SLAs.",
     problemSolved:
-      "Without timeouts, a slow or unresponsive dependency can cause requests to hang indefinitely, consuming threads, connections, and memory while users wait forever.",
+      "In distributed architectures, operations can hang indefinitely due to network partitions, overloaded downstream services, crashed processes, or deadlocked transactions. Without timeouts, these hung operations create a cascading resource exhaustion problem: caller threads remain blocked waiting for responses, connection pools fill up with stale connections, memory accumulates in request buffers, and circuit breakers never trip because requests never complete (neither successfully nor with errors). The problem compounds as new requests queue behind blocked ones, creating backpressure that propagates upstream through the call chain. Users experience this as frozen UIs, infinite loading spinners, and eventual complete system unresponsiveness. The timeout pattern solves this by establishing an explicit maximum wait time, transforming silent indefinite hangs into fast, actionable failures. When a timeout expires, the system immediately reclaims the blocked thread, closes the network connection, frees memory buffers, and returns a distinguishable timeout error that can trigger retry logic, circuit breakers, or fallback mechanisms. This enables the system to maintain responsiveness under partial failure conditions and provides explicit failure signals that automated recovery systems can act upon.",
     tradeoffs: {
       pros: [
         "Prevents resource exhaustion from hanging operations",
@@ -230,6 +231,361 @@ try {
           lines: [26, 33],
           label: "Cleanup on completion",
           sbvpDomain: "behavior",
+        },
+      ],
+    },
+    {
+      id: "timeout-go-context",
+      language: "go",
+      title: "Context-based Timeout in Go",
+      description:
+        "Go's idiomatic timeout implementation using context.WithTimeout for cancellation propagation",
+      code: `package main
+
+import (
+    "context"
+    "errors"
+    "fmt"
+    "net/http"
+    "time"
+)
+
+// TimeoutError wraps timeout-specific errors for clear identification
+type TimeoutError struct {
+    Operation string
+    Duration  time.Duration
+}
+
+func (e *TimeoutError) Error() string {
+    return fmt.Sprintf("%s timed out after %v", e.Operation, e.Duration)
+}
+
+// FetchUserProfile makes an HTTP request with timeout and cancellation support
+func FetchUserProfile(ctx context.Context, userID string) (*UserProfile, error) {
+    // Create a context with 5-second timeout
+    ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+    defer cancel() // Always call cancel to release resources
+
+    // Build the HTTP request with context
+    req, err := http.NewRequestWithContext(
+        ctx,
+        "GET",
+        fmt.Sprintf("https://api.example.com/users/%s", userID),
+        nil,
+    )
+    if err != nil {
+        return nil, fmt.Errorf("failed to create request: %w", err)
+    }
+
+    // Execute request - this will be cancelled if context times out
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        // Check if the error is due to context timeout
+        if errors.Is(err, context.DeadlineExceeded) {
+            return nil, &TimeoutError{
+                Operation: "FetchUserProfile",
+                Duration:  5 * time.Second,
+            }
+        }
+        return nil, fmt.Errorf("request failed: %w", err)
+    }
+    defer resp.Body.Close()
+
+    // Parse response (simplified)
+    profile := &UserProfile{ID: userID, Name: "John Doe"}
+    return profile, nil
+}
+
+// ProcessWithFallback demonstrates timeout with graceful degradation
+func ProcessWithFallback(userID string) (*UserProfile, error) {
+    // Create root context
+    ctx := context.Background()
+
+    profile, err := FetchUserProfile(ctx, userID)
+    if err != nil {
+        var timeoutErr *TimeoutError
+        if errors.As(err, &timeoutErr) {
+            // Timeout occurred - use cached fallback
+            fmt.Printf("Request timed out, using cached profile\\n")
+            return getCachedProfile(userID), nil
+        }
+        return nil, err
+    }
+
+    return profile, nil
+}
+
+type UserProfile struct {
+    ID   string
+    Name string
+}
+
+func getCachedProfile(userID string) *UserProfile {
+    return &UserProfile{ID: userID, Name: "Cached User"}
+}`,
+      runnable: false,
+      contextDilation: {
+        level: "module",
+        scope:
+          "Complete timeout implementation using Go's context package for cancellation propagation",
+        prerequisites: [
+          "Go context package",
+          "HTTP client",
+          "Error handling",
+          "Defer statements",
+        ],
+        systemPosition:
+          "Service layer for external API calls with automatic timeout and cancellation",
+      },
+      annotations: [
+        {
+          id: "go-timeout-error",
+          lines: [11, 18],
+          action: "Define custom TimeoutError type with operation context",
+          reason:
+            "Custom error type allows callers to distinguish timeouts from other failures and access timeout metadata",
+          contextLevel: "local",
+          relatedConcepts: ["error-wrapping", "typed-errors"],
+        },
+        {
+          id: "go-context-timeout",
+          lines: [23, 24],
+          action:
+            "Create context with 5-second deadline and defer cancellation",
+          reason:
+            "WithTimeout returns a context that automatically cancels after duration; defer ensures cleanup even if function panics",
+          contextLevel: "module",
+          relatedConcepts: ["context-propagation", "resource-cleanup"],
+        },
+        {
+          id: "go-request-context",
+          lines: [27, 34],
+          action: "Attach context to HTTP request for cancellation support",
+          reason:
+            "NewRequestWithContext wires the timeout into the HTTP client, enabling automatic cancellation when deadline expires",
+          contextLevel: "local",
+          relatedConcepts: ["cancellation-tokens"],
+        },
+        {
+          id: "go-deadline-check",
+          lines: [40, 46],
+          action: "Check for context.DeadlineExceeded and wrap in custom error",
+          reason:
+            "Converting standard context error to domain-specific timeout error provides better error context for logging and monitoring",
+          contextLevel: "module",
+          relatedConcepts: ["error-handling", "observability"],
+        },
+      ],
+      highlights: [
+        {
+          lines: [23, 24],
+          label: "Context-based timeout enforcement",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [27, 34],
+          label: "Context propagation to HTTP client",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [60, 71],
+          label: "Fallback handling on timeout",
+          sbvpDomain: "philosophy",
+        },
+      ],
+    },
+    {
+      id: "timeout-python-asyncio",
+      language: "python",
+      title: "Asyncio Timeout with async/await",
+      description:
+        "Modern Python timeout implementation using asyncio.timeout for concurrent operations",
+      code: `import asyncio
+import aiohttp
+from typing import Optional, TypeVar, Callable
+from datetime import timedelta
+
+T = TypeVar('T')
+
+class TimeoutError(Exception):
+    """Custom timeout error with operation context"""
+    def __init__(self, operation: str, timeout_seconds: float):
+        self.operation = operation
+        self.timeout_seconds = timeout_seconds
+        super().__init__(
+            f"{operation} timed out after {timeout_seconds}s"
+        )
+
+async def fetch_with_timeout(
+    url: str,
+    timeout_seconds: float = 5.0,
+    session: Optional[aiohttp.ClientSession] = None
+) -> dict:
+    """
+    Fetch data from URL with timeout enforcement.
+
+    Raises TimeoutError if operation exceeds timeout_seconds.
+    """
+    should_close_session = session is None
+    if session is None:
+        session = aiohttp.ClientSession()
+
+    try:
+        # asyncio.timeout creates a context manager that cancels on timeout
+        async with asyncio.timeout(timeout_seconds):
+            async with session.get(url) as response:
+                response.raise_for_status()
+                return await response.json()
+    except asyncio.TimeoutError:
+        # Convert standard timeout to custom error with context
+        raise TimeoutError(
+            operation=f"fetch_with_timeout({url})",
+            timeout_seconds=timeout_seconds
+        )
+    finally:
+        if should_close_session:
+            await session.close()
+
+async def fetch_user_profile(
+    user_id: str,
+    timeout: float = 5.0
+) -> dict:
+    """Fetch user profile with timeout and retry logic"""
+    url = f"https://api.example.com/users/{user_id}"
+
+    try:
+        profile = await fetch_with_timeout(url, timeout_seconds=timeout)
+        return profile
+    except TimeoutError as e:
+        print(f"Timeout error: {e}")
+        # Fallback to cached data
+        return await get_cached_profile(user_id)
+    except aiohttp.ClientError as e:
+        print(f"HTTP error: {e}")
+        raise
+
+async def fetch_multiple_with_timeout(
+    urls: list[str],
+    timeout_per_request: float = 5.0,
+    overall_timeout: float = 30.0
+) -> list[dict]:
+    """
+    Fetch multiple URLs concurrently with per-request and overall timeouts.
+    Demonstrates nested timeout contexts.
+    """
+    async def fetch_one(url: str) -> dict:
+        try:
+            return await fetch_with_timeout(url, timeout_per_request)
+        except TimeoutError:
+            # Individual request timed out - return empty result
+            return {"url": url, "error": "timeout"}
+
+    # Overall timeout wraps all concurrent requests
+    async with asyncio.timeout(overall_timeout):
+        tasks = [fetch_one(url) for url in urls]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        return [r for r in results if not isinstance(r, Exception)]
+
+async def get_cached_profile(user_id: str) -> dict:
+    """Simulate fetching from cache"""
+    await asyncio.sleep(0.1)
+    return {"id": user_id, "name": "Cached User", "cached": True}
+
+# Usage example
+async def main():
+    # Single request with timeout
+    try:
+        profile = await fetch_user_profile("user123", timeout=3.0)
+        print(f"Got profile: {profile}")
+    except Exception as e:
+        print(f"Failed to fetch profile: {e}")
+
+    # Multiple concurrent requests with timeouts
+    urls = [
+        "https://api.example.com/users/1",
+        "https://api.example.com/users/2",
+        "https://api.example.com/users/3",
+    ]
+    results = await fetch_multiple_with_timeout(
+        urls,
+        timeout_per_request=5.0,
+        overall_timeout=15.0
+    )
+    print(f"Fetched {len(results)} profiles")
+
+if __name__ == "__main__":
+    asyncio.run(main())`,
+      runnable: false,
+      contextDilation: {
+        level: "system",
+        scope:
+          "Complete async timeout implementation with nested contexts, concurrent operations, and fallback handling",
+        prerequisites: [
+          "Python asyncio",
+          "async/await syntax",
+          "Context managers",
+          "Type hints",
+        ],
+        systemPosition:
+          "Async service layer for concurrent API calls with timeout enforcement and graceful degradation",
+      },
+      annotations: [
+        {
+          id: "py-timeout-context",
+          lines: [32, 36],
+          action:
+            "Use asyncio.timeout context manager to enforce timeout boundary",
+          reason:
+            "asyncio.timeout cancels the async operation if it exceeds the deadline, raising asyncio.TimeoutError",
+          contextLevel: "local",
+          relatedConcepts: ["context-managers", "async-cancellation"],
+        },
+        {
+          id: "py-timeout-conversion",
+          lines: [37, 42],
+          action:
+            "Catch asyncio.TimeoutError and convert to domain-specific error",
+          reason:
+            "Custom error type provides operation context (URL, timeout value) for better debugging and observability",
+          contextLevel: "module",
+          relatedConcepts: ["error-handling", "exception-chaining"],
+        },
+        {
+          id: "py-fallback-handling",
+          lines: [54, 59],
+          action: "Implement fallback to cached data on timeout",
+          reason:
+            "Graceful degradation maintains partial functionality when external service is slow or unresponsive",
+          contextLevel: "system",
+          relatedConcepts: ["graceful-degradation", "cache-aside"],
+        },
+        {
+          id: "py-nested-timeouts",
+          lines: [80, 83],
+          action:
+            "Use nested timeout contexts for per-request and overall limits",
+          reason:
+            "Overall timeout prevents unbounded waiting even if all individual requests complete; enables fail-fast for batch operations",
+          contextLevel: "system",
+          relatedConcepts: ["deadline-propagation", "concurrent-control"],
+        },
+      ],
+      highlights: [
+        {
+          lines: [32, 36],
+          label: "Asyncio timeout context manager",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [54, 59],
+          label: "Graceful degradation with fallback",
+          sbvpDomain: "philosophy",
+        },
+        {
+          lines: [80, 83],
+          label: "Nested timeout for concurrent operations",
+          sbvpDomain: "structure",
         },
       ],
     },

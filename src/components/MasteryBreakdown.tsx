@@ -1,20 +1,56 @@
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { LayerBadge } from "./LayerBadge";
 import type { LayerUnlockStatus } from "@/lib/layerUnlock";
 
 interface MasteryBreakdownProps {
   patternId: string;
   patternName: string;
+  patternEmoji: string;
+  family: string;
   layerUnlocks: LayerUnlockStatus;
 }
 
+// Color mapping for family badges (matching Dashboard)
+const familyColors: Record<string, string> = {
+  "Circuit Breakers": "bg-rose-500/20 text-rose-400",
+  Retries: "bg-sky-500/20 text-sky-400",
+  "Retry Strategies": "bg-sky-500/20 text-sky-400",
+  Caching: "bg-lime-500/20 text-lime-400",
+  Bulkheads: "bg-violet-500/20 text-violet-400",
+  Timeouts: "bg-fuchsia-500/20 text-fuchsia-400",
+  "Flow Control": "bg-yellow-500/20 text-yellow-400",
+  "Data Access Patterns": "bg-blue-500/20 text-blue-400",
+  "Data Integrity": "bg-teal-500/20 text-teal-400",
+  Degradation: "bg-orange-500/20 text-orange-400",
+  "Event-Driven Architecture": "bg-purple-500/20 text-purple-400",
+  "Load Management": "bg-red-500/20 text-red-400",
+  Monitoring: "bg-cyan-500/20 text-cyan-400",
+  "Stream Processing": "bg-indigo-500/20 text-indigo-400",
+  "Traffic Management": "bg-pink-500/20 text-pink-400",
+  "Transaction Management": "bg-emerald-500/20 text-emerald-400",
+  "Transactional Messaging": "bg-amber-500/20 text-amber-400",
+};
+
 export function MasteryBreakdown({
   patternName,
+  patternEmoji,
+  family,
   layerUnlocks,
 }: MasteryBreakdownProps) {
   return (
     <div className="border rounded-lg p-4 space-y-3">
-      <h4 className="font-bold">{patternName}</h4>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className="text-xl">{patternEmoji}</span>
+          <h4 className="font-bold">{patternName}</h4>
+        </div>
+        <Badge
+          className={`${familyColors[family] || "bg-gray-500/20 text-gray-400"} border-0 text-xs shrink-0`}
+        >
+          {family}
+        </Badge>
+      </div>
 
       {/* L1 Progress */}
       <div>

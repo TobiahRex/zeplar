@@ -106,7 +106,7 @@ export function generateL1Cards(pattern: Pattern): Flashcard[] {
     },
     back: {
       text: pattern.concept.definition,
-      diagram: pattern.visualization.staticDiagram,
+      diagram: pattern.visualization?.staticDiagram,
     },
     hints: [pattern.concept.tagline],
     difficulty: 1,
@@ -132,7 +132,9 @@ export function generateL1Cards(pattern: Pattern): Flashcard[] {
     back: {
       text: pattern.concept.problemSolved,
     },
-    hints: [pattern.philosophy.coreProblem],
+    hints: pattern.philosophy?.coreProblem
+      ? [pattern.philosophy.coreProblem]
+      : [],
     difficulty: 1,
     grammarCoordinates: {
       pattern: pattern.id,
@@ -368,7 +370,7 @@ export function generateL3Cards(pattern: Pattern): Flashcard[] {
   });
 
   // 2. Action-reason cards (generate 2 from annotations)
-  const annotationsToUse = codeExample.annotations.slice(0, 2);
+  const annotationsToUse = codeExample.annotations?.slice(0, 2) || [];
 
   annotationsToUse.forEach((annotation, index) => {
     cards.push({

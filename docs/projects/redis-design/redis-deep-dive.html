@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redis Deep Dive: System Design Utility</title>
+  <style>
+    :root {
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary: #21262d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --accent-red: #ff6b6b;
+      --accent-green: #4ade80;
+      --accent-blue: #60a5fa;
+      --accent-yellow: #fbbf24;
+      --accent-purple: #a78bfa;
+      --accent-cyan: #22d3ee;
+      --accent-orange: #fb923c;
+      --border-color: #30363d;
+      --code-bg: #1a1f26;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.7;
+      padding: 2rem;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--accent-red), var(--accent-orange));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .subtitle { color: var(--text-secondary); font-size: 1.2rem; margin-bottom: 2rem; }
+    h2 {
+      font-size: 1.8rem;
+      margin: 2.5rem 0 1rem;
+      color: var(--accent-cyan);
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+    h3 { font-size: 1.3rem; margin: 1.5rem 0 1rem; color: var(--accent-purple); }
+    h4 { font-size: 1.1rem; margin: 1.2rem 0 0.6rem; color: var(--accent-yellow); }
+    p { margin-bottom: 1rem; }
+    .section {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin: 1.5rem 0;
+    }
+    .viz-container {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+    code {
+      font-family: 'Consolas', 'Monaco', monospace;
+      background: var(--code-bg);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: var(--accent-green);
+    }
+    pre {
+      font-family: 'Consolas', 'Monaco', monospace;
+      background: var(--code-bg);
+      padding: 1.2rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 1rem 0;
+      border-left: 3px solid var(--accent-purple);
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    pre code { background: none; padding: 0; color: var(--text-primary); }
+    .comment { color: var(--text-secondary); }
+    .keyword { color: var(--accent-purple); }
+    .string { color: var(--accent-green); }
+    .number { color: var(--accent-orange); }
+    .redis-cmd { color: var(--accent-red); font-weight: 600; }
+    .mental-model {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .model-card {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .model-card h5 { color: var(--accent-yellow); font-size: 0.95rem; margin-bottom: 0.5rem; }
+    .model-card p { font-size: 0.9rem; color: var(--text-secondary); margin: 0; }
+    .lexicon {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.8rem;
+      margin: 1rem 0;
+    }
+    .term {
+      background: var(--bg-tertiary);
+      padding: 0.8rem;
+      border-radius: 6px;
+      border-left: 3px solid var(--accent-blue);
+    }
+    .term strong { color: var(--accent-cyan); display: block; margin-bottom: 0.2rem; }
+    .term span { font-size: 0.8rem; color: var(--text-secondary); }
+    .philosophy-box {
+      background: linear-gradient(135deg, rgba(167, 139, 250, 0.1), rgba(96, 165, 250, 0.1));
+      border: 1px solid var(--accent-purple);
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin: 1rem 0;
+    }
+    .philosophy-box h4 { color: var(--accent-purple); margin-top: 0; }
+    .use-case {
+      background: var(--bg-tertiary);
+      border-radius: 8px;
+      padding: 1.2rem;
+      margin: 0.8rem 0;
+      border-left: 4px solid var(--accent-orange);
+    }
+    .use-case h4 { color: var(--accent-orange); margin-top: 0; }
+    .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+    .tab {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-family: inherit;
+      font-size: 0.9rem;
+    }
+    .tab:hover { border-color: var(--accent-cyan); color: var(--text-primary); }
+    .tab.active { background: var(--accent-cyan); color: var(--bg-primary); border-color: var(--accent-cyan); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .warning {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid var(--accent-yellow);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .warning::before { content: '⚠️ '; }
+    .tip {
+      background: rgba(74, 222, 128, 0.1);
+      border: 1px solid var(--accent-green);
+      border-radius: 8px;
+      padding: 1rem;
+      margin: 1rem 0;
+    }
+    .tip::before { content: '💡 '; }
+    .dual-panel { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 800px) { .dual-panel { grid-template-columns: 1fr; } }
+    @keyframes flow { 0% { stroke-dashoffset: 20; } 100% { stroke-dashoffset: 0; } }
+    .flow-line { stroke-dasharray: 5; animation: flow 0.5s linear infinite; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
+    th, td { padding: 0.6rem; text-align: left; border: 1px solid var(--border-color); }
+    th { background: var(--bg-tertiary); color: var(--accent-cyan); }
+    td { background: var(--bg-secondary); }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🔴 Redis Deep Dive</h1>
+  <p class="subtitle">A System Design Utility for Distributed Systems Architecture</p>
+
+  <!-- SECTION 1: PHILOSOPHY -->
+  <section class="section">
+    <h2>1. The Redis Philosophy</h2>
+    <p>Before touching data structures or commands, understand <em>why</em> Redis was built the way it was.</p>
+
+    <div class="philosophy-box">
+      <h4>Core Insight: Redis is a Data Structure Server, Not Just Key-Value</h4>
+      <p>Most people think "Redis = fast cache". That's like saying "PostgreSQL = table storage". Redis provides <strong>in-memory data structures</strong> with <strong>atomic operations</strong> — the speed is a consequence, not the purpose.</p>
+    </div>
+
+    <h3>The Three Pillars</h3>
+    <div class="viz-container">
+      <svg viewBox="0 0 800 280" width="100%">
+        <rect width="800" height="280" fill="#21262d" rx="8"/>
+        <!-- Pillar 1 -->
+        <g transform="translate(100, 40)">
+          <rect x="0" y="0" width="150" height="200" fill="#1a1f26" stroke="#ff6b6b" stroke-width="2" rx="4"/>
+          <text x="75" y="28" text-anchor="middle" fill="#ff6b6b" font-weight="700" font-size="15">SPEED</text>
+          <line x1="15" y1="40" x2="135" y2="40" stroke="#30363d"/>
+          <text x="75" y="65" text-anchor="middle" fill="#e6edf3" font-size="12">In-Memory</text>
+          <text x="75" y="82" text-anchor="middle" fill="#8b949e" font-size="10">RAM not Disk</text>
+          <text x="75" y="110" text-anchor="middle" fill="#e6edf3" font-size="12">Single-Threaded</text>
+          <text x="75" y="127" text-anchor="middle" fill="#8b949e" font-size="10">No lock contention</text>
+          <text x="75" y="155" text-anchor="middle" fill="#e6edf3" font-size="12">I/O Multiplexing</text>
+          <text x="75" y="172" text-anchor="middle" fill="#8b949e" font-size="10">epoll/kqueue</text>
+          <text x="75" y="195" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="600">~100k ops/sec</text>
+        </g>
+        <!-- Pillar 2 -->
+        <g transform="translate(325, 40)">
+          <rect x="0" y="0" width="150" height="200" fill="#1a1f26" stroke="#4ade80" stroke-width="2" rx="4"/>
+          <text x="75" y="28" text-anchor="middle" fill="#4ade80" font-weight="700" font-size="15">SIMPLICITY</text>
+          <line x1="15" y1="40" x2="135" y2="40" stroke="#30363d"/>
+          <text x="75" y="65" text-anchor="middle" fill="#e6edf3" font-size="12">Text Protocol</text>
+          <text x="75" y="82" text-anchor="middle" fill="#8b949e" font-size="10">RESP (human-readable)</text>
+          <text x="75" y="110" text-anchor="middle" fill="#e6edf3" font-size="12">Composable</text>
+          <text x="75" y="127" text-anchor="middle" fill="#8b949e" font-size="10">Simple primitives</text>
+          <text x="75" y="155" text-anchor="middle" fill="#e6edf3" font-size="12">Predictable</text>
+          <text x="75" y="172" text-anchor="middle" fill="#8b949e" font-size="10">O(1) or O(log n)</text>
+          <text x="75" y="195" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="600">~50 core cmds</text>
+        </g>
+        <!-- Pillar 3 -->
+        <g transform="translate(550, 40)">
+          <rect x="0" y="0" width="150" height="200" fill="#1a1f26" stroke="#60a5fa" stroke-width="2" rx="4"/>
+          <text x="75" y="28" text-anchor="middle" fill="#60a5fa" font-weight="700" font-size="15">ATOMICITY</text>
+          <line x1="15" y1="40" x2="135" y2="40" stroke="#30363d"/>
+          <text x="75" y="65" text-anchor="middle" fill="#e6edf3" font-size="12">Single-Threaded</text>
+          <text x="75" y="82" text-anchor="middle" fill="#8b949e" font-size="10">No race conditions</text>
+          <text x="75" y="110" text-anchor="middle" fill="#e6edf3" font-size="12">Lua Scripts</text>
+          <text x="75" y="127" text-anchor="middle" fill="#8b949e" font-size="10">Multi-op atomic</text>
+          <text x="75" y="155" text-anchor="middle" fill="#e6edf3" font-size="12">MULTI/EXEC</text>
+          <text x="75" y="172" text-anchor="middle" fill="#8b949e" font-size="10">Transaction batching</text>
+          <text x="75" y="195" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="600">Race-free</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="mental-model">
+      <div class="model-card">
+        <h5>🧠 "Hot Path Data"</h5>
+        <p>Redis lives on the "hot path" — data accessed frequently needing sub-ms response. It's your source of speed, not truth.</p>
+      </div>
+      <div class="model-card">
+        <h5>🧠 "Ephemeral + Renewable"</h5>
+        <p>Treat Redis data as ephemeral. If Redis dies, can you rebuild from your durable store? If yes, you're using Redis correctly.</p>
+      </div>
+      <div class="model-card">
+        <h5>🧠 "Shared Scratch Space"</h5>
+        <p>Redis is like a shared whiteboard between services — fast to read/write, everyone sees it, but you wouldn't store records there.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: ARCHITECTURE -->
+  <section class="section">
+    <h2>2. Core Architecture — The Single-Threaded Event Loop</h2>
+    <p>This is the most important concept. Redis's single-threaded nature is not a limitation — it's the <em>source</em> of its power.</p>
+
+    <div class="viz-container">
+      <svg viewBox="0 0 850 380" width="100%">
+        <defs>
+          <marker id="arr" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#60a5fa"/>
+          </marker>
+        </defs>
+        <rect width="850" height="380" fill="#21262d" rx="8"/>
+        <text x="425" y="30" text-anchor="middle" fill="#e6edf3" font-size="16" font-weight="700">Redis Single-Threaded Event Loop</text>
+
+        <!-- Clients -->
+        <g transform="translate(40, 60)">
+          <text x="40" y="0" text-anchor="middle" fill="#8b949e" font-size="11">Clients</text>
+          <rect x="0" y="15" width="80" height="35" fill="#1a1f26" stroke="#ff6b6b" stroke-width="2" rx="4"/>
+          <text x="40" y="38" text-anchor="middle" fill="#ff6b6b" font-size="10">Client 1</text>
+          <rect x="0" y="60" width="80" height="35" fill="#1a1f26" stroke="#fbbf24" stroke-width="2" rx="4"/>
+          <text x="40" y="83" text-anchor="middle" fill="#fbbf24" font-size="10">Client 2</text>
+          <rect x="0" y="105" width="80" height="35" fill="#1a1f26" stroke="#4ade80" stroke-width="2" rx="4"/>
+          <text x="40" y="128" text-anchor="middle" fill="#4ade80" font-size="10">Client N</text>
+        </g>
+
+        <!-- I/O Multiplexer -->
+        <g transform="translate(180, 70)">
+          <rect x="0" y="0" width="140" height="140" fill="#1a1f26" stroke="#22d3ee" stroke-width="2" rx="6"/>
+          <text x="70" y="22" text-anchor="middle" fill="#22d3ee" font-weight="600" font-size="12">I/O Multiplexer</text>
+          <text x="70" y="38" text-anchor="middle" fill="#8b949e" font-size="9">(epoll/kqueue)</text>
+          <line x1="15" y1="48" x2="125" y2="48" stroke="#30363d"/>
+          <text x="70" y="68" text-anchor="middle" fill="#e6edf3" font-size="10">Socket Queue</text>
+          <rect x="20" y="80" width="100" height="16" fill="#0d1117" rx="3"/>
+          <rect x="22" y="82" width="25" height="12" fill="#ff6b6b" rx="2">
+            <animate attributeName="x" values="22;72;22" dur="2s" repeatCount="indefinite"/>
+          </rect>
+          <rect x="20" y="105" width="100" height="16" fill="#0d1117" rx="3"/>
+          <rect x="22" y="107" width="25" height="12" fill="#4ade80" rx="2">
+            <animate attributeName="x" values="72;22;72" dur="2.5s" repeatCount="indefinite"/>
+          </rect>
+        </g>
+
+        <!-- Flow arrows -->
+        <path d="M120,95 L180,110" stroke="#ff6b6b" stroke-width="2" class="flow-line"/>
+        <path d="M120,130 L180,140" stroke="#4ade80" stroke-width="2" class="flow-line"/>
+
+        <!-- Event Queue -->
+        <g transform="translate(370, 70)">
+          <rect x="0" y="0" width="110" height="140" fill="#1a1f26" stroke="#fb923c" stroke-width="2" rx="6"/>
+          <text x="55" y="22" text-anchor="middle" fill="#fb923c" font-weight="600" font-size="12">Event Queue</text>
+          <line x1="12" y1="35" x2="98" y2="35" stroke="#30363d"/>
+          <rect x="12" y="45" width="86" height="25" fill="#ff6b6b" rx="3" opacity="0.8"/>
+          <text x="55" y="62" text-anchor="middle" fill="white" font-size="9">SET key val</text>
+          <rect x="12" y="75" width="86" height="25" fill="#fbbf24" rx="3" opacity="0.8"/>
+          <text x="55" y="92" text-anchor="middle" fill="#0d1117" font-size="9">GET key</text>
+          <rect x="12" y="105" width="86" height="25" fill="#4ade80" rx="3" opacity="0.8"/>
+          <text x="55" y="122" text-anchor="middle" fill="#0d1117" font-size="9">INCR counter</text>
+        </g>
+
+        <path d="M320,140 L370,140" stroke="#60a5fa" stroke-width="2" marker-end="url(#arr)"/>
+
+        <!-- Single Thread Core -->
+        <g transform="translate(530, 55)">
+          <rect x="0" y="0" width="150" height="170" fill="#1a1f26" stroke="#a78bfa" stroke-width="3" rx="8"/>
+          <text x="75" y="22" text-anchor="middle" fill="#a78bfa" font-weight="700" font-size="13">SINGLE THREAD</text>
+          <text x="75" y="38" text-anchor="middle" fill="#8b949e" font-size="9">(The Magic)</text>
+          <line x1="12" y1="50" x2="138" y2="50" stroke="#30363d"/>
+          
+          <rect x="15" y="60" width="120" height="40" fill="#0d1117" rx="4"/>
+          <text x="75" y="78" text-anchor="middle" fill="#e6edf3" font-size="10">Processing:</text>
+          <text x="75" y="93" text-anchor="middle" fill="#4ade80" font-size="11" font-weight="600">COMMAND</text>
+          
+          <rect x="15" y="110" width="120" height="45" fill="#0d1117" rx="4"/>
+          <text x="75" y="128" text-anchor="middle" fill="#22d3ee" font-size="10">In-Memory Data</text>
+          <text x="75" y="143" text-anchor="middle" fill="#8b949e" font-size="8">Hash Tables, Skip Lists</text>
+        </g>
+
+        <path d="M480,140 L530,140" stroke="#60a5fa" stroke-width="2" marker-end="url(#arr)"/>
+
+        <!-- Key Insight -->
+        <g transform="translate(180, 240)">
+          <rect x="0" y="0" width="490" height="55" fill="#1a1f26" stroke="#fbbf24" stroke-width="1" rx="6"/>
+          <text x="245" y="22" text-anchor="middle" fill="#fbbf24" font-weight="700" font-size="12">🔑 KEY INSIGHT</text>
+          <text x="245" y="42" text-anchor="middle" fill="#e6edf3" font-size="11">One command at a time = No race conditions = Atomic by default</text>
+        </g>
+
+        <!-- Latency breakdown -->
+        <g transform="translate(40, 310)">
+          <text x="0" y="0" fill="#8b949e" font-size="10">Latency Breakdown:</text>
+          <rect x="130" y="-12" width="200" height="18" fill="#ff6b6b" rx="3"/>
+          <text x="230" y="2" text-anchor="middle" fill="white" font-size="9">Network → Redis (0.1-1ms)</text>
+          <rect x="335" y="-12" width="30" height="18" fill="#4ade80" rx="3"/>
+          <text x="350" y="2" text-anchor="middle" fill="#0d1117" font-size="8">CPU</text>
+          <rect x="370" y="-12" width="200" height="18" fill="#60a5fa" rx="3"/>
+          <text x="470" y="2" text-anchor="middle" fill="white" font-size="9">Network ← Redis (0.1-1ms)</text>
+          <text x="590" y="2" fill="#8b949e" font-size="9">Redis CPU: ~1-10μs</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="tip">
+      <strong>Why Single-Threaded Works:</strong> Redis operations are so fast (microseconds) that the CPU processes thousands of commands between network I/O events. The bottleneck is almost always network latency, not CPU time.
+    </div>
+
+    <h3>Lexicon: Core Architecture Terms</h3>
+    <div class="lexicon">
+      <div class="term"><strong>RESP</strong><span>Redis Serialization Protocol — text-based wire protocol</span></div>
+      <div class="term"><strong>epoll/kqueue</strong><span>OS-level I/O multiplexing (Linux/BSD)</span></div>
+      <div class="term"><strong>Event Loop</strong><span>Single thread processing events sequentially</span></div>
+      <div class="term"><strong>Pipelining</strong><span>Sending multiple commands without waiting</span></div>
+      <div class="term"><strong>RDB</strong><span>Point-in-time snapshot persistence</span></div>
+      <div class="term"><strong>AOF</strong><span>Append-Only File — write log persistence</span></div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: DATA STRUCTURES -->
+  <section class="section">
+    <h2>3. Data Structures — First-Class Citizens</h2>
+    <p>Each data structure maps to specific use cases. Think of them as "primitives for distributed systems."</p>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('strings', this)">Strings</button>
+      <button class="tab" onclick="showTab('lists', this)">Lists</button>
+      <button class="tab" onclick="showTab('sets', this)">Sets</button>
+      <button class="tab" onclick="showTab('zsets', this)">Sorted Sets</button>
+      <button class="tab" onclick="showTab('hashes', this)">Hashes</button>
+      <button class="tab" onclick="showTab('streams', this)">Streams</button>
+    </div>
+
+    <!-- STRINGS -->
+    <div id="strings" class="tab-content active">
+      <h3>Strings — The Universal Primitive</h3>
+      <p>Despite the name, Strings store any binary data up to 512MB. They're the building block for counters, caches, and simple key-value storage.</p>
+      
+      <table>
+        <tr><th>Command</th><th>Description</th><th>Time Complexity</th></tr>
+        <tr><td><code>SET key value [EX secs]</code></td><td>Set with optional expiration</td><td>O(1)</td></tr>
+        <tr><td><code>GET key</code></td><td>Retrieve value</td><td>O(1)</td></tr>
+        <tr><td><code>INCR key / DECR key</code></td><td>Atomic increment/decrement</td><td>O(1)</td></tr>
+        <tr><td><code>SETNX key value</code></td><td>Set if Not eXists (for locks)</td><td>O(1)</td></tr>
+        <tr><td><code>MGET key1 key2 key3</code></td><td>Batch get (one round trip)</td><td>O(N)</td></tr>
+      </table>
+
+      <h4>Rate Limiting with Strings (Simple Counter)</h4>
+      <pre><code><span class="comment"># Simple rate limit check with INCR</span>
+<span class="redis-cmd">SET</span> ratelimit:user:123 <span class="number">0</span> EX <span class="number">60</span>   <span class="comment"># Create with 60s TTL</span>
+<span class="redis-cmd">INCR</span> ratelimit:user:123           <span class="comment"># Returns current count</span>
+<span class="comment"># If count > limit, reject request</span></code></pre>
+    </div>
+
+    <!-- LISTS -->
+    <div id="lists" class="tab-content">
+      <h3>Lists — Queues and Stacks</h3>
+      <p>Doubly-linked lists. Perfect for message queues, activity feeds, and bounded collections.</p>
+      
+      <div class="viz-container">
+        <svg viewBox="0 0 700 140" width="100%">
+          <rect width="700" height="140" fill="#21262d" rx="8"/>
+          <text x="350" y="25" text-anchor="middle" fill="#e6edf3" font-weight="700" font-size="13">List as Queue (FIFO)</text>
+          
+          <text x="30" y="75" fill="#4ade80" font-size="11" font-weight="600">LPUSH →</text>
+          <rect x="100" y="55" width="55" height="35" fill="#4ade80" stroke="#4ade80" rx="4"/>
+          <text x="127" y="78" text-anchor="middle" fill="#0d1117" font-size="10">new</text>
+          
+          <rect x="165" y="55" width="55" height="35" fill="#1a1f26" stroke="#60a5fa" stroke-width="2" rx="4"/>
+          <text x="192" y="78" text-anchor="middle" fill="#60a5fa" font-size="10">msg3</text>
+          
+          <rect x="230" y="55" width="55" height="35" fill="#1a1f26" stroke="#60a5fa" stroke-width="2" rx="4"/>
+          <text x="257" y="78" text-anchor="middle" fill="#60a5fa" font-size="10">msg2</text>
+          
+          <rect x="295" y="55" width="55" height="35" fill="#1a1f26" stroke="#60a5fa" stroke-width="2" rx="4"/>
+          <text x="322" y="78" text-anchor="middle" fill="#60a5fa" font-size="10">msg1</text>
+          
+          <rect x="360" y="55" width="55" height="35" fill="#ff6b6b" stroke="#ff6b6b" rx="4" opacity="0.7"/>
+          <text x="387" y="78" text-anchor="middle" fill="white" font-size="10">old</text>
+          
+          <text x="430" y="75" fill="#ff6b6b" font-size="11" font-weight="600">→ RPOP</text>
+          
+          <text x="127" y="110" text-anchor="middle" fill="#8b949e" font-size="9">HEAD</text>
+          <text x="387" y="110" text-anchor="middle" fill="#8b949e" font-size="9">TAIL</text>
+          
+          <text x="550" y="70" fill="#a78bfa" font-size="10">BRPOP queue 30</text>
+          <text x="550" y="88" fill="#8b949e" font-size="9">Blocks until msg or timeout</text>
+        </svg>
+      </div>
+      
+      <p><strong>Key Pattern:</strong> <code>BRPOP</code> / <code>BLPOP</code> are blocking operations — workers wait for new items without polling. Perfect for job queues.</p>
+    </div>
+
+    <!-- SETS -->
+    <div id="sets" class="tab-content">
+      <h3>Sets — Unique Collections</h3>
+      <p>Unordered collections of unique strings. Use for tags, tracking unique visitors, set operations.</p>
+      
+      <table>
+        <tr><th>Command</th><th>Description</th><th>Time</th></tr>
+        <tr><td><code>SADD key member</code></td><td>Add member</td><td>O(1)</td></tr>
+        <tr><td><code>SISMEMBER key member</code></td><td>Check membership</td><td>O(1)</td></tr>
+        <tr><td><code>SINTER key1 key2</code></td><td>Intersection</td><td>O(N*M)</td></tr>
+        <tr><td><code>SUNION key1 key2</code></td><td>Union</td><td>O(N)</td></tr>
+        <tr><td><code>SDIFF key1 key2</code></td><td>Difference</td><td>O(N)</td></tr>
+      </table>
+      
+      <p><strong>Use Case:</strong> Track online users per room, find mutual friends, tag systems.</p>
+    </div>
+
+    <!-- SORTED SETS -->
+    <div id="zsets" class="tab-content">
+      <h3>Sorted Sets (ZSETs) — The Powerhouse</h3>
+      <p>Sets with a score for each member. Automatically sorted. <strong>This is the key to rate limiting, leaderboards, and priority queues.</strong></p>
+      
+      <div class="viz-container">
+        <svg viewBox="0 0 700 200" width="100%">
+          <rect width="700" height="200" fill="#21262d" rx="8"/>
+          <text x="175" y="25" text-anchor="middle" fill="#e6edf3" font-weight="700" font-size="13">Leaderboard Example</text>
+          
+          <g transform="translate(30, 40)">
+            <rect x="0" y="0" width="280" height="150" fill="#1a1f26" stroke="#22d3ee" stroke-width="2" rx="6"/>
+            <text x="140" y="22" text-anchor="middle" fill="#22d3ee" font-size="11">leaderboard:game1</text>
+            <rect x="10" y="35" width="260" height="25" fill="#ff6b6b" opacity="0.3"/>
+            <text x="50" y="52" fill="#fbbf24" font-size="12" font-weight="600">9850</text>
+            <text x="150" y="52" fill="#e6edf3" font-size="11">alice</text>
+            <text x="245" y="52" fill="#ff6b6b" font-size="10">#1</text>
+            
+            <rect x="10" y="62" width="260" height="25" fill="#4ade80" opacity="0.2"/>
+            <text x="50" y="79" fill="#fbbf24" font-size="12">8200</text>
+            <text x="150" y="79" fill="#e6edf3" font-size="11">bob</text>
+            <text x="245" y="79" fill="#4ade80" font-size="10">#2</text>
+            
+            <rect x="10" y="89" width="260" height="25" fill="#60a5fa" opacity="0.2"/>
+            <text x="50" y="106" fill="#fbbf24" font-size="12">7650</text>
+            <text x="150" y="106" fill="#e6edf3" font-size="11">charlie</text>
+            <text x="245" y="106" fill="#60a5fa" font-size="10">#3</text>
+            
+            <text x="50" y="135" fill="#8b949e" font-size="9">SCORE</text>
+            <text x="150" y="135" fill="#8b949e" font-size="9">MEMBER</text>
+          </g>
+          
+          <g transform="translate(350, 50)">
+            <text x="0" y="0" fill="#fb923c" font-size="11" font-weight="600">Key Commands</text>
+            <text x="0" y="22" fill="#ff6b6b" font-family="monospace" font-size="10">ZADD lb 9850 alice</text>
+            <text x="0" y="42" fill="#ff6b6b" font-family="monospace" font-size="10">ZRANGE lb 0 2 REV WITHSCORES</text>
+            <text x="0" y="62" fill="#ff6b6b" font-family="monospace" font-size="10">ZRANK lb bob</text>
+            <text x="0" y="82" fill="#ff6b6b" font-family="monospace" font-size="10">ZINCRBY lb 500 bob</text>
+            <text x="0" y="110" fill="#4ade80" font-size="10">Time: O(log N)</text>
+            <text x="0" y="128" fill="#8b949e" font-size="9">Uses Skip List internally</text>
+          </g>
+        </svg>
+      </div>
+
+      <div class="philosophy-box">
+        <h4>🔑 Rate Limiting with Sorted Sets</h4>
+        <p><strong>Score = Unix timestamp (ms)</strong> | <strong>Member = Request ID</strong></p>
+        <pre><code><span class="redis-cmd">ZADD</span> ratelimit:user:123 <span class="number">1703849283000</span> <span class="string">"req-uuid-abc"</span>
+<span class="redis-cmd">ZREMRANGEBYSCORE</span> ratelimit:user:123 <span class="number">0</span> (now - window)
+<span class="redis-cmd">ZCARD</span> ratelimit:user:123  <span class="comment">→ count in window</span></code></pre>
+      </div>
+    </div>
+
+    <!-- HASHES -->
+    <div id="hashes" class="tab-content">
+      <h3>Hashes — Field-Value Maps</h3>
+      <p>Think of them as "objects" or "records". Perfect for storing structured data like user profiles, sessions, or configuration.</p>
+      
+      <pre><code><span class="redis-cmd">HSET</span> user:1001 name <span class="string">"Alice"</span> email <span class="string">"alice@ex.com"</span> plan <span class="string">"premium"</span>
+<span class="redis-cmd">HGET</span> user:1001 email           <span class="comment">→ "alice@ex.com"</span>
+<span class="redis-cmd">HMGET</span> user:1001 name plan      <span class="comment">→ ["Alice", "premium"]</span>
+<span class="redis-cmd">HINCRBY</span> user:1001 api_calls <span class="number">1</span>  <span class="comment">→ atomic counter within hash</span></code></pre>
+      
+      <div class="warning">
+        <strong>HGETALL Pitfall:</strong> Avoid on hashes with many fields in hot paths — it returns <em>all</em> fields. Use HMGET for specific fields.
+      </div>
+    </div>
+
+    <!-- STREAMS -->
+    <div id="streams" class="tab-content">
+      <h3>Streams — Append-Only Log (Your Pipeline Pattern!)</h3>
+      <p>This is exactly what you described: Go pushing financial data, Python consuming it. Streams are Redis's answer to Kafka-style event streaming.</p>
+      
+      <div class="viz-container">
+        <svg viewBox="0 0 750 280" width="100%">
+          <defs>
+            <marker id="arrg" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#4ade80"/>
+            </marker>
+          </defs>
+          <rect width="750" height="280" fill="#21262d" rx="8"/>
+          <text x="375" y="25" text-anchor="middle" fill="#e6edf3" font-weight="700" font-size="13">Redis Streams — Event Pipeline</text>
+
+          <!-- Producer -->
+          <g transform="translate(30, 50)">
+            <rect x="0" y="0" width="120" height="70" fill="#1a1f26" stroke="#00ADD8" stroke-width="2" rx="6"/>
+            <text x="60" y="22" text-anchor="middle" fill="#00ADD8" font-weight="600" font-size="11">Go Producer</text>
+            <text x="60" y="42" text-anchor="middle" fill="#8b949e" font-size="9">Morningstar API</text>
+            <text x="60" y="58" text-anchor="middle" fill="#fbbf24" font-size="9">~10k events/sec</text>
+          </g>
+
+          <path d="M150,85 L200,85" stroke="#4ade80" stroke-width="2" marker-end="url(#arrg)"/>
+          <text x="175" y="75" text-anchor="middle" fill="#4ade80" font-size="9">XADD</text>
+
+          <!-- Stream -->
+          <g transform="translate(210, 45)">
+            <rect x="0" y="0" width="240" height="80" fill="#1a1f26" stroke="#ff6b6b" stroke-width="2" rx="6"/>
+            <text x="120" y="20" text-anchor="middle" fill="#ff6b6b" font-weight="600" font-size="11">Stream: market:prices</text>
+            <g transform="translate(15, 32)">
+              <rect x="0" y="0" width="65" height="38" fill="#0d1117" rx="3"/>
+              <text x="32" y="13" text-anchor="middle" fill="#fbbf24" font-size="7">1703849283000-0</text>
+              <text x="5" y="25" fill="#8b949e" font-size="7">sym: AAPL</text>
+              <text x="5" y="35" fill="#8b949e" font-size="7">price: 195.42</text>
+            </g>
+            <g transform="translate(85, 32)">
+              <rect x="0" y="0" width="65" height="38" fill="#0d1117" rx="3"/>
+              <text x="32" y="13" text-anchor="middle" fill="#fbbf24" font-size="7">1703849283001-0</text>
+              <text x="5" y="25" fill="#8b949e" font-size="7">sym: MSFT</text>
+              <text x="5" y="35" fill="#8b949e" font-size="7">price: 372.89</text>
+            </g>
+            <g transform="translate(155, 32)">
+              <rect x="0" y="0" width="65" height="38" fill="#0d1117" rx="3"/>
+              <text x="32" y="13" text-anchor="middle" fill="#fbbf24" font-size="7">1703849283002-0</text>
+              <text x="5" y="25" fill="#8b949e" font-size="7">sym: GOOG</text>
+              <text x="5" y="35" fill="#8b949e" font-size="7">price: 140.12</text>
+            </g>
+          </g>
+
+          <path d="M450,85 L510,85" stroke="#60a5fa" stroke-width="2" marker-end="url(#arr)"/>
+          <text x="480" y="75" text-anchor="middle" fill="#60a5fa" font-size="8">XREADGROUP</text>
+
+          <!-- Consumer Group -->
+          <g transform="translate(520, 45)">
+            <rect x="0" y="0" width="200" height="80" fill="#1a1f26" stroke="#3776AB" stroke-width="2" rx="6"/>
+            <text x="100" y="20" text-anchor="middle" fill="#3776AB" font-weight="600" font-size="11">Consumer Group: analytics</text>
+            <rect x="15" y="35" width="75" height="35" fill="#0d1117" rx="3"/>
+            <text x="52" y="52" text-anchor="middle" fill="#e6edf3" font-size="9">Python Worker 1</text>
+            <rect x="100" y="35" width="75" height="35" fill="#0d1117" rx="3"/>
+            <text x="137" y="52" text-anchor="middle" fill="#e6edf3" font-size="9">Python Worker 2</text>
+          </g>
+
+          <!-- Key concepts -->
+          <g transform="translate(30, 145)">
+            <text x="0" y="0" fill="#fb923c" font-size="11" font-weight="600">Stream Concepts</text>
+            <text x="0" y="22" fill="#22d3ee" font-size="10">Entry ID:</text>
+            <text x="60" y="22" fill="#e6edf3" font-size="10">Timestamp-Sequence (auto-generated)</text>
+            <text x="0" y="42" fill="#22d3ee" font-size="10">Consumer Group:</text>
+            <text x="105" y="42" fill="#e6edf3" font-size="10">Distributes entries across workers</text>
+            <text x="0" y="62" fill="#22d3ee" font-size="10">XACK:</text>
+            <text x="45" y="62" fill="#e6edf3" font-size="10">Confirm processing complete (at-least-once delivery)</text>
+          </g>
+
+          <!-- Commands -->
+          <g transform="translate(380, 145)">
+            <text x="0" y="0" fill="#fb923c" font-size="11" font-weight="600">Key Commands</text>
+            <text x="0" y="20" fill="#ff6b6b" font-family="monospace" font-size="9">XADD stream MAXLEN ~ 100000 * field val</text>
+            <text x="0" y="38" fill="#ff6b6b" font-family="monospace" font-size="9">XGROUP CREATE stream grp $ MKSTREAM</text>
+            <text x="0" y="56" fill="#ff6b6b" font-family="monospace" font-size="9">XREADGROUP GROUP grp c BLOCK 0 STREAMS s ></text>
+            <text x="0" y="74" fill="#ff6b6b" font-family="monospace" font-size="9">XACK stream group entry-id</text>
+          </g>
+
+          <!-- Retention -->
+          <g transform="translate(30, 230)">
+            <rect x="0" y="0" width="690" height="35" fill="#0d1117" stroke="#fbbf24" rx="4"/>
+            <text x="345" y="15" text-anchor="middle" fill="#fbbf24" font-weight="600" font-size="10">⚠️ RETENTION: Streams grow unbounded by default!</text>
+            <text x="345" y="28" text-anchor="middle" fill="#e6edf3" font-size="9">Use MAXLEN ~ 10000 on XADD or XTRIM to cap size. The ~ allows Redis to trim approximately.</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: CLUSTERING -->
+  <section class="section">
+    <h2>4. Clustering & Distribution</h2>
+    <p>When a single Redis instance isn't enough: <strong>Replication</strong> (read scaling + failover) and <strong>Cluster</strong> (horizontal data sharding).</p>
+
+    <div class="viz-container">
+      <svg viewBox="0 0 750 320" width="100%">
+        <rect width="750" height="320" fill="#21262d" rx="8"/>
+        <text x="375" y="25" text-anchor="middle" fill="#e6edf3" font-weight="700" font-size="14">Redis Cluster — Hash Slot Distribution</text>
+
+        <!-- Hash Ring -->
+        <g transform="translate(375, 160)">
+          <circle cx="0" cy="0" r="100" fill="none" stroke="#30363d" stroke-width="2"/>
+          <path d="M0,-100 A100,100 0 0,1 86,50" fill="none" stroke="#ff6b6b" stroke-width="8"/>
+          <path d="M86,50 A100,100 0 0,1 -86,50" fill="none" stroke="#4ade80" stroke-width="8"/>
+          <path d="M-86,50 A100,100 0 0,1 0,-100" fill="none" stroke="#60a5fa" stroke-width="8"/>
+          <text x="0" y="-5" text-anchor="middle" fill="#8b949e" font-size="11">16,384</text>
+          <text x="0" y="10" text-anchor="middle" fill="#8b949e" font-size="11">Hash Slots</text>
+        </g>
+
+        <!-- Shards -->
+        <g transform="translate(30, 70)">
+          <rect x="0" y="0" width="130" height="65" fill="#1a1f26" stroke="#ff6b6b" stroke-width="2" rx="6"/>
+          <text x="65" y="20" text-anchor="middle" fill="#ff6b6b" font-weight="600" font-size="11">Shard 1</text>
+          <text x="65" y="38" text-anchor="middle" fill="#e6edf3" font-size="10">Slots 0-5460</text>
+          <text x="65" y="55" text-anchor="middle" fill="#8b949e" font-size="9">+ replica</text>
+        </g>
+
+        <g transform="translate(30, 185)">
+          <rect x="0" y="0" width="130" height="65" fill="#1a1f26" stroke="#4ade80" stroke-width="2" rx="6"/>
+          <text x="65" y="20" text-anchor="middle" fill="#4ade80" font-weight="600" font-size="11">Shard 2</text>
+          <text x="65" y="38" text-anchor="middle" fill="#e6edf3" font-size="10">Slots 5461-10922</text>
+          <text x="65" y="55" text-anchor="middle" fill="#8b949e" font-size="9">+ replica</text>
+        </g>
+
+        <g transform="translate(590, 130)">
+          <rect x="0" y="0" width="130" height="65" fill="#1a1f26" stroke="#60a5fa" stroke-width="2" rx="6"/>
+          <text x="65" y="20" text-anchor="middle" fill="#60a5fa" font-weight="600" font-size="11">Shard 3</text>
+          <text x="65" y="38" text-anchor="middle" fill="#e6edf3" font-size="10">Slots 10923-16383</text>
+          <text x="65" y="55" text-anchor="middle" fill="#8b949e" font-size="9">+ replica</text>
+        </g>
+
+        <!-- Key routing -->
+        <g transform="translate(520, 235)">
+          <rect x="0" y="0" width="200" height="70" fill="#1a1f26" stroke="#fbbf24" stroke-width="1" rx="6"/>
+          <text x="100" y="18" text-anchor="middle" fill="#fbbf24" font-weight="600" font-size="10">Key → Slot Routing</text>
+          <text x="15" y="38" fill="#e6edf3" font-size="9">CRC16("user:1001") % 16384</text>
+          <text x="15" y="55" fill="#4ade80" font-size="9">= slot 7834 → Shard 2</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="mental-model">
+      <div class="model-card">
+        <h5>🔑 Hash Tags for Multi-Key Ops</h5>
+        <p>Keys like <code>{user:123}:profile</code> and <code>{user:123}:sessions</code> land on the same shard. Essential for MULTI/EXEC across keys.</p>
+      </div>
+      <div class="model-card">
+        <h5>🔄 MOVED vs ASK Redirects</h5>
+        <p>Clients get redirects when hitting wrong shard. Smart clients cache slot→node mapping.</p>
+      </div>
+      <div class="model-card">
+        <h5>⚠️ Cross-Slot Operations Fail</h5>
+        <p>MGET/MSET across different slots = error. Use hash tags or client-side batching per slot.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 5: LUA -->
+  <section class="section">
+    <h2>5. Lua Scripting — Atomic Multi-Operations</h2>
+    <p>This is the key to the rate limiter. Lua scripts run <strong>atomically</strong> — the single thread executes the entire script without interruption.</p>
+
+    <div class="philosophy-box">
+      <h4>Why Lua?</h4>
+      <p><strong>Problem:</strong> You need to GET a value, check it, then SET conditionally. Between GET and SET, another client could modify it (race condition).</p>
+      <p><strong>Solution:</strong> Wrap both operations in a Lua script. Redis executes it atomically — no other commands run in between.</p>
+    </div>
+
+    <h3>Rate Limiter Lua Script (Sliding Window)</h3>
+    <pre><code><span class="comment">-- Rate Limiter: Sliding Window Log with Lua</span>
+<span class="comment">-- KEYS[1] = rate limit key (e.g., "ratelimit:user:123")</span>
+<span class="comment">-- ARGV[1] = current timestamp (milliseconds)</span>
+<span class="comment">-- ARGV[2] = window size (milliseconds)</span>
+<span class="comment">-- ARGV[3] = max requests allowed</span>
+<span class="comment">-- ARGV[4] = unique request ID</span>
+
+<span class="keyword">local</span> key = KEYS[<span class="number">1</span>]
+<span class="keyword">local</span> now = <span class="keyword">tonumber</span>(ARGV[<span class="number">1</span>])
+<span class="keyword">local</span> window = <span class="keyword">tonumber</span>(ARGV[<span class="number">2</span>])
+<span class="keyword">local</span> limit = <span class="keyword">tonumber</span>(ARGV[<span class="number">3</span>])
+<span class="keyword">local</span> request_id = ARGV[<span class="number">4</span>]
+
+<span class="comment">-- Remove entries outside the window</span>
+redis.call(<span class="string">"ZREMRANGEBYSCORE"</span>, key, <span class="number">0</span>, now - window)
+
+<span class="comment">-- Count current requests in window</span>
+<span class="keyword">local</span> count = redis.call(<span class="string">"ZCARD"</span>, key)
+
+<span class="keyword">if</span> count < limit <span class="keyword">then</span>
+    redis.call(<span class="string">"ZADD"</span>, key, now, request_id)
+    redis.call(<span class="string">"EXPIRE"</span>, key, math.ceil(window / <span class="number">1000</span>) + <span class="number">10</span>)
+    <span class="keyword">return</span> {<span class="number">1</span>, limit - count - <span class="number">1</span|}  <span class="comment">-- allowed, remaining</span>
+<span class="keyword">else</span>
+    <span class="keyword">return</span> {<span class="number">0</span>, <span class="number">0</span|}  <span class="comment">-- denied, remaining</span>
+<span class="keyword">end</span></code></pre>
+
+    <div class="warning">
+      <strong>CRITICAL:</strong> Long-running Lua scripts block ALL Redis operations! Keep scripts short. Default timeout: 5 seconds.
+    </div>
+
+    <h4>Calling from Go</h4>
+    <pre><code><span class="keyword">var</span> rateLimitScript = redis.NewScript(`
+    <span class="keyword">local</span> key = KEYS[1]
+    <span class="keyword">local</span> now = tonumber(ARGV[1])
+    <span class="keyword">local</span> window = tonumber(ARGV[2])
+    <span class="keyword">local</span> limit = tonumber(ARGV[3])
+    <span class="keyword">local</span> request_id = ARGV[4]
+    
+    redis.call("ZREMRANGEBYSCORE", key, 0, now - window)
+    <span class="keyword">local</span> count = redis.call("ZCARD", key)
+    
+    <span class="keyword">if</span> count < limit <span class="keyword">then</span>
+        redis.call("ZADD", key, now, request_id)
+        redis.call("EXPIRE", key, math.ceil(window/1000) + 10)
+        <span class="keyword">return</span> {1, limit - count - 1}
+    <span class="keyword">end</span>
+    <span class="keyword">return</span> {0, 0}
+`)
+
+<span class="keyword">func</span> CheckRateLimit(ctx context.Context, rdb *redis.Client, userID <span class="keyword">string</span>) (<span class="keyword">bool</span>, <span class="keyword">int64</span>) {
+    result, _ := rateLimitScript.Run(ctx, rdb, 
+        []<span class="keyword">string</span>{"ratelimit:" + userID},
+        time.Now().UnixMilli(), <span class="number">60000</span>, <span class="number">100</span>, uuid.New().String(),
+    ).Int64Slice()
+    <span class="keyword">return</span> result[<span class="number">0</span>] == <span class="number">1</span>, result[<span class="number">1</span>]
+}</code></pre>
+  </section>
+
+  <!-- SECTION 6: TEMPORAL -->
+  <section class="section">
+    <h2>6. Temporal Considerations</h2>
+    <p>Different time scales matter at different layers of a Redis system.</p>
+
+    <div class="viz-container">
+      <svg viewBox="0 0 750 200" width="100%">
+        <rect width="750" height="200" fill="#21262d" rx="8"/>
+        <text x="375" y="25" text-anchor="middle" fill="#e6edf3" font-weight="700" font-size="13">Temporal Layers in a Redis System</text>
+
+        <line x1="50" y1="60" x2="700" y2="60" stroke="#30363d" stroke-width="2"/>
+        <text x="50" y="52" fill="#8b949e" font-size="9">μs</text>
+        <text x="200" y="52" fill="#8b949e" font-size="9">ms</text>
+        <text x="400" y="52" fill="#8b949e" font-size="9">seconds</text>
+        <text x="600" y="52" fill="#8b949e" font-size="9">minutes+</text>
+
+        <g transform="translate(50, 75)">
+          <rect x="0" y="0" width="120" height="45" fill="#1a1f26" stroke="#ff6b6b" stroke-width="2" rx="4"/>
+          <text x="60" y="18" text-anchor="middle" fill="#ff6b6b" font-size="10">Command Exec</text>
+          <text x="60" y="35" text-anchor="middle" fill="#e6edf3" font-size="9">~1-10 μs</text>
+        </g>
+
+        <g transform="translate(190, 75)">
+          <rect x="0" y="0" width="120" height="45" fill="#1a1f26" stroke="#fbbf24" stroke-width="2" rx="4"/>
+          <text x="60" y="18" text-anchor="middle" fill="#fbbf24" font-size="10">Network RTT</text>
+          <text x="60" y="35" text-anchor="middle" fill="#e6edf3" font-size="9">0.1-2 ms</text>
+        </g>
+
+        <g transform="translate(330, 75)">
+          <rect x="0" y="0" width="120" height="45" fill="#1a1f26" stroke="#4ade80" stroke-width="2" rx="4"/>
+          <text x="60" y="18" text-anchor="middle" fill="#4ade80" font-size="10">Key TTL</text>
+          <text x="60" y="35" text-anchor="middle" fill="#e6edf3" font-size="9">secs to hours</text>
+        </g>
+
+        <g transform="translate(470, 75)">
+          <rect x="0" y="0" width="120" height="45" fill="#1a1f26" stroke="#60a5fa" stroke-width="2" rx="4"/>
+          <text x="60" y="18" text-anchor="middle" fill="#60a5fa" font-size="10">Stream Lag</text>
+          <text x="60" y="35" text-anchor="middle" fill="#e6edf3" font-size="9">variable</text>
+        </g>
+
+        <g transform="translate(610, 75)">
+          <rect x="0" y="0" width="120" height="45" fill="#1a1f26" stroke="#a78bfa" stroke-width="2" rx="4"/>
+          <text x="60" y="18" text-anchor="middle" fill="#a78bfa" font-size="10">Persistence</text>
+          <text x="60" y="35" text-anchor="middle" fill="#e6edf3" font-size="9">RDB/AOF</text>
+        </g>
+
+        <g transform="translate(50, 140)">
+          <text x="0" y="0" fill="#22d3ee" font-size="10" font-weight="600">Pub/Sub vs Streams:</text>
+          <text x="115" y="0" fill="#e6edf3" font-size="10">Pub/Sub = fire-and-forget (no persistence)</text>
+          <text x="115" y="18" fill="#e6edf3" font-size="10">Streams = persistent log with replay + consumer groups</text>
+          <text x="115" y="36" fill="#fbbf24" font-size="10">→ For your pipeline: USE STREAMS</text>
+        </g>
+      </svg>
+    </div>
+
+    <h3>Pipelining — Amortizing Network Latency</h3>
+    <div class="dual-panel">
+      <div>
+        <h4>Without Pipelining</h4>
+        <pre><code><span class="comment"># 3 round trips</span>
+SET key1 val1 <span class="comment">→ wait →</span> OK
+SET key2 val2 <span class="comment">→ wait →</span> OK
+SET key3 val3 <span class="comment">→ wait →</span> OK
+<span class="comment"># Total: ~6ms (3 × 2ms RTT)</span></code></pre>
+      </div>
+      <div>
+        <h4>With Pipelining</h4>
+        <pre><code><span class="comment"># 1 round trip, 3 commands</span>
+SET key1 val1
+SET key2 val2
+SET key3 val3
+<span class="comment">→ send all → wait once →</span> [OK,OK,OK]
+<span class="comment"># Total: ~2ms</span></code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7: USE CASES -->
+  <section class="section">
+    <h2>7. Use Cases — Patterns in Practice</h2>
+
+    <div class="use-case">
+      <h4>1. Rate Limiting (Sliding Window)</h4>
+      <p><strong>Structure:</strong> Sorted Set per user | <strong>Score:</strong> timestamp | <strong>Why Redis:</strong> Atomic operations, TTL cleanup, sub-ms latency</p>
+    </div>
+
+    <div class="use-case">
+      <h4>2. Session Storage</h4>
+      <p><strong>Structure:</strong> Hash per session ID | <strong>Pattern:</strong> SET with EX for timeout | <strong>Why Redis:</strong> Fast reads, auto-expiration</p>
+    </div>
+
+    <div class="use-case">
+      <h4>3. Caching (Cache-Aside)</h4>
+      <p><strong>Pattern:</strong> Check Redis → miss → fetch DB → write Redis with TTL | <strong>Why Redis:</strong> 100x faster than DB</p>
+    </div>
+
+    <div class="use-case">
+      <h4>4. Distributed Lock (Redlock)</h4>
+      <p><strong>Structure:</strong> String with unique token | <strong>Pattern:</strong> SET key token NX PX timeout | <strong>Why Redis:</strong> Atomic SET NX, auto-expire</p>
+    </div>
+
+    <div class="use-case">
+      <h4>5. Real-time Leaderboard</h4>
+      <p><strong>Structure:</strong> Sorted Set | <strong>Ops:</strong> ZINCRBY, ZREVRANGE, ZRANK | <strong>Why Redis:</strong> O(log N) sorted updates</p>
+    </div>
+
+    <div class="use-case">
+      <h4>6. Event Streaming / Message Queue</h4>
+      <p><strong>Structure:</strong> Stream with consumer groups | <strong>Pattern:</strong> XADD / XREADGROUP / XACK | <strong>Why Redis:</strong> Persistent, distributed consumers</p>
+    </div>
+  </section>
+
+  <!-- SECTION 8: YOUR PIPELINE -->
+  <section class="section">
+    <h2>8. Your Financial Data Pipeline</h2>
+    <p>Go ingesting Morningstar data → Redis Streams → Python → WebSocket → React</p>
+
+    <div class="viz-container">
+      <svg viewBox="0 0 800 200" width="100%">
+        <defs>
+          <marker id="arro" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#22d3ee"/>
+          </marker>
+        </defs>
+        <rect width="800" height="200" fill="#21262d" rx="8"/>
+        <text x="400" y="25" text-anchor="middle" fill="#e6edf3" font-weight="700" font-size="14">Financial Time-Series Pipeline</text>
+
+        <!-- Morningstar -->
+        <g transform="translate(30, 55)">
+          <rect x="0" y="0" width="90" height="55" fill="#1a1f26" stroke="#fbbf24" stroke-width="2" rx="6"/>
+          <text x="45" y="22" text-anchor="middle" fill="#fbbf24" font-size="10">Morningstar</text>
+          <text x="45" y="40" text-anchor="middle" fill="#8b949e" font-size="8">API</text>
+        </g>
+
+        <path d="M120,82 L150,82" stroke="#22d3ee" stroke-width="2" marker-end="url(#arro)"/>
+
+        <!-- Go -->
+        <g transform="translate(155, 50)">
+          <rect x="0" y="0" width="110" height="65" fill="#1a1f26" stroke="#00ADD8" stroke-width="2" rx="6"/>
+          <text x="55" y="20" text-anchor="middle" fill="#00ADD8" font-weight="600" font-size="11">Go Ingestion</text>
+          <text x="55" y="38" text-anchor="middle" fill="#e6edf3" font-size="9">High-throughput</text>
+          <text x="55" y="52" text-anchor="middle" fill="#fbbf24" font-size="8">~10k events/sec</text>
+        </g>
+
+        <path d="M265,82 L295,82" stroke="#22d3ee" stroke-width="2" marker-end="url(#arro)"/>
+        <text x="280" y="72" text-anchor="middle" fill="#4ade80" font-size="8">XADD</text>
+
+        <!-- Redis -->
+        <g transform="translate(300, 45)">
+          <rect x="0" y="0" width="140" height="75" fill="#1a1f26" stroke="#ff6b6b" stroke-width="3" rx="6"/>
+          <text x="70" y="20" text-anchor="middle" fill="#ff6b6b" font-weight="700" font-size="12">Redis Cluster</text>
+          <text x="70" y="40" text-anchor="middle" fill="#e6edf3" font-size="9">Stream: market:prices</text>
+          <text x="70" y="55" text-anchor="middle" fill="#8b949e" font-size="8">Consumer Group: analytics</text>
+        </g>
+
+        <path d="M440,82 L475,82" stroke="#22d3ee" stroke-width="2" marker-end="url(#arro)"/>
+        <text x="457" y="72" text-anchor="middle" fill="#60a5fa" font-size="7">XREADGROUP</text>
+
+        <!-- Python -->
+        <g transform="translate(480, 50)">
+          <rect x="0" y="0" width="110" height="65" fill="#1a1f26" stroke="#3776AB" stroke-width="2" rx="6"/>
+          <text x="55" y="20" text-anchor="middle" fill="#3776AB" font-weight="600" font-size="11">Python Backend</text>
+          <text x="55" y="38" text-anchor="middle" fill="#e6edf3" font-size="9">Consumer + Logic</text>
+          <text x="55" y="52" text-anchor="middle" fill="#8b949e" font-size="8">WebSocket push</text>
+        </g>
+
+        <path d="M590,82 L620,82" stroke="#22d3ee" stroke-width="2" marker-end="url(#arro)"/>
+        <text x="605" y="72" text-anchor="middle" fill="#a78bfa" font-size="8">WS</text>
+
+        <!-- React -->
+        <g transform="translate(625, 55)">
+          <rect x="0" y="0" width="90" height="55" fill="#1a1f26" stroke="#61DAFB" stroke-width="2" rx="6"/>
+          <text x="45" y="22" text-anchor="middle" fill="#61DAFB" font-size="10">React</text>
+          <text x="45" y="40" text-anchor="middle" fill="#8b949e" font-size="8">Real-time UI</text>
+        </g>
+
+        <!-- Benefits -->
+        <g transform="translate(30, 140)">
+          <rect x="0" y="0" width="740" height="45" fill="#1a1f26" stroke="#4ade80" stroke-width="1" rx="4"/>
+          <text x="100" y="20" fill="#4ade80" font-size="10">🔥 Speed: Go + Redis = max throughput</text>
+          <text x="290" y="20" fill="#60a5fa" font-size="10">🔄 Decoupling: Producer/consumer independent</text>
+          <text x="520" y="20" fill="#a78bfa" font-size="10">📊 Buffering: Absorbs spikes</text>
+          <text x="100" y="38" fill="#fbbf24" font-size="10">🔁 Replay: New consumers can catch up from history</text>
+        </g>
+      </svg>
+    </div>
+
+    <h3>Key Implementation Points</h3>
+    <pre><code><span class="comment">// Go Producer - batch with pipelining</span>
+pipe := rdb.Pipeline()
+<span class="keyword">for</span> _, update := <span class="keyword">range</span> batch {
+    pipe.XAdd(ctx, &redis.XAddArgs{
+        Stream: <span class="string">"market:prices"</span>,
+        MaxLen: <span class="number">100000</span>, Approx: <span class="keyword">true</span>,  <span class="comment">// Cap stream size</span>
+        Values: <span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">any</span>{"sym": update.Sym, "price": update.Price},
+    })
+}
+pipe.Exec(ctx)  <span class="comment">// One network round-trip for entire batch</span></code></pre>
+
+    <pre><code><span class="comment"># Python Consumer - blocking read</span>
+entries = r.xreadgroup(
+    groupname=<span class="string">"analytics"</span>, consumername=<span class="string">"worker-1"</span>,
+    streams={<span class="string">"market:prices"</span>: <span class="string">">"</span>},  <span class="comment"># ">" = only new messages</span>
+    count=<span class="number">100</span>, block=<span class="number">1000</span>  <span class="comment"># Block up to 1 second</span>
+)
+<span class="keyword">for</span> stream, messages <span class="keyword">in</span> entries:
+    <span class="keyword">for</span> msg_id, data <span class="keyword">in</span> messages:
+        <span class="comment"># Push to WebSocket</span>
+        await broadcast(data)
+        <span class="comment"># Acknowledge processing</span>
+        r.xack(<span class="string">"market:prices"</span>, <span class="string">"analytics"</span>, msg_id)</code></pre>
+  </section>
+
+  <!-- SUMMARY -->
+  <section class="section">
+    <h2>Summary: Redis Mental Model</h2>
+    
+    <div class="viz-container">
+      <svg viewBox="0 0 700 280" width="100%">
+        <rect width="700" height="280" fill="#21262d" rx="8"/>
+        <text x="350" y="30" text-anchor="middle" fill="#e6edf3" font-weight="700" font-size="15">Redis: The Complete Mental Model</text>
+
+        <!-- Core -->
+        <g transform="translate(50, 50)">
+          <rect x="0" y="0" width="600" height="50" fill="#1a1f26" stroke="#ff6b6b" stroke-width="2" rx="6"/>
+          <text x="300" y="20" text-anchor="middle" fill="#ff6b6b" font-weight="700" font-size="12">CORE IDENTITY</text>
+          <text x="300" y="40" text-anchor="middle" fill="#e6edf3" font-size="11">In-memory data structure server with atomic operations and sub-millisecond latency</text>
+        </g>
+
+        <!-- Pillars -->
+        <g transform="translate(50, 115)">
+          <rect x="0" y="0" width="190" height="50" fill="#1a1f26" stroke="#4ade80" stroke-width="1" rx="4"/>
+          <text x="95" y="20" text-anchor="middle" fill="#4ade80" font-weight="600" font-size="11">Single-Threaded</text>
+          <text x="95" y="38" text-anchor="middle" fill="#e6edf3" font-size="9">No locks, no races, atomicity by design</text>
+        </g>
+
+        <g transform="translate(255, 115)">
+          <rect x="0" y="0" width="190" height="50" fill="#1a1f26" stroke="#60a5fa" stroke-width="1" rx="4"/>
+          <text x="95" y="20" text-anchor="middle" fill="#60a5fa" font-weight="600" font-size="11">Data Structures</text>
+          <text x="95" y="38" text-anchor="middle" fill="#e6edf3" font-size="9">Strings, Lists, Sets, ZSets, Streams</text>
+        </g>
+
+        <g transform="translate(460, 115)">
+          <rect x="0" y="0" width="190" height="50" fill="#1a1f26" stroke="#a78bfa" stroke-width="1" rx="4"/>
+          <text x="95" y="20" text-anchor="middle" fill="#a78bfa" font-weight="600" font-size="11">Lua Scripts</text>
+          <text x="95" y="38" text-anchor="middle" fill="#e6edf3" font-size="9">Multi-op atomicity (rate limiters, locks)</text>
+        </g>
+
+        <!-- Use cases -->
+        <g transform="translate(50, 180)">
+          <text x="0" y="0" fill="#fbbf24" font-weight="600" font-size="11">When to Reach for Redis:</text>
+          <rect x="0" y="12" width="115" height="25" fill="#0d1117" rx="4"/>
+          <text x="57" y="30" text-anchor="middle" fill="#e6edf3" font-size="9">Caching</text>
+          <rect x="125" y="12" width="115" height="25" fill="#0d1117" rx="4"/>
+          <text x="182" y="30" text-anchor="middle" fill="#e6edf3" font-size="9">Rate Limiting</text>
+          <rect x="250" y="12" width="115" height="25" fill="#0d1117" rx="4"/>
+          <text x="307" y="30" text-anchor="middle" fill="#e6edf3" font-size="9">Sessions</text>
+          <rect x="375" y="12" width="115" height="25" fill="#0d1117" rx="4"/>
+          <text x="432" y="30" text-anchor="middle" fill="#e6edf3" font-size="9">Leaderboards</text>
+          <rect x="500" y="12" width="115" height="25" fill="#0d1117" rx="4"/>
+          <text x="557" y="30" text-anchor="middle" fill="#e6edf3" font-size="9">Event Streaming</text>
+        </g>
+
+        <!-- Key insight -->
+        <g transform="translate(50, 235)">
+          <rect x="0" y="0" width="600" height="30" fill="#4ade80" rx="4"/>
+          <text x="300" y="20" text-anchor="middle" fill="#0d1117" font-weight="700" font-size="11">🧠 Redis = Shared, fast, atomic scratch space between your services</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+</div>
+
+<script>
+function showTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById(tabId).classList.add('active');
+  btn.classList.add('active');
+}
+</script>
+</body>
+</html>

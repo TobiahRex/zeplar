@@ -1,0 +1,159 @@
+{
+  "generatedAt": "2025-12-29T12:39:25.266Z",
+  "summary": {
+    "totalPatterns": 1,
+    "averageScore": 0,
+    "byLayer": {
+      "L1-Concept": 0,
+      "L2-Structure": 0,
+      "L3-CodeExpression": 0,
+      "L4-SystemIntegration": 0,
+      "L5-TechnologyMapping": 0,
+      "L6-SystemComposition": 0
+    },
+    "byQuality": {
+      "performance": 0
+    },
+    "completionTiers": {
+      "excellent": 0,
+      "good": 0,
+      "partial": 0,
+      "minimal": 1
+    }
+  },
+  "patterns": [
+    {
+      "id": "debouncing",
+      "slug": "debouncing",
+      "name": "Debouncing",
+      "quality": "performance",
+      "totalScore": 0,
+      "maxScore": 100,
+      "percentage": 0,
+      "layers": [
+        {
+          "layer": "L1-Concept",
+          "maxPoints": 20,
+          "earnedPoints": 0,
+          "checks": [
+            {
+              "name": "Definition length ≥150 words",
+              "passed": false,
+              "weight": 5
+            },
+            {
+              "name": "Problem solved ≥100 words",
+              "passed": false,
+              "weight": 5
+            },
+            {
+              "name": "3+ pros",
+              "passed": false,
+              "weight": 3
+            },
+            {
+              "name": "3+ cons",
+              "passed": false,
+              "weight": 3
+            },
+            {
+              "name": "3+ related patterns",
+              "passed": false,
+              "weight": 4
+            }
+          ]
+        },
+        {
+          "layer": "L2-Structure",
+          "maxPoints": 20,
+          "earnedPoints": 0,
+          "checks": [
+            {
+              "name": "3+ participants",
+              "passed": false,
+              "weight": 5
+            },
+            {
+              "name": "5+ flow steps",
+              "passed": false,
+              "weight": 5
+            },
+            {
+              "name": "Real Mermaid diagram",
+              "passed": false,
+              "weight": 7
+            },
+            {
+              "name": "3+ invariants",
+              "passed": false,
+              "weight": 3
+            }
+          ]
+        },
+        {
+          "layer": "L3-CodeExpression",
+          "maxPoints": 20,
+          "earnedPoints": 0,
+          "checks": [
+            {
+              "name": "2+ code examples",
+              "passed": false,
+              "weight": 7
+            },
+            {
+              "name": "Code length ≥100 lines",
+              "passed": false,
+              "weight": 6
+            },
+            {
+              "name": "Has complete Layer 3 Trifecta",
+              "passed": false,
+              "weight": 7
+            }
+          ]
+        },
+        {
+          "layer": "L4-SystemIntegration",
+          "maxPoints": 20,
+          "earnedPoints": 0,
+          "checks": [
+            {
+              "name": "2+ placement scenarios",
+              "passed": false,
+              "weight": 10
+            },
+            {
+              "name": "2+ architectural boundaries",
+              "passed": false,
+              "weight": 10
+            }
+          ]
+        },
+        {
+          "layer": "L5-TechnologyMapping",
+          "maxPoints": 10,
+          "earnedPoints": 0,
+          "checks": [
+            {
+              "name": "5+ technology implementations",
+              "passed": false,
+              "weight": 10
+            }
+          ]
+        },
+        {
+          "layer": "L6-SystemComposition",
+          "maxPoints": 10,
+          "earnedPoints": 0,
+          "checks": [
+            {
+              "name": "2+ case studies",
+              "passed": false,
+              "weight": 10
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

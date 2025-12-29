@@ -1,21 +1,25 @@
 import { useEffect } from "react";
 import { RouterProvider } from "react-router-dom";
 import { router } from "@/app/router";
-import { usePersistence } from "@/lib/persistence";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import {
   loadPatterns,
   generateCards,
   selectAllPatterns,
 } from "@/features/patterns/patternsSlice";
-import { initializeLayerUnlocks } from "@/features/learning/learningSlice";
+import {
+  hydrateRequested,
+  initializeLayerUnlocks,
+} from "@/features/learning/learningSlice";
 
 export default function App() {
   const dispatch = useAppDispatch();
   const patterns = useAppSelector(selectAllPatterns);
 
-  // Hydrate and persist learning state
-  usePersistence();
+  // Hydrate learning state from IndexedDB via saga
+  useEffect(() => {
+    dispatch(hydrateRequested());
+  }, [dispatch]);
 
   // Load patterns and generate cards on app initialization
   useEffect(() => {

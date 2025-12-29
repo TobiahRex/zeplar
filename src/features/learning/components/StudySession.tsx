@@ -8,7 +8,7 @@ import {
   selectCurrentCardKey,
   selectSessionProgress,
   selectSession,
-  submitReview,
+  submitReviewRequested,
   nextCard,
   endSession,
 } from "../learningSlice";
@@ -36,7 +36,8 @@ export function StudySession() {
     (quality: Quality) => {
       if (!currentCardKey) return;
 
-      dispatch(submitReview({ cardKey: currentCardKey, quality }));
+      // Dispatch request action - saga handles SM2 calculation and persistence
+      dispatch(submitReviewRequested({ cardKey: currentCardKey, quality }));
       setIsFlipped(false);
 
       // Move to next card or end session
