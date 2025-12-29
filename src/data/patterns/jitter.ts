@@ -17,9 +17,9 @@ export const jitter: Pattern = {
     emoji: "🎲",
     tagline: "Randomize to prevent thundering herd",
     definition:
-      "A retry technique that adds randomness to retry delays, preventing synchronized retry storms when multiple clients fail simultaneously.",
+      "Jitter is a retry enhancement technique that introduces controlled randomness into retry delay calculations to prevent synchronized retry storms—a scenario where multiple clients simultaneously retry failed operations, creating coordinated traffic spikes that can overwhelm recovering systems. When a service experiences an outage, thousands or millions of clients may fail at the same instant. Without jitter, these clients would retry at identical intervals determined by a deterministic backoff algorithm (e.g., all retry after exactly 1s, then 2s, then 4s). This synchronized behavior creates tsunami-like traffic waves that can prevent the service from recovering, as each retry wave arrives before the system can stabilize. Jitter breaks this synchronization by adding randomness to each client's retry delay—one client might retry at 0.8s, another at 1.2s, another at 0.5s—spreading the retry load smoothly over time. The pattern supports multiple jitter strategies: Full Jitter (random delay between 0 and exponential backoff value, maximizing spread), Equal Jitter (half fixed delay plus half random, balancing predictability with randomness), and Decorrelated Jitter (randomness based on previous delay, creating smooth temporal distribution). Jitter is essential for large-scale distributed systems where client count makes synchronized retries catastrophic, particularly during cascading failures or service restarts. AWS's research shows that jitter can reduce retry-induced load by 80-90% compared to non-jittered exponential backoff, making it a critical reliability pattern for cloud-native applications.",
     problemSolved:
-      "When many clients experience the same failure at the same time (e.g., service restart), synchronized retries create traffic spikes that can prevent recovery. Jitter randomizes retry timing to spread out the load.",
+      "Distributed systems face a catastrophic failure mode called the thundering herd problem: when a popular service fails (server crash, deployment, network partition), all connected clients detect the failure simultaneously and initiate retries at the exact same intervals. With 10,000 clients using 1s exponential backoff, the service receives 10,000 requests at t=1s, 10,000 at t=2s, 10,000 at t=4s—concentrated bursts that can overwhelm a recovering service. Each retry wave consumes resources (CPU, memory, database connections), preventing the service from processing legitimate requests and fully recovering. This creates a vicious cycle: the service struggles under retry load, fails to recover, causing clients to retry again, perpetuating the outage. The problem intensifies with scale—1 million clients creates 1 million simultaneous retries. Jitter solves this by randomizing retry delays: those 10,000 clients now retry spread across 0-1s, 0-2s, 0-4s windows, creating smooth request flow instead of synchronized spikes. This allows the recovering service to process requests incrementally, stabilize resources, and restore service without being immediately crushed by retry traffic. Jitter is particularly critical during cascading failures, where one service failure triggers retries to dependent services, potentially collapsing entire service chains.",
     tradeoffs: {
       pros: [
         "Prevents synchronized retry storms",
@@ -216,6 +216,89 @@ const result = await retryWithJitter(
   }
 );`,
       runnable: true,
+      contextDilation: {
+        scope: "module",
+        systemPosition:
+          "Retry logic integrated into client libraries or service mesh sidecars. Jitter calculator is a utility used by retry coordinators across the application.",
+        zoomLevels: [
+          "Micro: Individual jitter calculation for single retry attempt",
+          "Local: RetryJitter class managing strategy and state across attempts",
+          "Module: Retry coordination with jitter as pluggable strategy",
+          "System: Client library providing jittered retries to all service calls",
+        ],
+        prerequisites: [
+          "Understanding of exponential backoff",
+          "Knowledge of the thundering herd problem",
+          "Familiarity with randomness and probability distributions",
+        ],
+      },
+      annotations: [
+        {
+          id: "jitter-strategy-selection",
+          lines: [22, 43],
+          action:
+            "Switch between three jitter strategies with different randomness characteristics",
+          reason:
+            "Different strategies suit different scenarios. Full jitter (0 to baseDelay) maximizes spread but can retry very quickly. Equal jitter (baseDelay/2 to baseDelay) ensures minimum delay while adding randomness. Decorrelated jitter creates smooth temporal distribution by basing randomness on previous delay rather than fixed exponential values, preventing long-term synchronization patterns.",
+          contextLevel: "module",
+          relatedConcepts: ["exponential-backoff", "random-distribution"],
+        },
+        {
+          id: "jitter-cap-enforcement",
+          lines: [44],
+          action:
+            "Cap jittered delay at configured maximum to prevent unbounded waits",
+          reason:
+            "Without a cap, exponential growth with jitter can produce extremely long delays (hours or days for high attempt numbers). The cap ensures retries remain within reasonable timeframes. Example: base=100ms, attempt=10 yields 102.4s exponential delay, but cap at 10s keeps retries responsive.",
+          contextLevel: "local",
+          relatedConcepts: ["backoff", "timeout"],
+        },
+        {
+          id: "jitter-decorrelated-state",
+          lines: [11, 39],
+          action: "Track last delay for decorrelated jitter calculation",
+          reason:
+            "Decorrelated jitter (Amazon's recommendation) uses previous delay to calculate next delay's range, creating temporal smoothing. State tracking enables `random(baseDelay, lastDelay * 3)` formula, which prevents synchronized patterns that can emerge even with full jitter over many clients and attempts.",
+          contextLevel: "local",
+          relatedConcepts: ["stateful-retry", "temporal-distribution"],
+        },
+      ],
+      highlights: [
+        {
+          id: "jitter-full-strategy",
+          lines: [24, 26],
+          domain: "behavior",
+          title: "Full Jitter: Maximum Spread",
+          explanation:
+            "Full jitter provides maximum desynchronization by randomizing delay uniformly across 0 to exponentialDelay. This aggressive spreading minimizes thundering herd effects but can cause very short retries (near 0ms) which may not give services enough recovery time.",
+        },
+        {
+          id: "jitter-equal-strategy",
+          lines: [28, 32],
+          domain: "behavior",
+          title: "Equal Jitter: Balanced Approach",
+          explanation:
+            "Equal jitter balances predictability with randomness: delay = baseDelay/2 + random(0, baseDelay/2). Guarantees minimum 50% of exponential delay (ensures some recovery time) while adding 50% randomness (prevents synchronization). Recommended for most production systems.",
+        },
+      ],
     },
   ],
+
+  systemContext: {
+    typicalPlacement:
+      "Jitter is implemented in client-side retry logic within HTTP clients (axios, fetch), message queue consumers, database connection pools, and service mesh proxies. It sits at the boundary between the application and external dependencies, wrapping any operation that might fail and require retries. In microservices architectures, jitter is typically configured in the service mesh (Istio, Linkerd) or client libraries (gRPC, REST clients) to apply uniformly across all outbound calls.",
+    architecturalBoundaries: [
+      "Client Libraries: HTTP clients, SDK retry policies, gRPC interceptors",
+      "Service Mesh: Envoy/Istio retry configuration with jittered backoff",
+      "Message Consumers: Kafka, RabbitMQ consumers retrying failed message processing",
+      "Infrastructure: Load balancer health check retry intervals with jitter",
+    ],
+    interactsWith: [
+      "circuit-breaker",
+      "exponential-backoff",
+      "retry",
+      "timeout",
+      "rate-limiting",
+    ],
+  },
 };
