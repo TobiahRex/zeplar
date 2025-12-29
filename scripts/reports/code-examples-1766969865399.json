@@ -1,0 +1,51 @@
+{
+  "generatedAt": "2025-12-29T00:57:45.398Z",
+  "totalPatterns": 1,
+  "totalExamples": 4,
+  "tested": 1,
+  "skipped": 3,
+  "passed": 1,
+  "failed": 0,
+  "results": [
+    {
+      "patternId": "circuit-breaker",
+      "patternName": "Circuit Breaker",
+      "exampleId": "cb-typescript-basic",
+      "exampleTitle": "Basic Circuit Breaker Implementation",
+      "language": "typescript",
+      "passed": true,
+      "skipped": false,
+      "output": "✅ TypeScript compilation successful"
+    },
+    {
+      "patternId": "circuit-breaker",
+      "patternName": "Circuit Breaker",
+      "exampleId": "cb-python-basic",
+      "exampleTitle": "Circuit Breaker in Python with Decorators",
+      "language": "python",
+      "passed": false,
+      "skipped": true,
+      "skipReason": "Marked as runnable: false"
+    },
+    {
+      "patternId": "circuit-breaker",
+      "patternName": "Circuit Breaker",
+      "exampleId": "cb-go-basic",
+      "exampleTitle": "Circuit Breaker in Go with Channels",
+      "language": "go",
+      "passed": false,
+      "skipped": true,
+      "skipReason": "Marked as runnable: false"
+    },
+    {
+      "patternId": "circuit-breaker",
+      "patternName": "Circuit Breaker",
+      "exampleId": "cb-opossum-library",
+      "exampleTitle": "Circuit Breaker with Opossum Library",
+      "language": "typescript",
+      "passed": false,
+      "skipped": true,
+      "skipReason": "Marked as runnable: false"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "generatedAt": "2025-12-29T00:55:25.915Z",
+  "summary": {
+    "totalPatterns": 0,
+    "averageScore": null,
+    "byLayer": {
+      "L1-Concept": null,
+      "L2-Structure": null,
+      "L3-CodeExpression": null,
+      "L4-SystemIntegration": null,
+      "L5-TechnologyMapping": null,
+      "L6-SystemComposition": null
+    },
+    "byQuality": {},
+    "completionTiers": {
+      "excellent": 0,
+      "good": 0,
+      "partial": 0,
+      "minimal": 0
+    }
+  },
+  "patterns": []
+}
