@@ -22,7 +22,17 @@ export type QuestionType =
   | "code-identification" // "Which pattern does this code demonstrate?"
   | "action-reason" // "Why does this code do X?"
   | "context-dilation" // "What would break if we changed X?"
-  | "fill-in-blank"; // Fill in the code blanks
+  | "fill-in-blank" // Fill in the code blanks
+  // L4 - System Integration layer
+  | "placement-decision" // "Where should you place X?"
+  | "integration" // "How does X integrate with Y?"
+  | "architectural-boundaries" // "What boundaries does X span?"
+  // L5 - Technology Mapping layer
+  | "tool-identification" // "Which library provides X?"
+  | "technology-choice" // "When to choose A vs B?"
+  // L6 - System Composition layer
+  | "case-study-recognition" // "How does company X use Y?"
+  | "composition-understanding"; // "Why combine X and Y?"
 
 export type SBVPDomain =
   | "structure"
@@ -505,7 +515,21 @@ export function getCard(
     return cards.find((c) => c.id === cardKey);
   }
 
-  // TODO: Add L4-L6 card generation
+  if (parsed.layer === 4) {
+    const cards = generateL4Cards(pattern);
+    return cards.find((c) => c.id === cardKey);
+  }
+
+  if (parsed.layer === 5) {
+    const cards = generateL5Cards(pattern);
+    return cards.find((c) => c.id === cardKey);
+  }
+
+  if (parsed.layer === 6) {
+    const cards = generateL6Cards(pattern);
+    return cards.find((c) => c.id === cardKey);
+  }
+
   return undefined;
 }
 
@@ -546,6 +570,330 @@ export function getCardKeysForPattern(
     ];
   }
 
-  // TODO: Add L4-L6
+  if (layer === 4) {
+    return [
+      getCardKey(patternId, 4, "placement-decision"),
+      getCardKey(patternId, 4, "integration-1"),
+      getCardKey(patternId, 4, "integration-2"),
+      getCardKey(patternId, 4, "integration-3"),
+      getCardKey(patternId, 4, "architectural-boundaries"),
+    ];
+  }
+
+  if (layer === 5) {
+    return [
+      getCardKey(patternId, 5, "tool-identification-1"),
+      getCardKey(patternId, 5, "tool-identification-2"),
+      getCardKey(patternId, 5, "tool-identification-3"),
+      getCardKey(patternId, 5, "technology-choice"),
+    ];
+  }
+
+  if (layer === 6) {
+    return [
+      getCardKey(patternId, 6, "case-study-1"),
+      getCardKey(patternId, 6, "case-study-2"),
+      getCardKey(patternId, 6, "case-study-3"),
+      getCardKey(patternId, 6, "composition-understanding"),
+    ];
+  }
+
   return [];
+}
+
+/**
+ * Generate all L4 cards for a pattern
+ * L4 focuses on system integration: placement, boundaries, integration
+ */
+export function generateL4Cards(pattern: Pattern): Flashcard[] {
+  const cards: Flashcard[] = [];
+
+  // Skip if no systemContext
+  if (!pattern.systemContext) return cards;
+
+  // 1. Placement decision: "Where should you place X in architecture?"
+  if (pattern.systemContext.typicalPlacement) {
+    cards.push({
+      id: getCardKey(pattern.id, 4, "placement-decision"),
+      patternId: pattern.id,
+      layer: 4,
+      questionType: "placement-decision" as QuestionType,
+      sbvpDomain: "structure",
+      front: {
+        text: `Where should you place the ${pattern.concept.name} pattern in your architecture?`,
+        hint: `Think about ${pattern.hierarchy.quality} concerns`,
+      },
+      back: {
+        text: pattern.systemContext.typicalPlacement,
+        details: pattern.systemContext.architecturalBoundaries,
+      },
+      difficulty: 3,
+      grammarCoordinates: {
+        pattern: pattern.id,
+        layer: 4,
+        domain: "structure",
+        facet: "placement",
+        questionType: "where-place",
+      },
+    });
+  }
+
+  // 2. Integration questions: Generate for first 3 interacting patterns
+  if (pattern.systemContext.interactsWith) {
+    const interactionsToQuery = pattern.systemContext.interactsWith.slice(0, 3);
+
+    interactionsToQuery.forEach((relatedPattern, index) => {
+      cards.push({
+        id: getCardKey(pattern.id, 4, `integration-${index + 1}`),
+        patternId: pattern.id,
+        layer: 4,
+        questionType: "integration" as QuestionType,
+        sbvpDomain: "behavior",
+        front: {
+          text: `How does ${pattern.concept.name} integrate with ${relatedPattern}?`,
+          hint: `Consider the boundaries and responsibilities`,
+        },
+        back: {
+          text: `${pattern.concept.name} and ${relatedPattern} work together: ${pattern.concept.name} handles ${pattern.hierarchy.family || pattern.hierarchy.strategy} while ${relatedPattern} provides complementary functionality.`,
+          details: pattern.systemContext.architecturalBoundaries,
+        },
+        difficulty: 3,
+        grammarCoordinates: {
+          pattern: pattern.id,
+          layer: 4,
+          domain: "behavior",
+          facet: "integration",
+          questionType: "how-integrate",
+        },
+      });
+    });
+  }
+
+  // 3. Architectural boundaries: Understanding system layers
+  if (
+    pattern.systemContext.architecturalBoundaries &&
+    pattern.systemContext.architecturalBoundaries.length > 0
+  ) {
+    cards.push({
+      id: getCardKey(pattern.id, 4, "architectural-boundaries"),
+      patternId: pattern.id,
+      layer: 4,
+      questionType: "architectural-boundaries" as QuestionType,
+      sbvpDomain: "structure",
+      front: {
+        text: `What architectural boundaries does ${pattern.concept.name} typically span or exist within?`,
+      },
+      back: {
+        text: pattern.systemContext.architecturalBoundaries.join("\n\n"),
+        details: [pattern.systemContext.typicalPlacement || ""],
+      },
+      difficulty: 3,
+      grammarCoordinates: {
+        pattern: pattern.id,
+        layer: 4,
+        domain: "structure",
+        facet: "boundaries",
+        questionType: "what-boundaries",
+      },
+    });
+  }
+
+  return cards;
+}
+
+/**
+ * Generate all L4 cards for multiple patterns
+ */
+export function generateAllL4Cards(patterns: Pattern[]): Flashcard[] {
+  return patterns.flatMap(generateL4Cards);
+}
+
+/**
+ * Generate all L5 cards for a pattern
+ * L5 focuses on technology mapping: tools, libraries, frameworks
+ */
+export function generateL5Cards(pattern: Pattern): Flashcard[] {
+  const cards: Flashcard[] = [];
+
+  // Skip if no implementations
+  if (!pattern.implementations || pattern.implementations.length === 0) {
+    return cards;
+  }
+
+  // 1. Tool identification: "Which library provides X for Y?"
+  const firstThreeImpls = pattern.implementations.slice(0, 3);
+
+  firstThreeImpls.forEach((impl, index) => {
+    cards.push({
+      id: getCardKey(pattern.id, 5, `tool-identification-${index + 1}`),
+      patternId: pattern.id,
+      layer: 5,
+      questionType: "tool-identification" as QuestionType,
+      sbvpDomain: "structure",
+      front: {
+        text: `Which library/framework provides ${pattern.concept.name} for ${impl.ecosystem}?`,
+        hint: impl.ecosystem,
+      },
+      back: {
+        text: impl.name,
+        details: impl.keyFeatures,
+      },
+      difficulty: 2,
+      grammarCoordinates: {
+        pattern: pattern.id,
+        layer: 5,
+        domain: "structure",
+        facet: "technology",
+        questionType: "which-tool",
+      },
+    });
+  });
+
+  // 2. Technology choice: When to use each implementation
+  if (pattern.implementations.length >= 2) {
+    const impl1 = pattern.implementations[0];
+    const impl2 = pattern.implementations[1];
+
+    cards.push({
+      id: getCardKey(pattern.id, 5, "technology-choice"),
+      patternId: pattern.id,
+      layer: 5,
+      questionType: "technology-choice" as QuestionType,
+      sbvpDomain: "philosophy",
+      front: {
+        text: `When should you choose ${impl1.name} vs ${impl2.name} for ${pattern.concept.name}?`,
+      },
+      back: {
+        text: `${impl1.name} (${impl1.ecosystem}): ${impl1.whenToUse || impl1.keyFeatures?.[0] || "General purpose implementation"}\n\n${impl2.name} (${impl2.ecosystem}): ${impl2.whenToUse || impl2.keyFeatures?.[0] || "Alternative implementation"}`,
+        details: [...(impl1.keyFeatures || []), ...(impl2.keyFeatures || [])],
+      },
+      difficulty: 3,
+      grammarCoordinates: {
+        pattern: pattern.id,
+        layer: 5,
+        domain: "philosophy",
+        facet: "choice",
+        questionType: "when-choose",
+      },
+    });
+  }
+
+  return cards;
+}
+
+/**
+ * Generate all L5 cards for multiple patterns
+ */
+export function generateAllL5Cards(patterns: Pattern[]): Flashcard[] {
+  return patterns.flatMap(generateL5Cards);
+}
+
+/**
+ * Generate all L6 cards for a pattern
+ * L6 focuses on system composition: case studies, real-world usage
+ */
+export function generateL6Cards(pattern: Pattern): Flashcard[] {
+  const cards: Flashcard[] = [];
+
+  // Skip if no case studies
+  if (!pattern.usedInSystems || pattern.usedInSystems.length === 0) {
+    return cards;
+  }
+
+  // 1. Case study recognition: "How does company X use pattern Y?"
+  const firstThreeCases = pattern.usedInSystems.slice(0, 3);
+
+  firstThreeCases.forEach((caseStudy, index) => {
+    cards.push({
+      id: getCardKey(pattern.id, 6, `case-study-${index + 1}`),
+      patternId: pattern.id,
+      layer: 6,
+      questionType: "case-study-recognition" as QuestionType,
+      sbvpDomain: "behavior",
+      front: {
+        text: `How does ${caseStudy.company} use the ${pattern.concept.name} pattern?`,
+        hint: caseStudy.system,
+      },
+      back: {
+        text: caseStudy.usage,
+        details: [
+          `Rationale: ${caseStudy.rationale}`,
+          `Impact: ${caseStudy.impact}`,
+          caseStudy.source ? `Source: ${caseStudy.source}` : "",
+        ].filter(Boolean),
+      },
+      difficulty: 3,
+      grammarCoordinates: {
+        pattern: pattern.id,
+        layer: 6,
+        domain: "behavior",
+        facet: "case-study",
+        questionType: "how-used",
+      },
+    });
+  });
+
+  // 2. Composition understanding: Pattern combinations
+  if (
+    pattern.usedInSystems[0]?.composedWith &&
+    pattern.usedInSystems[0].composedWith.length > 0
+  ) {
+    const caseStudy = pattern.usedInSystems[0];
+    const composedPatterns = caseStudy.composedWith.join(", ");
+
+    cards.push({
+      id: getCardKey(pattern.id, 6, "composition-understanding"),
+      patternId: pattern.id,
+      layer: 6,
+      questionType: "composition-understanding" as QuestionType,
+      sbvpDomain: "philosophy",
+      front: {
+        text: `Why does ${caseStudy.company} combine ${pattern.concept.name} with ${composedPatterns}?`,
+        hint: caseStudy.system,
+      },
+      back: {
+        text: caseStudy.rationale,
+        details: [`System: ${caseStudy.system}`, `Impact: ${caseStudy.impact}`],
+      },
+      difficulty: 3,
+      grammarCoordinates: {
+        pattern: pattern.id,
+        layer: 6,
+        domain: "philosophy",
+        facet: "composition",
+        questionType: "why-combine",
+      },
+    });
+  }
+
+  return cards;
+}
+
+/**
+ * Generate all L6 cards for multiple patterns
+ */
+export function generateAllL6Cards(patterns: Pattern[]): Flashcard[] {
+  return patterns.flatMap(generateL6Cards);
+}
+
+/**
+ * Generate all flashcards for a pattern (L1-L6)
+ * This is the main entry point for card generation
+ */
+export function generateFlashcards(pattern: Pattern): Flashcard[] {
+  return [
+    ...generateL1Cards(pattern),
+    ...generateL2Cards(pattern),
+    ...generateL3Cards(pattern),
+    ...generateL4Cards(pattern),
+    ...generateL5Cards(pattern),
+    ...generateL6Cards(pattern),
+  ];
+}
+
+/**
+ * Generate all flashcards for multiple patterns (L1-L6)
+ */
+export function generateAllFlashcards(patterns: Pattern[]): Flashcard[] {
+  return patterns.flatMap(generateFlashcards);
 }
