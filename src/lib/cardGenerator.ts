@@ -624,7 +624,7 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
         hint: `Think about ${pattern.hierarchy.quality} concerns`,
       },
       back: {
-        text: pattern.systemContext.typicalPlacement,
+        text: pattern.systemContext.typicalPlacement.join("\n\n"),
         details: pattern.systemContext.architecturalBoundaries,
       },
       difficulty: 3,
@@ -655,7 +655,7 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
         },
         back: {
           text: `${pattern.concept.name} and ${relatedPattern} work together: ${pattern.concept.name} handles ${pattern.hierarchy.family || pattern.hierarchy.strategy} while ${relatedPattern} provides complementary functionality.`,
-          details: pattern.systemContext.architecturalBoundaries,
+          details: pattern.systemContext?.architecturalBoundaries || [],
         },
         difficulty: 3,
         grammarCoordinates: {
@@ -685,7 +685,7 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
       },
       back: {
         text: pattern.systemContext.architecturalBoundaries.join("\n\n"),
-        details: [pattern.systemContext.typicalPlacement || ""],
+        details: pattern.systemContext.typicalPlacement,
       },
       difficulty: 3,
       grammarCoordinates: {
@@ -731,12 +731,12 @@ export function generateL5Cards(pattern: Pattern): Flashcard[] {
       questionType: "tool-identification" as QuestionType,
       sbvpDomain: "structure",
       front: {
-        text: `Which library/framework provides ${pattern.concept.name} for ${impl.ecosystem}?`,
-        hint: impl.ecosystem,
+        text: `Which library/framework provides ${pattern.concept.name} for ${impl.languages.join("/")}?`,
+        hint: impl.type,
       },
       back: {
         text: impl.name,
-        details: impl.keyFeatures,
+        details: [impl.description],
       },
       difficulty: 2,
       grammarCoordinates: {
@@ -764,8 +764,11 @@ export function generateL5Cards(pattern: Pattern): Flashcard[] {
         text: `When should you choose ${impl1.name} vs ${impl2.name} for ${pattern.concept.name}?`,
       },
       back: {
-        text: `${impl1.name} (${impl1.ecosystem}): ${impl1.whenToUse || impl1.keyFeatures?.[0] || "General purpose implementation"}\n\n${impl2.name} (${impl2.ecosystem}): ${impl2.whenToUse || impl2.keyFeatures?.[0] || "Alternative implementation"}`,
-        details: [...(impl1.keyFeatures || []), ...(impl2.keyFeatures || [])],
+        text: `**${impl1.name}** (${impl1.type}): ${impl1.description}\n\n**${impl2.name}** (${impl2.type}): ${impl2.description}`,
+        details: [
+          `${impl1.name} languages: ${impl1.languages.join(", ")}`,
+          `${impl2.name} languages: ${impl2.languages.join(", ")}`,
+        ],
       },
       difficulty: 3,
       grammarCoordinates: {
@@ -811,16 +814,12 @@ export function generateL6Cards(pattern: Pattern): Flashcard[] {
       questionType: "case-study-recognition" as QuestionType,
       sbvpDomain: "behavior",
       front: {
-        text: `How does ${caseStudy.company} use the ${pattern.concept.name} pattern?`,
-        hint: caseStudy.system,
+        text: `How is the ${pattern.concept.name} pattern used in ${caseStudy.systemName}?`,
+        hint: caseStudy.systemId,
       },
       back: {
-        text: caseStudy.usage,
-        details: [
-          `Rationale: ${caseStudy.rationale}`,
-          `Impact: ${caseStudy.impact}`,
-          caseStudy.source ? `Source: ${caseStudy.source}` : "",
-        ].filter(Boolean),
+        text: caseStudy.howUsed,
+        details: caseStudy.source ? [`Source: ${caseStudy.source}`] : [],
       },
       difficulty: 3,
       grammarCoordinates: {
@@ -833,38 +832,7 @@ export function generateL6Cards(pattern: Pattern): Flashcard[] {
     });
   });
 
-  // 2. Composition understanding: Pattern combinations
-  if (
-    pattern.usedInSystems[0]?.composedWith &&
-    pattern.usedInSystems[0].composedWith.length > 0
-  ) {
-    const caseStudy = pattern.usedInSystems[0];
-    const composedPatterns = caseStudy.composedWith.join(", ");
-
-    cards.push({
-      id: getCardKey(pattern.id, 6, "composition-understanding"),
-      patternId: pattern.id,
-      layer: 6,
-      questionType: "composition-understanding" as QuestionType,
-      sbvpDomain: "philosophy",
-      front: {
-        text: `Why does ${caseStudy.company} combine ${pattern.concept.name} with ${composedPatterns}?`,
-        hint: caseStudy.system,
-      },
-      back: {
-        text: caseStudy.rationale,
-        details: [`System: ${caseStudy.system}`, `Impact: ${caseStudy.impact}`],
-      },
-      difficulty: 3,
-      grammarCoordinates: {
-        pattern: pattern.id,
-        layer: 6,
-        domain: "philosophy",
-        facet: "composition",
-        questionType: "why-combine",
-      },
-    });
-  }
+  // Note: Composition understanding cards removed - composedWith property not in schema
 
   return cards;
 }
