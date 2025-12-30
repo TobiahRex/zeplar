@@ -181,6 +181,17 @@ export const VisualizationSchema = z.object({
 });
 
 // =============================================================================
+// External References
+// =============================================================================
+
+export const ReferenceSchema = z.object({
+  title: z.string(),
+  url: z.string(),
+  type: z.enum(["article", "documentation", "book", "video", "research-paper"]),
+  author: z.string().optional(),
+});
+
+// =============================================================================
 // Hierarchy
 // =============================================================================
 
@@ -221,6 +232,7 @@ export const PatternSchema = z.object({
   usedInSystems: z.array(SystemReferenceSchema).optional(),
   philosophy: PhilosophySchema.optional(),
   visualization: VisualizationSchema.optional(),
+  references: z.array(ReferenceSchema).optional(),
   tags: z.array(z.string()).optional(),
   difficulty: DifficultySchema.optional(),
 });
@@ -249,5 +261,6 @@ export type SystemReference = z.infer<typeof SystemReferenceSchema>;
 export type UseCaseExample = z.infer<typeof UseCaseExampleSchema>;
 export type Philosophy = z.infer<typeof PhilosophySchema>;
 export type Visualization = z.infer<typeof VisualizationSchema>;
+export type Reference = z.infer<typeof ReferenceSchema>;
 export type Hierarchy = z.infer<typeof HierarchySchema>;
 export type Pattern = z.infer<typeof PatternSchema>;
