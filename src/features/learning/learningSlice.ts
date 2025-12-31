@@ -92,7 +92,11 @@ const learningSlice = createSlice({
     // Start Session Actions
     // =============================================================================
 
-    startSessionRequested(state) {
+    startSessionRequested(
+      state,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _action: PayloadAction<{ patternIds?: string[] } | undefined>,
+    ) {
       state.sessionLoading = true;
       state.error = null;
     },
@@ -117,7 +121,11 @@ const learningSlice = createSlice({
     // Submit Review Actions
     // =============================================================================
 
-    submitReviewRequested(state) {
+    submitReviewRequested(
+      state,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _action: PayloadAction<{ cardKey: string; quality: number }>,
+    ) {
       // Just mark the action as requested - saga will handle it
       state.error = null;
     },
