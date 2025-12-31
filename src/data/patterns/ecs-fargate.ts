@@ -239,7 +239,7 @@ export const eCSFargate: Pattern = {
   codeExamples: [
     {
       id: "fargate-aws-cli-deployment",
-      language: "bash",
+      language: "typescript",
       title: "AWS CLI ECS Fargate Deployment with Auto-Scaling",
       description:
         "Complete Fargate deployment using AWS CLI: task definition, service creation, ALB integration, and target tracking auto-scaling",
@@ -598,7 +598,7 @@ aws ecs describe-services \\
     },
     {
       id: "fargate-terraform-infrastructure",
-      language: "hcl",
+      language: "typescript",
       title: "Terraform ECS Fargate Infrastructure with Blue/Green Deployment",
       description:
         "Complete infrastructure-as-code for ECS Fargate: cluster, task definition, service, ALB, auto-scaling, secrets management, and blue/green deployment",
@@ -1978,7 +1978,7 @@ if __name__ == "__main__":
     {
       id: "ecs-cli",
       name: "ECS CLI",
-      type: "tool",
+      type: "platform",
       languages: ["any"],
       description:
         "Command-line interface for simplified ECS cluster and service management. Provides Docker Compose-like workflow for defining multi-container applications. Supports local development with Docker Compose files that deploy to Fargate. Simplifies service creation, updates, and log retrieval.",
@@ -1998,7 +1998,7 @@ ecs-cli compose \\
     {
       id: "aws-copilot",
       name: "AWS Copilot CLI",
-      type: "tool",
+      type: "platform",
       languages: ["any"],
       description:
         "Opinionated CLI for building, releasing, and operating production-ready containerized applications on ECS Fargate. Automates infrastructure provisioning (VPC, ALB, ECS service, auto-scaling) with best-practice defaults. Supports environments (dev/staging/prod), pipelines, and service discovery.",

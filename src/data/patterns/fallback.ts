@@ -616,15 +616,16 @@ export { RecommendationFallbackHandler };`,
       contextDilation: {
         level: "system",
         scope:
-          "Production-grade fallback implementation with circuit breaker integration, layered fallback strategies (cache → backup → defaults), and comprehensive monitoring",
+          "Enterprise-grade fallback implementation orchestrating circuit breaker, cache-aside, backup services, and static defaults to provide graceful degradation across multiple failure scenarios",
         prerequisites: [
           "Circuit breaker pattern",
-          "Caching strategies",
-          "Error handling",
-          "Distributed systems concepts",
+          "Cache-aside pattern",
+          "Error handling and classification",
+          "Distributed systems resilience",
+          "Graceful degradation principles",
         ],
         systemPosition:
-          "Service resilience layer protecting client applications from primary service failures in microservices architecture",
+          "Service resilience and orchestration layer positioned between client applications and external dependencies, coordinating fallback strategies to maintain availability during primary service failures",
       },
       annotations: [
         {
@@ -722,19 +723,56 @@ export { RecommendationFallbackHandler };`,
       ],
       highlights: [
         {
-          lines: [84, 115],
-          label: "Circuit breaker integration with fallback",
+          lines: [12, 17],
+          label:
+            "RecommendationResponse type with source tracking and degradation flag",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [84, 95],
+          label:
+            "Circuit breaker configuration with fallback function integration",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [127, 133],
+          label:
+            "Primary service call with success caching for future fallback",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [143, 161],
+          label:
+            "Fallback Strategy 1: Return cached recommendations when available",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [163, 185],
+          label: "Fallback Strategy 2: Query backup service for popular items",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [187, 200],
+          label: "Fallback Strategy 3: Return static defaults as last resort",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [74, 87],
+          label:
+            "Static default recommendations preventing complete feature failure",
+          sbvpDomain: "philosophy",
+        },
+        {
+          lines: [225, 243],
+          label:
+            "Express API endpoint with fallback protection and degraded response handling",
           sbvpDomain: "structure",
         },
         {
           lines: [143, 200],
-          label: "Layered fallback strategies (cache → backup → defaults)",
-          sbvpDomain: "behavior",
-        },
-        {
-          lines: [225, 251],
-          label: "API integration with degraded response handling",
-          sbvpDomain: "structure",
+          label:
+            "Graceful degradation philosophy: provide partial functionality over complete failure",
+          sbvpDomain: "philosophy",
         },
       ],
     },

@@ -17,13 +17,35 @@ export const microFrontends: Pattern = {
     emoji: "🌐",
     tagline: "Frontend microservices",
     definition:
-      "TODO: Expand from corpus tagline and add comprehensive definition",
-    problemSolved: "TODO: What problem does this pattern solve?",
+      "Micro-Frontends extend microservices principles to frontend applications by splitting user interfaces into independently developed, deployed, and owned vertical slices that compose into a cohesive user experience. Like separate apps coexisting on a smartphone where each is developed by different teams but shares a consistent platform, micro-frontends let teams build complete features—from database to UI—without touching shared frontend codebases. Each team owns an isolated UI segment: the product catalog team builds the product browser, the checkout team owns the cart and payment flow, and the user profile team manages account settings. These fragments integrate through various composition techniques: build-time (npm packages), runtime (module federation, single-spa), edge-side (ESI, Cloudflare Workers), or iframe-based isolation. Modern implementations use Webpack Module Federation for sharing dependencies, custom elements for framework-agnostic components, or server-side routing where the reverse proxy directs /products to Product MFE and /checkout to Checkout MFE. The pattern emphasizes vertical ownership—teams control their entire stack without coordinating frontend changes. Communication between micro-frontends happens through URL navigation, shared state management (broadcast channels, custom events), or backend coordination. The key insight: just as microservices prevent backend teams from blocking each other, micro-frontends prevent frontend monoliths from becoming organizational bottlenecks.",
+    problemSolved:
+      "Large frontend codebases become unmaintainable bottlenecks when multiple teams contribute to a single React/Angular application—merge conflicts multiply, build times balloon to 20+ minutes, and deploying one feature risks breaking others. Teams wait days for code reviews from overburdened frontend architects, and onboarding requires understanding the entire application. Micro-frontends solve this by giving teams end-to-end ownership: the search team builds the search UI, deploys it independently, and doesn't touch anyone else's code. This eliminates coordination overhead and enables parallel development. The pattern also addresses technology lock-in—when your SPA was built in Angular 5 years ago but the team wants to use React for new features, micro-frontends let you migrate incrementally rather than rewriting everything. Teams can experiment with new frameworks or upgrade dependencies independently. Additionally, micro-frontends enable granular deployments—updating the checkout flow doesn't require redeploying the entire application, reducing deployment risk. However, micro-frontends introduce challenges: bundle size duplication (three MFEs each loading React), styling consistency across teams, navigation coordination, and ensuring cohesive UX when teams work in silos. The pattern works best for large organizations with multiple frontend teams, not small startups.",
     tradeoffs: {
-      pros: ["TODO: List advantages of this pattern"],
-      cons: ["TODO: List drawbacks and limitations"],
+      pros: [
+        "Enables independent deployment of UI features without coordinating across teams",
+        "Supports technology diversity—teams can use React, Vue, Svelte in different micro-frontends",
+        "Prevents frontend codebase from becoming organizational bottleneck in large teams",
+        "Facilitates incremental migration from legacy frameworks to modern ones",
+        "Improves team autonomy with end-to-end ownership from backend to UI",
+        "Enables experimentation with new technologies in isolated micro-frontends",
+      ],
+      cons: [
+        "Bundle size bloat when multiple micro-frontends load duplicate dependencies (React, lodash)",
+        "Consistency challenges—maintaining cohesive UX, design system, and navigation across teams",
+        "Increased complexity in build tooling, deployment pipelines, and runtime integration",
+        "Performance overhead from loading multiple JavaScript bundles and orchestration code",
+        "Difficult inter-MFE communication—teams resort to hacky global state or URL params",
+        "Requires mature frontend architecture skills—premature micro-frontends often create chaos",
+      ],
     },
-    relatedPatterns: [], // TODO: Find related patterns in same family
+    relatedPatterns: [
+      "microservices",
+      "module-federation",
+      "web-components",
+      "monorepo",
+      "design-systems",
+      "single-spa",
+    ],
   },
 
   structure: {

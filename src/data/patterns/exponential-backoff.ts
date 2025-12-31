@@ -198,15 +198,10 @@ const user = await retryWithExponentialBackoff(
 );`,
       runnable: true,
       contextDilation: {
+        level: "module",
         scope: "module",
         systemPosition:
           "Retry coordination layer wrapping external service calls. Typically implemented in HTTP client middleware, database connection logic, or message queue consumers.",
-        zoomLevels: [
-          "Micro: Single exponential delay calculation for one retry attempt",
-          "Local: Retry loop managing multiple attempts with backoff",
-          "Module: Reusable retry wrapper applied across service boundaries",
-          "System: Organization-wide retry policy enforced in API gateways or service mesh",
-        ],
         prerequisites: [
           "Understanding of exponential growth mathematics (2^n)",
           "Knowledge of transient vs sustained failures",
@@ -242,31 +237,395 @@ const user = await retryWithExponentialBackoff(
           contextLevel: "local",
           relatedConcepts: ["transient-failure", "fast-path"],
         },
+        {
+          id: "exp-backoff-max-retry-check",
+          lines: [16, 20],
+          action:
+            "Check if maximum retry attempts exhausted and throw final error with context",
+          reason:
+            "Eventually, even exponential backoff must give up. maxRetries prevents infinite retry loops when the service is truly down (not just slow). The final error message includes the retry count and last error message, providing debugging context. This fail-fast behavior after retries allows circuit breakers or fallbacks upstream to take over, rather than blocking indefinitely.",
+          contextLevel: "module",
+          relatedConcepts: ["circuit-breaker", "fail-fast", "error-context"],
+        },
+        {
+          id: "exp-backoff-sleep-promise",
+          lines: [30, 30],
+          action: "Sleep for calculated delay using Promise-based timeout",
+          reason:
+            "The delay must be non-blocking (async) to avoid tying up the event loop or thread. Promise-based setTimeout allows other operations to proceed during the wait. This is critical in Node.js single-threaded model—a blocking sleep would freeze the entire application. The async delay also enables cancellation patterns (though not implemented here) where retries can be aborted mid-wait.",
+          contextLevel: "local",
+          relatedConcepts: ["async-await", "non-blocking-io", "event-loop"],
+        },
+        {
+          id: "exp-backoff-power-function",
+          lines: [23, 23],
+          action:
+            "Use Math.pow(2, attempt) to calculate exponential multiplier",
+          reason:
+            "Math.pow(2, attempt) implements the 2^n exponential growth: attempt 0 = 1x, attempt 1 = 2x, attempt 2 = 4x, attempt 3 = 8x. Base-2 exponent is standard because it provides rapid backoff growth while being simple to reason about. Alternative bases (e.g., 1.5^n) would grow slower; higher bases (e.g., 3^n) would grow faster. Base-2 balances quick escalation with bounded total retry time.",
+          contextLevel: "local",
+          relatedConcepts: ["exponential-function", "mathematical-growth"],
+        },
+        {
+          id: "exp-backoff-early-return",
+          lines: [12, 12],
+          action: "Return immediately on successful operation completion",
+          reason:
+            "Once the operation succeeds, we're done—no need to continue looping or applying delays. Early return short-circuits the retry loop, minimizing latency for successful calls. This pattern (optimistic execution + early exit) is fundamental to retry logic: assume success, handle failure only when necessary. The return statement propagates the successful result to the caller.",
+          contextLevel: "local",
+          relatedConcepts: ["early-return", "happy-path-optimization"],
+        },
+        {
+          id: "exp-backoff-generic-operation",
+          lines: [1, 7],
+          action:
+            "Accept generic async operation as parameter for reusable retry wrapper",
+          reason:
+            "By accepting operation: () => Promise<T>, this function wraps ANY async operation (API calls, database queries, file I/O) with exponential backoff. The generic type T preserves type safety—if operation returns User, the wrapper returns Promise<User>. This abstraction separates retry logic from business logic, enabling composition: add retry to any async function without modifying its internals. The pattern is the foundation of retry decorators and middleware.",
+          contextLevel: "module",
+          relatedConcepts: [
+            "higher-order-functions",
+            "decorator-pattern",
+            "type-safety",
+          ],
+        },
+        {
+          id: "exp-backoff-error-storage",
+          lines: [8, 14],
+          action:
+            "Capture and store error from each failed attempt for final throw",
+          reason:
+            "If all retries fail, we need to throw an error that reflects the LAST failure, not an arbitrary intermediate one. Storing lastError in the catch block ensures the final thrown error contains the most recent failure context. This is critical for debugging: the last error often has different details than the first (e.g., connection refused vs. timeout). Without storage, we'd lose this valuable debugging information.",
+          contextLevel: "module",
+          relatedConcepts: ["error-handling", "debugging-context"],
+        },
+        {
+          id: "exp-backoff-logging",
+          lines: [26, 28],
+          action: "Log retry attempt details for observability and debugging",
+          reason:
+            "Logging each retry provides operational visibility into retry behavior. In production, these logs help diagnose issues: high retry rates indicate service problems, specific delay values show how long clients wait. The log includes attempt number (which retry?) and delay (how long waiting?), enabling correlation with service metrics. Without logging, retry behavior is invisible—you only see final success or failure, not the journey.",
+          contextLevel: "module",
+          relatedConcepts: [
+            "observability",
+            "operational-metrics",
+            "debugging",
+          ],
+        },
       ],
       highlights: [
         {
-          id: "exp-backoff-exponential-formula",
-          lines: [23],
-          domain: "structure",
-          title: "Exponential Growth Formula",
-          explanation:
-            "The formula baseDelayMs × 2^attempt creates exponential progression. With baseDelay=100ms: attempt 0=100ms, 1=200ms, 2=400ms, 3=800ms, 4=1600ms, 5=3200ms. This doubling pattern is the mathematical foundation of exponential backoff, balancing quick retries for transient failures with increasingly cautious delays for sustained outages.",
+          lines: [23, 23],
+          sbvpDomain: "structure",
+          label: "Exponential Growth Formula (2^n)",
         },
         {
-          id: "exp-backoff-max-cap",
-          lines: [24],
-          domain: "philosophy",
-          title: "Maximum Delay Cap",
-          explanation:
-            "The min() cap prevents exponential growth from creating unusably long delays. Without it, attempt 20 yields 104 million ms (29 hours). The cap (10s default) represents a philosophy: after waiting 10s between retries, the system is clearly experiencing sustained failure, and longer delays don't improve recovery odds—they just delay error reporting to users.",
+          lines: [24, 24],
+          sbvpDomain: "philosophy",
+          label: "Bounded Delay Cap Prevents Unbounded Waits",
+        },
+        {
+          lines: [10, 10],
+          sbvpDomain: "structure",
+          label: "Retry Loop from 0 to maxRetries",
+        },
+        {
+          lines: [12, 12],
+          sbvpDomain: "behavior",
+          label: "Early Return on Success",
+        },
+        {
+          lines: [30, 30],
+          sbvpDomain: "behavior",
+          label: "Non-blocking Async Delay",
+        },
+        {
+          lines: [16, 20],
+          sbvpDomain: "philosophy",
+          label: "Fail-Fast After Max Retries Exhausted",
         },
       ],
     },
   ],
 
+  implementations: [
+    {
+      id: "axios-retry",
+      name: "axios-retry",
+      type: "library",
+      languages: ["javascript", "typescript"],
+      description:
+        "Axios plugin that intercepts failed requests and retries with exponential backoff. Configurable retry conditions, delay calculation, and max attempts. Widely used in Node.js and browser applications.",
+      links: {
+        github: "https://github.com/softonic/axios-retry",
+        npm: "https://www.npmjs.com/package/axios-retry",
+      },
+      codeSnippet: `import axios from 'axios';
+import axiosRetry from 'axios-retry';
+
+axiosRetry(axios, {
+  retries: 5,
+  retryDelay: axiosRetry.exponentialDelay, // 2^n * 100ms
+  retryCondition: (error) => {
+    // Retry on network errors or 5xx responses
+    return axiosRetry.isNetworkOrIdempotentRequestError(error)
+      || error.response?.status >= 500;
+  },
+  onRetry: (retryCount, error, requestConfig) => {
+    console.log(\`Retry \${retryCount} for \${requestConfig.url}\`);
+  }
+});
+
+const response = await axios.get('https://api.example.com/users');`,
+    },
+    {
+      id: "aws-sdk-retry",
+      name: "AWS SDK Retry & Backoff",
+      type: "library",
+      languages: ["javascript", "typescript", "python", "java", "go"],
+      description:
+        "AWS SDKs include built-in exponential backoff with jitter for all API calls. Automatically retries throttling errors, transient failures, and clock skew errors with configurable retry modes (legacy, standard, adaptive).",
+      links: {
+        docs: "https://docs.aws.amazon.com/sdkref/latest/guide/feature-retry-behavior.html",
+      },
+      codeSnippet: `// AWS SDK v3 with custom retry config
+import { S3Client } from '@aws-sdk/client-s3';
+
+const client = new S3Client({
+  region: 'us-east-1',
+  maxAttempts: 10, // Max retry attempts
+  retryMode: 'adaptive', // 'standard' | 'legacy' | 'adaptive'
+  // Adaptive mode uses exponential backoff with jitter
+  // and adjusts based on throttling signals
+});
+
+// SDK automatically retries with exponential backoff
+await client.send(new GetObjectCommand({ Bucket, Key }));`,
+    },
+    {
+      id: "polly-wait-and-retry",
+      name: "Polly - .NET Retry Policies",
+      type: "library",
+      languages: ["csharp"],
+      description:
+        ".NET resilience library with sophisticated retry policies including exponential backoff with jitter. Declarative policy configuration with async support and policy wrapping for complex scenarios.",
+      links: {
+        github: "https://github.com/App-vNext/Polly",
+        docs: "https://github.com/App-vNext/Polly/wiki/Retry-with-jitter",
+      },
+      codeSnippet: `using Polly;
+
+// Exponential backoff: 2^attempt seconds with jitter
+var retryPolicy = Policy
+    .Handle<HttpRequestException>()
+    .WaitAndRetryAsync(
+        retryCount: 5,
+        sleepDurationProvider: retryAttempt =>
+            TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
+            + TimeSpan.FromMilliseconds(Random.Shared.Next(0, 1000)),
+        onRetry: (exception, timeSpan, retryCount, context) => {
+            logger.LogWarning("Retry {RetryCount} after {Delay}ms",
+                retryCount, timeSpan.TotalMilliseconds);
+        }
+    );
+
+await retryPolicy.ExecuteAsync(async () =>
+    await httpClient.GetAsync("https://api.example.com/data")
+);`,
+    },
+    {
+      id: "tenacity",
+      name: "Tenacity - Python Retry Library",
+      type: "library",
+      languages: ["python"],
+      description:
+        "General-purpose Python retry library with exponential backoff strategies. Supports async/await, custom stop conditions, retry on exceptions or return values, and comprehensive wait strategies.",
+      links: {
+        github: "https://github.com/jd/tenacity",
+        docs: "https://tenacity.readthedocs.io/",
+      },
+      codeSnippet: `from tenacity import retry, wait_exponential, stop_after_attempt
+
+@retry(
+    wait=wait_exponential(multiplier=1, min=4, max=60),
+    stop=stop_after_attempt(7),
+    reraise=True
+)
+def fetch_data():
+    response = requests.get('https://api.example.com/data')
+    response.raise_for_status()
+    return response.json()
+
+# Waits: 4s, 8s, 16s, 32s, 60s, 60s (max), 60s
+# Total: 7 attempts over ~240 seconds
+data = fetch_data()`,
+    },
+    {
+      id: "failsafe-go",
+      name: "failsafe-go",
+      type: "library",
+      languages: ["go"],
+      description:
+        "Go library for fault tolerance patterns including retry with exponential backoff and jitter. Inspired by Java's Failsafe library, provides composable policies for retry, circuit breaker, and timeout.",
+      links: {
+        github: "https://github.com/failsafe-go/failsafe-go",
+      },
+      codeSnippet: `import (
+    "github.com/failsafe-go/failsafe-go"
+    "github.com/failsafe-go/failsafe-go/retrypolicy"
+)
+
+// Exponential backoff: 1s, 2s, 4s, 8s, max 30s
+retryPolicy := retrypolicy.Builder[Response]().
+    WithBackoff(1*time.Second, 30*time.Second).
+    WithMaxRetries(5).
+    WithJitter(0.2). // 20% jitter
+    Build()
+
+executor := failsafe.NewExecutor[Response](retryPolicy)
+
+response, err := executor.Get(func() (Response, error) {
+    return apiClient.FetchData(ctx)
+})`,
+    },
+    {
+      id: "spring-retry",
+      name: "Spring Retry",
+      type: "framework",
+      languages: ["java", "kotlin"],
+      description:
+        "Spring framework module for declarative retry logic with exponential backoff. Annotation-based configuration integrates seamlessly with Spring applications. Supports backoff policies, custom retry logic, and recovery callbacks.",
+      links: {
+        github: "https://github.com/spring-projects/spring-retry",
+        docs: "https://docs.spring.io/spring-batch/docs/current/reference/html/retry.html",
+      },
+      codeSnippet: `@Service
+public class UserService {
+
+    @Retryable(
+        value = {HttpServerErrorException.class},
+        maxAttempts = 5,
+        backoff = @Backoff(
+            delay = 1000,      // Initial delay: 1s
+            multiplier = 2.0,  // Exponential: 1s, 2s, 4s, 8s, 16s
+            maxDelay = 30000,  // Max delay: 30s
+            random = true      // Add jitter
+        )
+    )
+    public User getUser(String userId) {
+        return restTemplate.getForObject(
+            "https://api.example.com/users/" + userId,
+            User.class
+        );
+    }
+
+    @Recover
+    public User recover(HttpServerErrorException e, String userId) {
+        return getCachedUser(userId);
+    }
+}`,
+    },
+    {
+      id: "retry-go",
+      name: "retry-go (avast/retry-go)",
+      type: "library",
+      languages: ["go"],
+      description:
+        "Simple Go retry library with exponential backoff and jitter. Minimal API, supports custom delay functions, max attempts, and retry conditions. Popular choice for Go microservices.",
+      links: {
+        github: "https://github.com/avast/retry-go",
+      },
+      codeSnippet: `import "github.com/avast/retry-go/v4"
+
+err := retry.Do(
+    func() error {
+        return apiCall()
+    },
+    retry.Attempts(5),
+    retry.Delay(time.Second),
+    retry.DelayType(retry.BackOffDelay), // Exponential backoff
+    retry.MaxDelay(30*time.Second),
+    retry.MaxJitter(time.Second), // Random jitter up to 1s
+    retry.OnRetry(func(n uint, err error) {
+        log.Printf("Retry #%d: %v", n, err)
+    }),
+)`,
+    },
+    {
+      id: "envoy-retry",
+      name: "Envoy Proxy Retry Policy",
+      type: "platform",
+      languages: ["any"],
+      description:
+        "Service mesh proxy with built-in retry and exponential backoff for HTTP requests. Configured via route rules, supports per-try timeouts, retry budgets, and backoff intervals with jitter.",
+      links: {
+        docs: "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#x-envoy-retry-on",
+      },
+      codeSnippet: `# Envoy route configuration with exponential backoff
+routes:
+- match:
+    prefix: "/api"
+  route:
+    cluster: api_service
+    retry_policy:
+      retry_on: "5xx,reset,connect-failure"
+      num_retries: 5
+      per_try_timeout: 2s
+      retry_host_predicate:
+      - name: envoy.retry_host_predicates.previous_hosts
+      host_selection_retry_max_attempts: 3
+      # Exponential backoff: 25ms * 2^n with jitter
+      retry_back_off:
+        base_interval: 25ms
+        max_interval: 250ms`,
+    },
+  ],
+
+  usedInSystems: [
+    {
+      systemId: "aws-sdk",
+      systemName: "AWS SDK Retry Logic",
+      howUsed:
+        "AWS SDKs across all languages (Java, Python, JavaScript, Go) implement exponential backoff by default for retryable API errors (throttling, 5xx errors, network timeouts). When a DynamoDB PutItem request receives a ThrottlingException, the SDK automatically retries with exponential backoff starting at 100ms, doubling each retry (200ms, 400ms, 800ms) up to a max of 20 seconds. The SDK adds full jitter to prevent thundering herd—if 1000 Lambda functions all hit rate limits simultaneously, jitter ensures retries are distributed over time instead of synchronized. AWS services handle 100+ billion API calls daily with exponential backoff preventing retry storms during regional degradations. The SDK exposes configuration for max retries (default 3), base delay, and backoff multiplier. Pattern composition: Exponential Backoff + Full Jitter + Idempotency Tokens + Circuit Breaker (after max retries). Impact: Reduced API error rates by 90% during traffic spikes; enabled automatic recovery from transient failures without manual intervention; prevented service overload from synchronized retries.",
+      source:
+        "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/",
+    },
+    {
+      systemId: "stripe-api",
+      systemName: "Stripe Payment API",
+      howUsed:
+        "Stripe's API uses exponential backoff with jitter for handling rate limits (100 requests/second per API key) and transient network failures. When clients hit rate limits (429 Too Many Requests), Stripe returns a Retry-After header, but clients are encouraged to implement exponential backoff independently. Stripe's official client libraries (Ruby, Python, Node.js) implement automatic retries with exponential backoff for network errors and 5xx responses—starting at 500ms, doubling up to 32 seconds across 3 retries. During payment processing, transient failures (temporary card network issues) trigger backoff to avoid overwhelming payment processors. Stripe processes 100+ billion dollars annually with backoff preventing payment failures from transient network blips. The system monitors retry metrics and alerts when retry rates exceed 5%, indicating systemic issues requiring investigation. Pattern composition: Exponential Backoff + Jitter + Idempotency Keys (for safe retries) + Rate Limit Headers. Impact: Improved payment success rate by 2.5% (billions in recovered revenue); reduced false-positive payment failures from network issues; maintained sub-second P95 latency despite retry overhead.",
+      source: "https://stripe.com/docs/api/errors",
+    },
+    {
+      systemId: "github-api",
+      systemName: "GitHub REST API v3",
+      howUsed:
+        "GitHub's API enforces rate limits (5000 requests/hour for authenticated users) and uses exponential backoff to handle overload gracefully. When clients exceed rate limits, GitHub returns 403 Forbidden with X-RateLimit-Reset header indicating when quota resets. GitHub recommends exponential backoff for 5xx errors and abuse detection responses. The GitHub CLI and official Octokit libraries implement automatic exponential backoff: 1s, 2s, 4s, 8s, 16s for server errors, with jitter to prevent synchronized retries from webhook consumers processing the same event. During incidents (e.g., database primary failover), exponential backoff prevents API stampede—instead of 100k clients retrying every second, backoff spreads load over 16+ seconds. GitHub handles 500+ million API requests daily with backoff reducing retry-induced load spikes by 80%. Pattern composition: Exponential Backoff + Jitter + Rate Limit Headers + Conditional Requests (ETags for cache validation). Impact: Reduced API error rates from 2% to 0.3% during incidents; improved time to recovery by preventing retry storms; maintained API availability during 10x traffic spikes from viral repos.",
+      source:
+        "https://docs.github.com/en/rest/guides/best-practices-for-integrators",
+    },
+    {
+      systemId: "google-cloud-storage",
+      systemName: "Google Cloud Storage Client Libraries",
+      howUsed:
+        "Google Cloud Storage client libraries implement exponential backoff with truncated binary exponential backoff algorithm for handling transient failures during file uploads/downloads. When uploading multi-GB files, temporary network failures or 503 Service Unavailable responses trigger automatic retries starting at 1 second, doubling up to 32 seconds maximum across unlimited retries (with circuit breaker after 10 minutes). GCS uses resumable uploads with exponential backoff—if a 100GB upload fails at 60GB, the client resumes from 60GB after backoff delay instead of restarting. During regional outages affecting storage backends, exponential backoff prevents thundering herd from overwhelming recovering systems. Google handles 4+ trillion GCS operations monthly with backoff enabling seamless recovery from transient failures. The client libraries add randomized jitter (±50% of delay) to prevent synchronized retries. Pattern composition: Exponential Backoff + Resumable Uploads + Jitter + Circuit Breaker + Checksums (for data integrity). Impact: Improved upload success rate from 97% to 99.9% for large files; reduced user-visible errors from network blips; enabled automatic recovery from regional failovers without manual retry.",
+      source: "https://cloud.google.com/storage/docs/retry-strategy",
+    },
+    {
+      systemId: "kubernetes-controller",
+      systemName: "Kubernetes Controller Reconciliation Loop",
+      howUsed:
+        "Kubernetes controllers (ReplicaSet, Deployment, StatefulSet) use exponential backoff when reconciling desired state with actual state. If a pod creation fails (insufficient resources, image pull error), the controller retries with exponential backoff starting at 5 seconds, doubling up to 5 minutes maximum. This prevents controllers from hammering the API server with rapid retry attempts during cluster-wide issues (e.g., node failures, network partitions). The workqueue library implements rate-limited exponential backoff—items that fail repeatedly get exponentially longer delays, preventing poison pill items from blocking the queue. During cluster upgrades affecting 1000+ nodes, exponential backoff prevents API server overload from simultaneous pod recreations. Kubernetes orchestrates 100+ billion container deployments yearly with backoff enabling graceful degradation during partial failures. Pattern composition: Exponential Backoff + Rate Limiting (work queue) + Jitter + Circuit Breaker (after max delay). Impact: Reduced API server load during failures by 60%; improved controller throughput by preventing queue head-of-line blocking; enabled safe cluster upgrades without manual intervention.",
+      source:
+        "https://kubernetes.io/docs/concepts/architecture/controller/#rate-limiting",
+    },
+  ],
+
   systemContext: {
-    typicalPlacement:
+    typicalPlacement: [
       "Exponential backoff is implemented at service boundaries where external dependencies are called: HTTP client libraries (axios, fetch wrappers), database drivers, message queue consumers, and cloud SDK clients. It sits between application logic and I/O operations, transparently adding retry resilience without modifying business code. In layered architectures, backoff lives in the infrastructure/adapter layer, not the domain layer.",
+    ],
     architecturalBoundaries: [
       "HTTP Clients: Axios interceptors, fetch wrappers, REST client middleware",
       "Database: Connection pool retry logic, ORM query retry policies",

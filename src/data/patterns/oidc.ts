@@ -1463,7 +1463,6 @@ public class UserController {
         "Cloud-based identity platform with OIDC, social connections, enterprise federation (SAML, AD), and passwordless authentication. Provides SDKs for 20+ languages/frameworks. Used by Atlassian, Mozilla, VMware. 100k+ applications, 4.5B+ logins/month.",
       links: {
         docs: "https://auth0.com/docs",
-        website: "https://auth0.com",
       },
     },
     {
@@ -1475,7 +1474,6 @@ public class UserController {
         "Enterprise identity platform with OIDC, SAML, multi-factor authentication, lifecycle management, and API access management. Industry leader in workforce identity (15,000+ enterprises). Acquired Auth0 in 2021. 300M+ monthly active users.",
       links: {
         docs: "https://developer.okta.com/docs/",
-        website: "https://www.okta.com",
       },
     },
     {
@@ -1487,7 +1485,6 @@ public class UserController {
         "Google's OIDC provider enabling 'Sign in with Google' for 3 billion+ Google accounts. Provides ID tokens with email, name, picture claims. Widely used for consumer applications. Free tier: unlimited authentications. Integrates with Google Workspace for enterprise SSO.",
       links: {
         docs: "https://developers.google.com/identity/protocols/oauth2/openid-connect",
-        website: "https://developers.google.com/identity",
       },
     },
     {
@@ -1499,7 +1496,6 @@ public class UserController {
         "Azure AD and Microsoft Account OIDC provider. Enables SSO for Office 365, Microsoft 365, Azure services. 300M+ monthly active users. Supports work/school accounts (Azure AD) and personal Microsoft accounts. Enterprise features: Conditional Access, MFA, B2B/B2C.",
       links: {
         docs: "https://docs.microsoft.com/en-us/azure/active-directory/develop/v2-protocols-oidc",
-        website: "https://azure.microsoft.com/en-us/services/active-directory/",
       },
     },
     {
@@ -1511,7 +1507,6 @@ public class UserController {
         "AWS managed OIDC provider with user pools, identity pools, and social/enterprise federation. Provides JWTs for API authorization, integrates with API Gateway, Lambda, S3. Scales to millions of users. Pay-per-active-user pricing. HIPAA, SOC, PCI DSS compliant.",
       links: {
         docs: "https://docs.aws.amazon.com/cognito/latest/developerguide/",
-        website: "https://aws.amazon.com/cognito/",
       },
     },
     {
@@ -1523,7 +1518,6 @@ public class UserController {
         "Enterprise identity platform with PingFederate (OIDC/SAML server), PingOne (cloud), and PingAccess (API security). Used by 60% of Fortune 100. Strong in hybrid cloud, zero-trust, and API security. Focus on regulated industries (finance, healthcare, government).",
       links: {
         docs: "https://docs.pingidentity.com/",
-        website: "https://www.pingidentity.com",
       },
     },
     {
@@ -1535,7 +1529,6 @@ public class UserController {
         "Cloud-based SSO and identity management with OIDC, SAML, RADIUS. Provides unified access management, MFA, and user provisioning. 5,500+ pre-integrated applications. Strong in mid-market and SMB. Acquired by One Identity in 2021.",
       links: {
         docs: "https://developers.onelogin.com/openid-connect",
-        website: "https://www.onelogin.com",
       },
     },
   ],

@@ -563,103 +563,256 @@ export default app;`,
       },
       annotations: [
         {
-          id: "jwt-access-token-gen",
-          lines: [37, 59],
-          action: "Generate short-lived access token with user claims",
+          id: "jwt-base64url-encoding",
+          lines: [260, 276],
+          action: "Encode JWT header and payload as base64url before signing",
           reason:
-            "Access tokens contain identity and authorization claims, enabling stateless verification. Short expiration (15min) limits exposure if stolen. Claims embedded in token eliminate database lookups on every request—10x faster than session-based auth.",
+            "Base64url encoding makes binary data URL-safe for HTTP headers and query parameters. Unlike standard base64, base64url uses '-' and '_' instead of '+' and '/' (which have special meaning in URLs). The '=' padding is removed. This allows JWTs to be safely transmitted in Authorization headers, URL parameters, and POST bodies without encoding issues.",
+          contextLevel: "micro",
+          relatedConcepts: ["base64-encoding", "url-safe-encoding"],
+        },
+        {
+          id: "jwt-signature-verification-importance",
+          lines: [438, 445],
+          action:
+            "Verify JWT signature using cached secret key before trusting claims",
+          reason:
+            "Signature verification is the security foundation of JWT. It proves the token was created by someone with the secret key and hasn't been modified. Without verification, attackers could change claims (e.g., userId: 'admin') and gain unauthorized access. The signature is created by signing base64url(header).base64url(payload) with HMAC-SHA256. Verification happens in-memory (<1ms) using cached secret—no network calls.",
           contextLevel: "system",
           relatedConcepts: [
-            "stateless-authentication",
-            "claims-based-authorization",
+            "cryptographic-signatures",
+            "hmac-sha256",
+            "integrity-verification",
           ],
         },
         {
-          id: "jwt-hs256-algorithm",
-          lines: [53, 56],
-          action: "Use HS256 symmetric signing algorithm",
+          id: "jwt-short-lived-access-tokens",
+          lines: [226, 227],
+          action: "Set access token expiration to 15 minutes (short-lived)",
           reason:
-            "HS256 uses shared secret for signing and verification—faster than asymmetric RSA. Suitable when auth server and resource servers share secret. Use RS256 (asymmetric) when distributing public keys to resource servers for independent verification.",
+            "Short token lifetime limits damage if token is stolen. If attacker obtains access token, they only have 15 minutes of access before it expires. This is a security/UX tradeoff: shorter = more secure but requires more frequent refreshes. Longer = better UX but higher risk. 15 minutes balances security with acceptable refresh frequency. Refresh tokens (7 days) enable seamless renewal without re-authentication.",
+          contextLevel: "system",
+          relatedConcepts: [
+            "token-expiration",
+            "security-tradeoffs",
+            "defense-in-depth",
+          ],
+        },
+        {
+          id: "jwt-claims-structure",
+          lines: [260, 268],
+          action:
+            "Include standard claims (sub, exp, iat, iss, aud, jti) plus custom claims (roles, permissions)",
+          reason:
+            "Standard claims enable interoperability: 'sub' (subject) identifies user, 'exp' enforces expiration, 'iat' (issued at) tracks token age, 'iss' (issuer) prevents token reuse across systems, 'aud' (audience) limits which APIs accept token, 'jti' (JWT ID) enables revocation tracking. Custom claims (roles, permissions) embed authorization data for stateless decisions. This eliminates database lookups for every authorization check.",
           contextLevel: "module",
-          relatedConcepts: ["hmac", "symmetric-cryptography"],
+          relatedConcepts: [
+            "jwt-claims",
+            "standard-claims",
+            "custom-claims",
+            "claims-based-authorization",
+          ],
         },
         {
           id: "jwt-refresh-rotation",
-          lines: [148, 170],
-          action: "Rotate refresh tokens on every refresh request",
+          lines: [354, 370],
+          action:
+            "Rotate refresh tokens on every refresh request (single-use pattern)",
           reason:
-            "Single-use refresh tokens prevent replay attacks. If attacker steals refresh token, it becomes invalid after legitimate user refreshes. Stored version in database/Redis acts as revocation mechanism for stateless tokens.",
+            "Refresh token rotation prevents replay attacks. When user refreshes, server issues new refresh token and invalidates old one. If attacker steals refresh token and uses it, the legitimate user's next refresh attempt will fail (token already used), alerting system to breach. Without rotation, stolen refresh token works until expiration (7 days). Stored version in Map/Redis acts as revocation mechanism—only latest token is valid.",
           contextLevel: "system",
-          relatedConcepts: ["token-rotation", "replay-attack-prevention"],
+          relatedConcepts: [
+            "token-rotation",
+            "replay-attack-prevention",
+            "breach-detection",
+          ],
         },
         {
           id: "jwt-blacklist-revocation",
-          lines: [194, 199],
-          action: "Maintain token blacklist for revocation",
+          lines: [405, 411],
+          action:
+            "Maintain token blacklist with JTI (JWT ID) for logout/revocation",
           reason:
-            "JWTs are stateless and cannot be invalidated server-side. Blacklist stores revoked token JTIs (JWT IDs) until expiration. Only needs to store entries for token lifetime (15min for access tokens), preventing unbounded growth.",
+            "JWTs are stateless—once issued, they're valid until expiration. Blacklist solves revocation problem by storing JTIs of logged-out tokens. On every request, check if JTI exists in blacklist. Blacklist entries only need to live until token expires (15min for access tokens), preventing unbounded growth. Use Redis with TTL for production. Alternative: rely solely on short expiration without blacklist, accepting 15min vulnerability window after logout.",
           contextLevel: "system",
-          relatedConcepts: ["token-revocation", "stateless-tradeoffs"],
+          relatedConcepts: [
+            "token-revocation",
+            "stateless-tradeoffs",
+            "logout-implementation",
+          ],
         },
         {
-          id: "jwt-verify-middleware",
-          lines: [214, 240],
-          action: "Verify JWT signature and validate claims in middleware",
+          id: "jwt-middleware-pattern",
+          lines: [428, 461],
+          action:
+            "Implement JWT verification as Express middleware to authenticate all protected routes",
           reason:
-            "Centralized verification ensures every protected route checks token validity. Signature verification (<1ms) proves token hasn't been tampered. Expiration check ensures time-bound access. Attaching claims to request enables zero-database authorization.",
+            "Middleware pattern centralizes authentication logic. Every protected route uses authenticateJWT middleware, ensuring consistent security. Middleware extracts token from Authorization header, verifies signature, validates claims (expiration, issuer, audience), checks blacklist, and attaches user context to request. Downstream route handlers access req.user for authorization. This separation of concerns (authentication vs business logic) makes code testable and maintainable.",
           contextLevel: "module",
           relatedConcepts: [
             "middleware-pattern",
-            "signature-verification",
-            "claims-validation",
+            "separation-of-concerns",
+            "express-middleware",
           ],
         },
         {
-          id: "jwt-algorithm-explicit",
-          lines: [226, 229],
-          action: "Explicitly specify allowed algorithms in verification",
+          id: "jwt-algorithm-confusion-prevention",
+          lines: [441, 445],
+          action:
+            "Explicitly specify allowed algorithms array (HS256) in jwt.verify()",
           reason:
-            "Prevents algorithm confusion attack where attacker changes 'alg' header to 'none' or switches from RS256 to HS256, using public key as HMAC secret. Always specify algorithms array in jwt.verify() options.",
+            "Prevents algorithm confusion attack. Attacker could change 'alg' header from HS256 to 'none', bypassing signature verification. Or switch from RS256 to HS256, using public key as HMAC secret. jwt.verify() with algorithms: ['HS256'] rejects tokens with different algorithms. Never trust algorithm from token header—specify server-side. This is critical security hardening against known JWT vulnerabilities.",
           contextLevel: "micro",
-          relatedConcepts: ["algorithm-confusion-attack", "security-hardening"],
+          relatedConcepts: [
+            "algorithm-confusion-attack",
+            "security-hardening",
+            "jwt-vulnerabilities",
+          ],
         },
         {
-          id: "jwt-claims-authz",
-          lines: [249, 263],
-          action: "Use claims for role-based authorization without database",
+          id: "jwt-claims-based-authorization",
+          lines: [479, 491],
+          action:
+            "Implement role-based authorization using claims from JWT, not database",
           reason:
-            "Roles stored in JWT claims enable instant authorization decisions. No database lookup for permissions on every request. Trade-off: role changes don't take effect until token expires or user re-authenticates. For critical roles, use short token expiry.",
-          contextLevel: "module",
+            "Roles embedded in JWT enable zero-database authorization checks. requireRole middleware reads req.user.roles (from verified token claims) and grants/denies access instantly. At 10,000 req/s, this saves ~10ms database lookup per request = 100 seconds of DB load eliminated per second! Trade-off: role changes don't take effect until token expires (15min) or user re-authenticates. For critical permissions needing instant propagation, use shorter expiration or force re-authentication.",
+          contextLevel: "system",
           relatedConcepts: [
             "role-based-access-control",
             "claims-based-authorization",
+            "performance-optimization",
+            "eventual-consistency",
           ],
         },
         {
-          id: "jwt-performance-gain",
-          lines: [31, 34],
-          action:
-            "Context: JWT verification (<1ms) vs session DB lookup (~10ms)",
+          id: "jwt-bearer-token-standard",
+          lines: [430, 435],
+          action: "Extract token from 'Authorization: Bearer <token>' header",
           reason:
-            "At 10,000 req/s, JWT saves 90ms per request compared to session lookup. This eliminates 900 seconds of database load per second! Enables horizontal scaling without shared session store. Critical for high-throughput APIs.",
+            "Bearer token is OAuth 2.0 standard for API authentication. Format: 'Authorization: Bearer eyJhbGc...'. 'Bearer' indicates token type (grants bearer access). This works everywhere: CORS-enabled APIs, mobile apps (no cookies needed), SPAs (bypasses same-origin policy), third-party integrations. Alternative 'Cookie' header ties authentication to browser and domain, breaking mobile/SPA use cases. Bearer tokens in headers are the universal authentication mechanism.",
+          contextLevel: "module",
+          relatedConcepts: [
+            "bearer-tokens",
+            "oauth-2-0",
+            "authorization-header",
+            "cross-origin-auth",
+          ],
+        },
+        {
+          id: "jwt-stateless-performance",
+          lines: [249, 255],
+          action:
+            "Context: JWT verification happens in-memory with cached secret, eliminating database lookups",
+          reason:
+            "Session-based auth requires database/Redis lookup per request (~10-50ms). JWT verification uses cached secret in memory (<1ms)—10-50x faster. At 10,000 req/s: session auth = 100-500 seconds of DB load per second. JWT = zero database load for authentication. This enables horizontal scaling without shared session store, simplifies infrastructure (no Redis cluster for sessions), and eliminates authentication as performance bottleneck. Critical for high-throughput APIs and microservices.",
           contextLevel: "system",
-          relatedConcepts: ["stateless-scaling", "performance-optimization"],
+          relatedConcepts: [
+            "stateless-authentication",
+            "horizontal-scaling",
+            "performance-optimization",
+            "distributed-systems",
+          ],
+        },
+        {
+          id: "jwt-refresh-token-strategy",
+          lines: [287, 304],
+          action:
+            "Generate long-lived refresh token (7 days) with minimal claims for security",
+          reason:
+            "Access tokens are short (15min) for security. Refresh tokens are long (7 days) for UX—users stay logged in without re-entering credentials. Refresh tokens have minimal claims (just user ID and type: 'refresh') to limit damage if stolen. They're only used at /auth/refresh endpoint, not for API access. Stored in secure storage: httpOnly cookie (web) or Keychain/Keystore (mobile). This dual-token strategy balances security (short-lived access) with UX (long-lived sessions).",
+          contextLevel: "system",
+          relatedConcepts: [
+            "refresh-tokens",
+            "token-strategy",
+            "security-ux-balance",
+          ],
+        },
+        {
+          id: "jwt-token-type-validation",
+          lines: [359, 366],
+          action:
+            "Verify token type claim to prevent using refresh token as access token",
+          reason:
+            "Refresh tokens should only be accepted at /auth/refresh, not for API access. Access tokens should not be accepted at /auth/refresh. The 'type' claim differentiates them. Without this check, attacker could use stolen refresh token (7 day lifetime) to directly access APIs, instead of just using it to get new access tokens. This defense-in-depth validates both signature AND intended usage of token.",
+          contextLevel: "micro",
+          relatedConcepts: [
+            "defense-in-depth",
+            "token-type-validation",
+            "least-privilege",
+          ],
+        },
+        {
+          id: "jwt-error-handling",
+          lines: [462, 469],
+          action:
+            "Handle different JWT error types (TokenExpiredError, JsonWebTokenError) with specific status codes",
+          reason:
+            "Specific error responses enable better client-side handling. TokenExpiredError (401 + 'TOKEN_EXPIRED') tells client to refresh token. JsonWebTokenError (401 + 'INVALID_TOKEN') tells client to re-authenticate. Generic 500 for unexpected errors. Error codes enable automated retry logic: client sees TOKEN_EXPIRED → calls /auth/refresh → gets new access token → retries original request. This creates seamless auth flows without user intervention.",
+          contextLevel: "module",
+          relatedConcepts: [
+            "error-handling",
+            "http-status-codes",
+            "client-error-recovery",
+          ],
+        },
+        {
+          id: "jwt-jti-for-revocation",
+          lines: [267, 267],
+          action: "Generate unique JTI (JWT ID) using UUID for each token",
+          reason:
+            "JTI enables token-level revocation despite JWT being stateless. When user logs out, add JTI to blacklist. Future requests with that token are rejected even if signature valid and not expired. JTI must be unique across all tokens—UUID guarantees uniqueness. Without JTI, can only revoke all tokens by rotating secret (impacts all users) or wait for expiration. JTI provides granular, per-token revocation critical for security incidents.",
+          contextLevel: "module",
+          relatedConcepts: [
+            "jwt-id",
+            "token-revocation",
+            "unique-identifiers",
+            "security-incidents",
+          ],
         },
       ],
       highlights: [
         {
-          lines: [37, 59],
-          label: "Token generation with claims",
+          lines: [256, 277],
+          label:
+            "JWT Structure: Three-Part Token Format (Header.Payload.Signature)",
           sbvpDomain: "structure",
         },
         {
-          lines: [148, 170],
-          label: "Refresh token rotation",
+          lines: [354, 382],
+          label:
+            "Refresh Token Rotation: Single-Use Tokens Prevent Replay Attacks",
           sbvpDomain: "behavior",
         },
         {
-          lines: [214, 240],
-          label: "Verification middleware",
+          lines: [428, 461],
+          label: "Middleware Verification: Stateless Authentication Pipeline",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [405, 414],
+          label: "Philosophy: Stateless Revocation via JTI Blacklist",
+          sbvpDomain: "philosophy",
+        },
+        {
+          lines: [479, 491],
+          label: "Claims-Based Authorization: Zero-Database Role Checks",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [249, 255],
+          label:
+            "Performance Philosophy: 10-50x Faster Than Session-Based Auth",
+          sbvpDomain: "philosophy",
+        },
+        {
+          lines: [316, 344],
+          label: "Login Flow: Token Issuance at Authentication Boundary",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [438, 450],
+          label:
+            "Security Architecture: Signature Verification Prevents Tampering",
           sbvpDomain: "structure",
         },
       ],

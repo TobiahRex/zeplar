@@ -174,59 +174,172 @@ function sleep(ms: number): Promise<void> {
 }`,
       runnable: true,
       contextDilation: {
-        level: "local",
-        scope: "A reusable retry utility function with exponential backoff",
-        prerequisites: ["Async/await", "Error handling", "Exponential math"],
+        level: "module",
+        scope:
+          "Reusable retry utility function implementing exponential backoff with jitter for handling transient failures in network operations",
+        prerequisites: [
+          "Async/await",
+          "Error handling",
+          "Exponential math",
+          "Promise patterns",
+        ],
         systemPosition:
-          "Utility function called by service layer or HTTP clients",
+          "Utility wrapper called by HTTP clients, service layer, and database operations to automatically recover from transient network/service failures",
       },
       annotations: [
         {
-          id: "retry-loop",
-          lines: [14, 26],
-          action: "Attempt operation up to maxAttempts times",
+          id: "retry-config-interface",
+          lines: [125, 130],
+          action:
+            "Define retry configuration interface with tunable parameters",
           reason:
-            "Bounded retries prevent infinite loops while giving transient failures multiple chances to resolve",
+            "Externalized configuration enables per-operation retry tuning—aggressive retries for critical operations, minimal for non-essential; parameterization supports different service characteristics (fast vs slow recovery)",
+          contextLevel: "module",
+        },
+        {
+          id: "retry-predicate-function",
+          lines: [132, 136],
+          action:
+            "Accept optional isRetryable predicate function for custom error classification",
+          reason:
+            "Not all errors are retryable—4xx client errors are permanent failures that won't succeed on retry; predicate enables caller to define retryable conditions (network errors, 5xx, timeouts) vs permanent (400, 401, 404)",
+          contextLevel: "module",
+        },
+        {
+          id: "retry-bounded-loop",
+          lines: [139, 152],
+          action: "Loop from attempt 1 to maxAttempts with bounded iteration",
+          reason:
+            "Bounded loop prevents infinite retries that would waste resources and delay inevitable failures; finite attempts provide balance between recovery opportunity and fail-fast behavior",
           contextLevel: "local",
         },
         {
-          id: "retry-check",
-          lines: [20, 22],
-          action: "Check if error is retryable and attempts remain",
+          id: "retry-try-catch",
+          lines: [140, 151],
+          action:
+            "Execute wrapped function inside try-catch to handle success and failure",
           reason:
-            "Non-retryable errors (e.g., 400 Bad Request) should fail immediately; exhausted retries should propagate the error",
+            "Success path returns immediately (no need for remaining retries); failure path captures error for retry decision; try-catch enables transparent wrapping of any async operation",
           contextLevel: "local",
-          relatedConcepts: ["fail-fast"],
         },
         {
-          id: "backoff-calc",
-          lines: [31, 33],
-          action: "Calculate exponential delay: baseDelay * 2^(attempt-1)",
+          id: "retry-early-return",
+          lines: [141, 141],
+          action: "Return immediately on successful function execution",
           reason:
-            "Exponential growth gives the failing service progressively more time to recover between attempts",
-          contextLevel: "micro",
-          relatedConcepts: ["exponential-backoff"],
+            "First success short-circuits retry loop—no point in attempting remaining retries once operation succeeds; reduces latency by avoiding unnecessary delays",
+          contextLevel: "local",
         },
         {
-          id: "jitter",
-          lines: [39, 41],
-          action: "Add random jitter to the delay",
+          id: "retry-error-classification",
+          lines: [145, 147],
+          action: "Check if error is retryable using predicate function",
           reason:
-            "Jitter prevents thundering herd: if many clients retry at exactly the same time, they would all hit the service simultaneously",
+            "Permanent errors (bad request, auth failure, not found) will never succeed regardless of retries—fail fast instead of wasting attempts; only transient errors (network, timeout, 5xx) benefit from retries",
+          contextLevel: "module",
+        },
+        {
+          id: "retry-last-attempt-check",
+          lines: [145, 147],
+          action: "Check if current attempt is the last allowed attempt",
+          reason:
+            "On final attempt, throw error immediately rather than waiting for backoff delay—user already waited through all retries, additional delay adds no value; fail-fast on exhaustion improves UX",
+          contextLevel: "local",
+        },
+        {
+          id: "retry-exponential-backoff",
+          lines: [158, 159],
+          action: "Calculate exponential backoff delay using power function",
+          reason:
+            "Exponential growth (baseDelay * 2^(attempt-1)) gives struggling service progressively more recovery time—first retry quick (100ms), later retries longer (800ms, 1600ms); graduated backoff balances fast recovery vs overload prevention",
+          contextLevel: "module",
+        },
+        {
+          id: "retry-max-delay-cap",
+          lines: [161, 162],
+          action: "Cap calculated delay at maximum to prevent unbounded growth",
+          reason:
+            "Without cap, exponential growth would eventually create hour-long delays (2^20 = 1M ms = 17 min); maxDelay bounds worst-case latency while maintaining exponential benefits for early retries",
+          contextLevel: "module",
+        },
+        {
+          id: "retry-jitter",
+          lines: [164, 167],
+          action:
+            "Add random jitter (0.5x - 1.0x multiplier) to calculated delay",
+          reason:
+            "Jitter desynchronizes retry timing across concurrent clients—without it, 1000 clients failing simultaneously would retry at exactly same intervals, creating synchronized load spikes (thundering herd); randomization spreads retries over time",
           contextLevel: "system",
-          relatedConcepts: ["thundering-herd"],
+        },
+        {
+          id: "retry-sleep-delay",
+          lines: [149, 150],
+          action:
+            "Sleep for calculated backoff delay before next retry attempt",
+          reason:
+            "Delay between retries gives service time to recover from transient issues (network congestion clearing, server restart completing, rate limit window resetting); immediate retries would likely hit same failure",
+          contextLevel: "module",
+        },
+        {
+          id: "retry-last-error",
+          lines: [137, 154],
+          action:
+            "Track lastError throughout loop to throw final error if all retries fail",
+          reason:
+            "After exhausting all retry attempts, caller needs to know why operation failed—lastError preserves most recent failure context; throwing enables caller to log error or apply fallback strategies",
+          contextLevel: "module",
+        },
+        {
+          id: "retry-sleep-utility",
+          lines: [172, 174],
+          action: "Implement sleep utility using Promise and setTimeout",
+          reason:
+            "Async sleep enables non-blocking delays between retries—doesn't block event loop while waiting; Promise-based sleep integrates naturally with async/await retry loop",
+          contextLevel: "local",
         },
       ],
       highlights: [
         {
-          lines: [14, 26],
-          label: "Retry loop with bounded attempts",
-          sbvpDomain: "behavior",
+          lines: [125, 130],
+          sbvpDomain: "structure",
+          label:
+            "Retry configuration interface defining tunable retry parameters",
         },
         {
-          lines: [31, 41],
-          label: "Backoff calculation with jitter",
+          lines: [139, 152],
           sbvpDomain: "behavior",
+          label: "Bounded retry loop with early return on success",
+        },
+        {
+          lines: [145, 147],
+          sbvpDomain: "behavior",
+          label: "Error classification check determining retry eligibility",
+        },
+        {
+          lines: [158, 159],
+          sbvpDomain: "philosophy",
+          label: "Exponential backoff calculation with growth factor of 2",
+        },
+        {
+          lines: [161, 162],
+          sbvpDomain: "philosophy",
+          label: "Maximum delay cap preventing unbounded exponential growth",
+        },
+        {
+          lines: [164, 167],
+          sbvpDomain: "philosophy",
+          label: "Jitter randomization spreading retry attempts across time",
+        },
+        {
+          lines: [132, 136],
+          sbvpDomain: "structure",
+          label: "Generic retry wrapper positioned to wrap any async operation",
+        },
+        {
+          lines: [149, 150],
+          sbvpDomain: "philosophy",
+          label:
+            "Optimistic retry philosophy: assume transient failures will resolve with patience and graduated delays",
         },
       ],
     },

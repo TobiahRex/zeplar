@@ -1220,4 +1220,291 @@ def example_usage():
       "Across geographic regions for global read distribution",
     ],
   },
+
+  implementations: [
+    {
+      id: "postgresql-streaming-replication",
+      name: "PostgreSQL Streaming Replication",
+      type: "platform",
+      languages: ["sql"],
+      description:
+        "Built-in physical replication in PostgreSQL using Write-Ahead Log (WAL) streaming. Primary server streams WAL records to standby servers in near real-time, enabling Hot Standby mode where replicas accept read-only queries. Supports synchronous replication (wait for replica acknowledgment), asynchronous replication (fire-and-forget), and cascading replication (replicas can replicate to other replicas). Provides pg_stat_replication view for monitoring lag. Used by Instagram, Spotify, and Reddit for scaling read throughput.",
+      links: {
+        docs: "https://www.postgresql.org/docs/current/warm-standby.html",
+      },
+      codeSnippet: `# postgresql.conf on primary
+wal_level = replica
+max_wal_senders = 10
+wal_keep_size = 1GB
+archive_mode = on
+archive_command = 'cp %p /archive/%f'
+
+# Monitor replication lag
+SELECT
+  client_addr,
+  state,
+  sent_lsn,
+  write_lsn,
+  replay_lsn,
+  sync_state,
+  EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) AS lag_seconds
+FROM pg_stat_replication;
+
+# Application: route reads to replicas
+psycopg2.connect(host='replica1.db.example.com', dbname='myapp')`,
+    },
+    {
+      id: "mysql-replication",
+      name: "MySQL Binary Log Replication",
+      type: "service",
+      languages: ["any"],
+      description:
+        "MySQL native replication using binary log (binlog) for change propagation. Primary logs all changes to binlog, replicas read and apply changes asynchronously. Supports statement-based, row-based, and mixed replication formats. Features GTID (Global Transaction ID) for simplified failover and Semi-Synchronous Replication for durability. Widely used by Facebook, YouTube, and GitHub for read scaling. Replication lag monitoring via SHOW SLAVE STATUS.",
+      links: {
+        docs: "https://dev.mysql.com/doc/refman/8.0/en/replication.html",
+      },
+      codeSnippet: `# my.cnf on primary
+server-id = 1
+log-bin = mysql-bin
+binlog-format = ROW
+gtid-mode = ON
+enforce-gtid-consistency = ON
+
+# my.cnf on replica
+server-id = 2
+relay-log = mysql-relay-bin
+read-only = ON
+
+# Monitor replication lag
+SHOW SLAVE STATUS\\G
+-- Check Seconds_Behind_Master
+
+# Application: connect to replica
+mysql -h replica.db.example.com -u app_user -p myapp`,
+    },
+    {
+      id: "mongodb-replica-sets",
+      name: "MongoDB Replica Sets",
+      type: "service",
+      languages: ["any"],
+      description:
+        "MongoDB native replication using replica sets with automatic failover. One primary node accepts writes, secondary nodes replicate data asynchronously via oplog. Supports read preferences (primary, primaryPreferred, secondary, secondaryPreferred, nearest) for flexible read routing. Features automatic primary election on failure, configurable write concern for durability, and read concern for consistency guarantees. Provides rs.status() and rs.printReplicationInfo() for monitoring lag.",
+      links: {
+        docs: "https://www.mongodb.com/docs/manual/replication/",
+      },
+      codeSnippet: `// Initialize replica set
+rs.initiate({
+  _id: "myapp-rs",
+  members: [
+    { _id: 0, host: "mongo1:27017", priority: 2 },
+    { _id: 1, host: "mongo2:27017" },
+    { _id: 2, host: "mongo3:27017" }
+  ]
+});
+
+// Application: route reads to secondaries
+const { MongoClient } = require('mongodb');
+
+const client = new MongoClient('mongodb://mongo1,mongo2,mongo3/myapp', {
+  replicaSet: 'myapp-rs',
+  readPreference: 'secondaryPreferred'
+});
+
+// Monitor replication lag
+rs.status().members.forEach(m => {
+  if (m.stateStr === 'SECONDARY') {
+    print(\`\${m.name}: lag \${m.optimeDate - rs.status().members[0].optimeDate}ms\`);
+  }
+});`,
+    },
+    {
+      id: "aws-rds-read-replicas",
+      name: "AWS RDS Read Replicas",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Managed read replicas for Amazon RDS supporting MySQL, PostgreSQL, MariaDB, Oracle, SQL Server. Creates asynchronous replicas in same region or cross-region for disaster recovery. Supports up to 15 read replicas per primary instance. Features automated backups from replicas (reducing primary load), promotion to standalone instance for disaster recovery, and CloudWatch metrics for monitoring replication lag. Handles patching, backups, and scaling automatically.",
+      links: {
+        docs: "https://aws.amazon.com/rds/features/read-replicas/",
+      },
+      codeSnippet: `# AWS CLI: create read replica
+aws rds create-db-instance-read-replica \\
+  --db-instance-identifier myapp-read-replica-1 \\
+  --source-db-instance-identifier myapp-primary \\
+  --db-instance-class db.r5.large \\
+  --availability-zone us-east-1b \\
+  --publicly-accessible false
+
+# Terraform: create read replica
+resource "aws_db_instance" "replica" {
+  identifier              = "myapp-read-replica-1"
+  replicate_source_db     = aws_db_instance.primary.identifier
+  instance_class          = "db.r5.large"
+  availability_zone       = "us-east-1b"
+  publicly_accessible     = false
+  auto_minor_version_upgrade = true
+}
+
+# Application: connect to replica
+conn = psycopg2.connect(
+  host='myapp-read-replica-1.abc123.us-east-1.rds.amazonaws.com',
+  dbname='myapp'
+)`,
+    },
+    {
+      id: "gcp-cloud-sql-replicas",
+      name: "Google Cloud SQL Read Replicas",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Managed read replicas for Cloud SQL supporting MySQL, PostgreSQL, and SQL Server. Creates read replicas in same region, cross-region, or external (on-premises to Cloud SQL). Features automated failover with High Availability configuration, point-in-time recovery, and automated backups. Supports cascading read replicas and promotion to standalone instances. Integrates with Cloud Monitoring for replication lag alerts.",
+      links: {
+        docs: "https://cloud.google.com/sql/docs/postgres/replication",
+      },
+      codeSnippet: `# gcloud: create read replica
+gcloud sql instances create myapp-replica-1 \\
+  --master-instance-name=myapp-primary \\
+  --tier=db-n1-standard-4 \\
+  --region=us-central1 \\
+  --replica-type=READ
+
+# Terraform: create read replica
+resource "google_sql_database_instance" "replica" {
+  name                 = "myapp-replica-1"
+  master_instance_name = google_sql_database_instance.primary.name
+  region               = "us-central1"
+  replica_configuration {
+    failover_target = false
+  }
+  settings {
+    tier = "db-n1-standard-4"
+  }
+}
+
+# Monitor replication lag
+SELECT
+  EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) AS lag_seconds;`,
+    },
+    {
+      id: "azure-sql-replication",
+      name: "Azure SQL Database Geo-Replication",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Active geo-replication for Azure SQL Database and SQL Managed Instance. Creates up to 4 readable secondary databases in same or different regions. Features continuous asynchronous replication, automatic failover groups for disaster recovery, and read-scale out for offloading read workloads. Supports user-initiated failover with RPO < 5 seconds and automatic failover with RTO < 30 seconds. Integrates with Azure Monitor for lag tracking.",
+      links: {
+        docs: "https://learn.microsoft.com/en-us/azure/azure-sql/database/active-geo-replication-overview",
+      },
+      codeSnippet: `# Azure CLI: create geo-replica
+az sql db replica create \\
+  --resource-group myResourceGroup \\
+  --server myapp-secondary \\
+  --name myappdb \\
+  --partner-server myapp-primary \\
+  --partner-database myappdb \\
+  --service-objective S3
+
+# Application: connect to readable secondary
+connection_string = "Server=myapp-secondary.database.windows.net;Database=myappdb;ApplicationIntent=ReadOnly"`,
+    },
+    {
+      id: "vitess-mysql-sharding",
+      name: "Vitess MySQL Replication & Sharding",
+      type: "platform",
+      languages: ["any"],
+      description:
+        "MySQL orchestration system from YouTube for horizontal scaling via sharding and read replicas. Manages MySQL topology including primary-replica replication, automatic failover, and connection pooling. VTGate routes reads to replicas and writes to primaries transparently. Features resharding without downtime, query routing based on keyspace, and integration with Orchestrator for topology management. Used by Slack, GitHub, and Twitter for massive MySQL deployments.",
+      links: {
+        docs: "https://vitess.io/docs/",
+        github: "https://github.com/vitessio/vitess",
+      },
+      codeSnippet: `# Vitess tablet types
+# MASTER: primary, accepts writes
+# REPLICA: read-only replica, serves read traffic
+# RDONLY: read-only replica for batch/analytics
+
+# VTGate query routing
+# Reads automatically go to REPLICA tablets
+SELECT * FROM users WHERE id = 123;  -- routes to REPLICA
+
+# Writes go to MASTER tablet
+UPDATE users SET status = 'active' WHERE id = 123;  -- routes to MASTER
+
+# Application connects to VTGate, not MySQL directly
+mysql -h vtgate.example.com -P 15306 -u app_user myapp`,
+    },
+    {
+      id: "citus-postgresql-distributed",
+      name: "Citus Distributed PostgreSQL",
+      type: "platform",
+      languages: ["any"],
+      description:
+        "Distributed PostgreSQL extension providing sharding and replication for horizontal scaling. Coordinator node distributes queries to worker nodes, each running PostgreSQL with replicas. Supports reference tables (replicated to all nodes) and distributed tables (sharded across nodes). Features parallel query execution across workers, automatic rebalancing, and standard PostgreSQL tooling compatibility. Used for multi-tenant SaaS applications and real-time analytics.",
+      links: {
+        docs: "https://docs.citusdata.com/",
+        github: "https://github.com/citusdata/citus",
+      },
+      codeSnippet: `-- Create distributed table (sharded + replicated)
+SELECT create_distributed_table('events', 'tenant_id');
+
+-- Set replication factor
+ALTER TABLE events SET (citus.shard_replication_factor = 2);
+
+-- Query routes to appropriate shards and replicas
+SELECT COUNT(*) FROM events WHERE tenant_id = 123;
+
+-- Monitor replication lag per worker
+SELECT * FROM citus_stat_activity WHERE backend_type = 'walsender';`,
+    },
+  ],
+
+  usedInSystems: [
+    {
+      systemId: "instagram-postgresql",
+      systemName: "Instagram PostgreSQL Read Replicas",
+      howUsed:
+        "Instagram scaled to 2 billion users using PostgreSQL with read replicas across multiple availability zones and regions. Their architecture runs 12 PostgreSQL replicas in different zones using streaming replication in a master-replica setup, with the main database cluster containing 12 Quadruple Extra Large memory instances. Read operations (viewing feeds, profiles, photos) are distributed across regional replicas using Django database routers, avoiding cross-datacenter reads from web servers. Writes (posts, likes, comments) still go to the primary database across datacenters. Instagram's read-to-write ratio is approximately 100:1, making read replicas essential for handling billions of daily read queries without overwhelming the primary. Pattern composition: Read Replicas + Sharding (split users across shards) + Connection Pooling (pgBouncer multiplexes connections) + Cache-Aside (Redis reduces database load) + Load Balancing (distribute reads across replicas). Rationale: Single PostgreSQL instance cannot handle billions of reads per day. Read replicas enable horizontal scaling of read capacity while maintaining PostgreSQL's ACID guarantees for writes. Geographic replicas reduce latency for global users. Replication lag of 50-200ms is acceptable for viewing content (eventual consistency), while critical operations like payments use primary database (strong consistency). Impact: Scaled from 1M to 2B users without PostgreSQL rewrite; reduced read latency from 200ms (cross-region primary) to 20ms (local replica); handled 100B+ daily read operations with 12 replicas vs single primary; enabled geographic expansion by deploying replicas in new regions (Europe, Asia) without primary migration; maintained 99.9% uptime during AWS regional outages by failing over to replicas in healthy regions.",
+      source:
+        "https://instagram-engineering.com/instagration-pt-2-scaling-our-infrastructure-to-multiple-data-centers-5745cbad7834",
+    },
+    {
+      systemId: "twitter-vitess",
+      systemName: "Twitter User Database Scaling with Vitess",
+      howUsed:
+        "Twitter's User Reservation System handles millions of QPS for username lookups, user profile reads, and authentication. Initially built on Gizzard, Twitter migrated to Vitess for MySQL orchestration with automated replication topology management. Vitess VTGate routes read queries to MySQL replicas and write queries to primary, handling 10,000+ queries per second per shard. Each user shard has 1 primary and 2-4 replicas across availability zones. Vitess integrates with Orchestrator for automatic failover: when primary fails, Orchestrator promotes replica within seconds, minimizing write downtime. Twitter's read-heavy workload (90% reads, 10% writes) benefits massively from read replicas—profile views, timeline generation, and follower counts all query replicas. Pattern composition: Read Replicas (Vitess-managed MySQL) + Sharding (users distributed by ID) + Connection Pooling (VTGate pools) + Cache-Aside (Redis for hot users) + Health Checks (replica health monitoring). Rationale: Twitter's 500M users generate massive read traffic that single MySQL instance cannot handle. Vitess provides automated replication management and transparent read routing, eliminating manual failover and read distribution logic. Cache protects replicas from extreme spikes (celebrity tweets), while replicas provide fallback when cache misses. Impact: Reduced user profile read latency from 100ms to 10ms by routing to regional replicas; handled 10x traffic spikes during major events (Super Bowl, elections) without database saturation; automated failover reduced write downtime from 15 minutes (manual intervention) to 30 seconds (Orchestrator); enabled Twitter to scale to 500M users with predictable database infrastructure costs.",
+      source:
+        "https://blog.x.com/engineering/en_us/topics/infrastructure/2023/how-we-scaled-reads-on-the-twitter-users-database",
+    },
+    {
+      systemId: "github-mysql-replicas",
+      systemName: "GitHub MySQL Read Replicas",
+      howUsed:
+        "GitHub operates one of the largest MySQL deployments globally, serving millions of developers accessing repositories, pull requests, and issues. GitHub uses MySQL read replicas extensively for repository metadata queries (file listings, commit history, search) while writes (commits, PRs, comments) go to primary. Each primary database has 3-5 read replicas distributed across availability zones, with cross-region replicas for disaster recovery. GitHub's Orchestrator manages MySQL replication topology, detecting failed replicas and primaries, and orchestrating automatic failover. During primary failure, Orchestrator promotes best candidate replica (least lag, most up-to-date) and reconfigures remaining replicas to follow new primary. GitHub's application layer uses ProxySQL for connection pooling and read/write splitting: queries with SELECT go to replicas via round-robin load balancing, while INSERT/UPDATE/DELETE route to primary. Pattern composition: Read Replicas + Orchestrator (failover automation) + ProxySQL (connection pooling + routing) + Consul (service discovery for replica endpoints) + Delayed Replica (1-hour delayed replica for accidental deletion recovery). Rationale: GitHub's workload is extremely read-heavy (repository browsing, search, CI status checks) versus writes (actual commits). Single MySQL primary cannot handle 100,000+ queries per second. Read replicas scale read capacity linearly while preserving MySQL compatibility and ACID transactions. Delayed replica provides safety net for accidental data deletion (restore from 1-hour-ago replica). Impact: Scaled to 100M repositories and 100M developers without MySQL rewrite; reduced repository page load time from 800ms to 150ms via replica routing; handled GitHub Actions CI/CD query surge (millions of status checks per minute) without primary saturation; automated failover reduced database incidents by 70% through Orchestrator's quick promotion; survived AWS AZ outages by failing over to replicas in healthy zones within 2 minutes.",
+      source: "https://github.blog/engineering/",
+    },
+    {
+      systemId: "shopify-mysql-sharding-replicas",
+      systemName: "Shopify Multi-Shard MySQL with Read Replicas",
+      howUsed:
+        "Shopify operates 1000+ MySQL shards serving millions of merchants and billions of product catalog queries during peak shopping periods (Black Friday, Cyber Monday). Each shard has 1 primary and 2-3 read replicas, totaling 3000+ MySQL instances globally. Shopify uses Vitess for MySQL orchestration, routing read queries (product searches, inventory checks, storefront rendering) to replicas and write queries (orders, inventory updates) to primaries. During Black Friday, read traffic increases 10x while write traffic increases 5x—read replicas absorb traffic spike without impacting write performance. Shopify's application framework (Ruby on Rails) uses custom database routing: replica selection based on geographic proximity (reduce latency for global storefronts), replica health checks (avoid laggy replicas), and primary pinning for read-after-write consistency (view newly created product immediately after upload). Pattern composition: Read Replicas + Sharding (split merchants across shards) + Vitess (orchestration) + Connection Pooling (pgBouncer/ProxySQL) + Rate Limiting (protect primary from write storms) + Cache-Aside (Redis for product catalogs). Rationale: Shopify's multi-tenant architecture (millions of independent stores) requires horizontal database scaling via sharding. Each shard needs read replicas to handle storefront traffic (product views, searches) without blocking write operations (order processing, inventory updates). Geographic replicas reduce latency for stores in Europe, Asia, Americas. Impact: Handled 80M shoppers during Black Friday with 99.99% uptime; reduced product page load latency from 500ms to 100ms via regional replicas; scaled read capacity 10x during flash sales without database saturation; enabled geographic expansion by deploying replicas in new regions (EU, APAC) close to merchant storefronts; automated failover via Vitess reduced database incidents during peak shopping by 80%.",
+      source:
+        "https://shopify.engineering/e-commerce-at-scale-inside-shopifys-tech-stack",
+    },
+    {
+      systemId: "reddit-postgresql-replicas",
+      systemName: "Reddit PostgreSQL Read Replicas",
+      howUsed:
+        "Reddit serves 50M daily active users viewing billions of posts, comments, and votes, using PostgreSQL with read replicas for scaling read-heavy workloads. Reddit's subreddit architecture creates extreme read skew: popular posts (r/worldnews, r/AskReddit) receive millions of views versus handful of writes (new comments, votes). Read replicas handle post rendering, comment trees, and vote counts, while primary database handles writes (new posts, comments, votes). Reddit runs 8-12 read replicas per primary database, with cross-region replicas for disaster recovery and geographic read distribution. Application uses pg_bouncer for connection pooling and custom Python middleware for read/write routing: GET requests query replicas, POST/PUT/DELETE target primary. Reddit tolerates replication lag of 1-5 seconds for comment display (eventual consistency) but uses primary database for vote casting (strong consistency to prevent double-voting). Pattern composition: Read Replicas + Cache-Aside (Reddit's heavy Memcached usage reduces database reads) + Connection Pooling (pgBouncer) + Sharding (split subreddits across databases) + Load Balancing (HAProxy distributes reads across replicas). Rationale: Reddit's read-to-write ratio exceeds 100:1 (millions of page views versus thousands of comments per minute). Single PostgreSQL instance cannot handle read traffic during viral posts (100k+ concurrent viewers). Read replicas enable horizontal scaling while maintaining PostgreSQL's strengths: complex queries, JSON support, full-text search. Geographic replicas reduce latency for international users. Impact: Scaled to 50M DAU and 430M monthly active users without PostgreSQL rewrite; reduced post page load latency from 400ms to 80ms via replica routing; handled viral post traffic spikes (10x normal load) without database saturation; enabled subreddit browsing during primary database maintenance by serving reads from replicas; maintained 99.9% read availability during AWS outages by failing over to cross-region replicas.",
+      source: "http://highscalability.com/reddit-architecture",
+    },
+  ],
+
+  tags: [
+    "performance",
+    "scalability",
+    "replication",
+    "read-scaling",
+    "high-availability",
+  ],
+  difficulty: "intermediate",
 };

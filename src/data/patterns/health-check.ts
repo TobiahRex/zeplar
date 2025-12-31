@@ -849,4 +849,478 @@ app.listen(port, () => {
       "Between monitoring system and service health state",
     ],
   },
+
+  implementations: [
+    {
+      id: "spring-boot-actuator",
+      name: "Spring Boot Actuator",
+      type: "framework",
+      languages: ["java", "kotlin"],
+      description:
+        "Production-grade health checking for Spring Boot applications with built-in liveness and readiness endpoints. Starting with Spring Boot 2.3, Actuator automatically exposes /actuator/health/liveness and /actuator/health/readiness endpoints for Kubernetes probes. Supports health indicators for common dependencies (database, Redis, Kafka, RabbitMQ, disk space) and custom health indicators via HealthIndicator interface. Provides health groups for composing multiple indicators and conditional health checks based on application lifecycle.",
+      links: {
+        docs: "https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html",
+        github: "https://github.com/spring-projects/spring-boot",
+      },
+      codeSnippet: `// Enable health endpoints in application.properties
+management.endpoint.health.probes.enabled=true
+management.health.livenessState.enabled=true
+management.health.readinessState.enabled=true
+management.endpoints.web.exposure.include=health,info
+
+// Custom health indicator
+@Component
+public class DatabaseHealthIndicator implements HealthIndicator {
+    @Autowired
+    private DataSource dataSource;
+
+    @Override
+    public Health health() {
+        try (Connection conn = dataSource.getConnection()) {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT 1");
+            return rs.next()
+                ? Health.up().withDetail("database", "PostgreSQL").build()
+                : Health.down().withDetail("error", "Query failed").build();
+        } catch (Exception e) {
+            return Health.down(e).build();
+        }
+    }
+}
+
+// Kubernetes deployment manifest
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: app
+    livenessProbe:
+      httpGet:
+        path: /actuator/health/liveness
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+    readinessProbe:
+      httpGet:
+        path: /actuator/health/readiness
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 5`,
+    },
+    {
+      id: "fastapi-health",
+      name: "FastAPI Health Check Libraries",
+      type: "library",
+      languages: ["python"],
+      description:
+        "Health check libraries for FastAPI including fastapi-healthcheck and fastapi-healthchecks. Provides configurable liveness and readiness endpoints with support for PostgreSQL, Redis, and custom dependency checks. Async-first design integrates seamlessly with FastAPI's async capabilities. Supports health check caching to reduce dependency load and structured responses compatible with Kubernetes probes.",
+      links: {
+        docs: "https://kludex.github.io/fastapi-health/",
+        github: "https://github.com/Kludex/fastapi-health",
+      },
+      codeSnippet: `from fastapi import FastAPI
+from fastapi_healthcheck import HealthCheckFactory, healthCheckRoute
+
+app = FastAPI()
+
+# Add health check with dependency checks
+_healthChecks = HealthCheckFactory()
+
+# Database health check
+@_healthChecks.add_check
+def check_database():
+    try:
+        # Execute simple query
+        result = db.execute("SELECT 1")
+        return True
+    except Exception:
+        return False
+
+# Redis health check
+@_healthChecks.add_check
+def check_redis():
+    try:
+        redis_client.ping()
+        return True
+    except Exception:
+        return False
+
+# Mount health endpoint
+app.add_api_route('/health', healthCheckRoute(factory=_healthChecks))
+
+# Kubernetes deployment
+# livenessProbe:
+#   httpGet:
+#     path: /health
+#     port: 8000
+#   periodSeconds: 10
+# readinessProbe:
+#   httpGet:
+#     path: /health
+#     port: 8000
+#   periodSeconds: 5`,
+    },
+    {
+      id: "express-terminus",
+      name: "Terminus (Express.js)",
+      type: "library",
+      languages: ["javascript", "typescript"],
+      description:
+        "Graceful shutdown and health checks for Express.js and Koa applications. Provides /health/live and /health/ready endpoints with customizable health checks. Supports beforeShutdown hooks for cleanup operations, health signal propagation during shutdown, and configurable health check timeouts. Integrates with Kubernetes probes and AWS ELB health checks.",
+      links: {
+        docs: "https://github.com/godaddy/terminus",
+        github: "https://github.com/godaddy/terminus",
+        npm: "https://www.npmjs.com/package/@godaddy/terminus",
+      },
+      codeSnippet: `const express = require('express');
+const http = require('http');
+const { createTerminus } = require('@godaddy/terminus');
+
+const app = express();
+
+// Health check functions
+async function onHealthCheck() {
+  // Check database
+  await db.query('SELECT 1');
+  // Check Redis
+  await redis.ping();
+  // All checks passed
+  return Promise.resolve();
+}
+
+async function onSignal() {
+  console.log('Server shutting down...');
+  await db.close();
+  await redis.disconnect();
+}
+
+const server = http.createServer(app);
+
+createTerminus(server, {
+  healthChecks: {
+    '/health/live': onHealthCheck,
+    '/health/ready': onHealthCheck,
+  },
+  onSignal,
+  timeout: 10000,  // Shutdown timeout
+  logger: console.log,
+});
+
+server.listen(3000);`,
+    },
+    {
+      id: "py-healthcheck",
+      name: "py-healthcheck (Flask/Tornado)",
+      type: "library",
+      languages: ["python"],
+      description:
+        "Health check library for Flask and Tornado applications. Provides /health endpoint with support for custom health check functions. Features health check result caching (27 seconds for success, 9 seconds for failures) to reduce dependency load. Returns JSON response with status and individual check results. Simple integration via decorator pattern.",
+      links: {
+        docs: "https://pypi.org/project/py-healthcheck/",
+        github: "https://github.com/Runscope/healthcheck",
+      },
+      codeSnippet: `from flask import Flask
+from healthcheck import HealthCheck
+
+app = Flask(__name__)
+health = HealthCheck()
+
+# Database health check
+def database_check():
+    try:
+        db.execute('SELECT 1')
+        return True, "Database OK"
+    except Exception as e:
+        return False, str(e)
+
+# Redis health check
+def redis_check():
+    try:
+        redis_client.ping()
+        return True, "Redis OK"
+    except Exception as e:
+        return False, str(e)
+
+health.add_check(database_check)
+health.add_check(redis_check)
+
+# Add health endpoint
+app.add_url_rule("/health", "healthcheck", view_func=health.run)
+
+# Response format:
+# {
+#   "status": "success",
+#   "results": [
+#     {"checker": "database_check", "output": "Database OK", "passed": true},
+#     {"checker": "redis_check", "output": "Redis OK", "passed": true}
+#   ]
+# }`,
+    },
+    {
+      id: "go-health",
+      name: "Go Health Check Libraries",
+      type: "library",
+      languages: ["go"],
+      description:
+        "Health check libraries for Go including health by alexliesenfeld and healthcheck. Provides composable health checks for databases, HTTP endpoints, and custom dependencies. Supports periodic background health checking with configurable intervals, health check timeouts, and concurrent execution. Integrates with standard library http.Handler for easy mounting in existing applications.",
+      links: {
+        docs: "https://github.com/alexliesenfeld/health",
+        github: "https://github.com/alexliesenfeld/health",
+      },
+      codeSnippet: `package main
+
+import (
+    "context"
+    "database/sql"
+    "net/http"
+    "time"
+
+    "github.com/alexliesenfeld/health"
+)
+
+func main() {
+    db, _ := sql.Open("postgres", "...")
+
+    // Create health checker
+    checker := health.NewChecker(
+        // Database health check
+        health.WithCheck(health.Check{
+            Name: "database",
+            Check: func(ctx context.Context) error {
+                return db.PingContext(ctx)
+            },
+            Timeout:        2 * time.Second,
+            MaxTimeInError: 30 * time.Second,
+        }),
+
+        // Redis health check
+        health.WithCheck(health.Check{
+            Name: "redis",
+            Check: func(ctx context.Context) error {
+                return redisClient.Ping(ctx).Err()
+            },
+            Timeout: 1 * time.Second,
+        }),
+    )
+
+    // Mount health endpoints
+    http.Handle("/health/live", health.NewHandler(checker))
+    http.Handle("/health/ready", health.NewHandler(checker))
+
+    http.ListenAndServe(":8080", nil)
+}`,
+    },
+    {
+      id: "aws-elb-health-check",
+      name: "AWS Elastic Load Balancer Health Checks",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Built-in health checking for AWS Application Load Balancer (ALB), Network Load Balancer (NLB), and Classic Load Balancer. Supports HTTP, HTTPS, TCP, and SSL health checks with configurable interval (5-300 seconds), timeout (2-120 seconds), healthy/unhealthy thresholds. Features active health checks (periodic probing) and passive health checks (monitoring actual traffic responses). Integrates with Auto Scaling to replace unhealthy instances automatically.",
+      links: {
+        docs: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html",
+      },
+      codeSnippet: `# Terraform configuration for ALB health check
+resource "aws_lb_target_group" "app" {
+  name     = "app-target-group"
+  port     = 80
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
+
+  health_check {
+    enabled             = true
+    path                = "/health"
+    protocol            = "HTTP"
+    matcher             = "200"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+  }
+}
+
+# CloudFormation configuration
+HealthCheckPath: /health
+HealthCheckIntervalSeconds: 30
+HealthCheckTimeoutSeconds: 5
+HealthyThresholdCount: 2
+UnhealthyThresholdCount: 3
+Matcher:
+  HttpCode: 200`,
+    },
+    {
+      id: "gcp-health-check",
+      name: "Google Cloud Load Balancer Health Checks",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Configurable health checks for Google Cloud load balancers with support for HTTP, HTTPS, TCP, SSL, and HTTP/2 protocols. Features include regional and global health checks, configurable check intervals (1-300 seconds), timeout durations, and healthy/unhealthy thresholds. Supports legacy health checks for backward compatibility and autohealing for managed instance groups. Provides detailed health check logging for debugging.",
+      links: {
+        docs: "https://cloud.google.com/load-balancing/docs/health-check-concepts",
+      },
+      codeSnippet: `# gcloud command to create health check
+gcloud compute health-checks create http app-health-check \\
+    --port=8080 \\
+    --request-path=/health \\
+    --check-interval=10s \\
+    --timeout=5s \\
+    --healthy-threshold=2 \\
+    --unhealthy-threshold=3
+
+# Terraform configuration
+resource "google_compute_health_check" "app" {
+  name                = "app-health-check"
+  check_interval_sec  = 10
+  timeout_sec         = 5
+  healthy_threshold   = 2
+  unhealthy_threshold = 3
+
+  http_health_check {
+    port         = 8080
+    request_path = "/health"
+  }
+}`,
+    },
+    {
+      id: "kubernetes-probes",
+      name: "Kubernetes Health Probes",
+      type: "platform",
+      languages: ["any"],
+      description:
+        "Native health checking in Kubernetes with three probe types: liveness (restart unhealthy containers), readiness (remove from service endpoints), and startup (delay liveness checks for slow-starting containers). Supports HTTP GET, TCP socket, and exec command probe mechanisms. Configurable parameters include initialDelaySeconds, periodSeconds, timeoutSeconds, successThreshold, and failureThreshold. Probes enable self-healing and zero-downtime deployments.",
+      links: {
+        docs: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      },
+      codeSnippet: `apiVersion: v1
+kind: Pod
+metadata:
+  name: my-app
+spec:
+  containers:
+  - name: app
+    image: my-app:1.0
+    ports:
+    - containerPort: 8080
+
+    # Liveness probe - restart if fails
+    livenessProbe:
+      httpGet:
+        path: /health/live
+        port: 8080
+      initialDelaySeconds: 30
+      periodSeconds: 10
+      timeoutSeconds: 5
+      failureThreshold: 3
+
+    # Readiness probe - remove from service if fails
+    readinessProbe:
+      httpGet:
+        path: /health/ready
+        port: 8080
+      initialDelaySeconds: 10
+      periodSeconds: 5
+      timeoutSeconds: 3
+      failureThreshold: 2
+
+    # Startup probe - protect slow starts
+    startupProbe:
+      httpGet:
+        path: /health/startup
+        port: 8080
+      periodSeconds: 5
+      failureThreshold: 30  # Allow up to 150s startup time`,
+    },
+    {
+      id: "consul-health-check",
+      name: "HashiCorp Consul Health Checks",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Service mesh health checking and service discovery with Consul. Supports multiple check types: HTTP, TCP, script, TTL, Docker, and gRPC. Health checks integrate with service catalog to automatically route traffic away from unhealthy instances. Features include check intervals, deregister_critical_service_after for automatic cleanup, and health check passing/warning/critical states. Enables sophisticated service mesh topologies with automatic failover.",
+      links: {
+        docs: "https://developer.hashicorp.com/consul/docs/services/configuration/checks-configuration-reference",
+        github: "https://github.com/hashicorp/consul",
+      },
+      codeSnippet: `{
+  "service": {
+    "name": "web",
+    "port": 8080,
+    "checks": [
+      {
+        "name": "HTTP Health Check",
+        "http": "http://localhost:8080/health",
+        "interval": "10s",
+        "timeout": "2s"
+      },
+      {
+        "name": "TCP Port Check",
+        "tcp": "localhost:8080",
+        "interval": "10s",
+        "timeout": "1s"
+      },
+      {
+        "name": "Script Check",
+        "args": ["/usr/local/bin/check-app.sh"],
+        "interval": "30s",
+        "timeout": "5s"
+      }
+    ],
+    "deregister_critical_service_after": "90m"
+  }
+}`,
+    },
+  ],
+
+  usedInSystems: [
+    {
+      systemId: "netflix-eureka",
+      systemName: "Netflix Microservices with Eureka",
+      howUsed:
+        "Netflix operates thousands of microservices handling billions of requests daily, using Eureka service discovery for health-based traffic routing. Each microservice exposes /health endpoints that Eureka polls every 30 seconds to maintain service registry health. When instances become unhealthy (failing 3 consecutive health checks), Eureka removes them from the registry, preventing new requests from routing to failing instances. Netflix's health checks validate critical dependencies: Cassandra database connectivity, Redis cache availability, and downstream API reachability. The architecture distinguishes between liveness (is the JVM responsive?) and readiness (can it serve traffic?). Pattern composition: Health Checks + Service Discovery (Eureka) + Circuit Breaker (Hystrix prevents cascading failures) + Load Balancing (Ribbon uses health data for routing) + Auto Scaling (unhealthy instances trigger replacements). Rationale: With thousands of ephemeral instances launching and terminating constantly, manual health monitoring is impossible. Automated health checks enable self-healing infrastructure where failing instances are detected and replaced within minutes without human intervention. During regional AWS outages, health checks detect degraded instances and shift traffic to healthy regions, maintaining 99.99% uptime. Impact: Reduced mean time to detection (MTTD) from hours to seconds; enabled zero-downtime deployments by validating new versions before switching traffic; prevented cascading failures during dependency outages by removing unhealthy instances before user impact; supported 1000+ production deployments per day with automated health validation preventing bad releases from reaching users.",
+      source:
+        "https://netflixtechblog.com/netflix-oss-and-spring-boot-coming-full-circle-4855947713a0",
+    },
+    {
+      systemId: "kubernetes-production",
+      systemName: "Kubernetes Self-Healing Infrastructure",
+      howUsed:
+        "Kubernetes uses health checks (liveness, readiness, startup probes) as the foundation for self-healing container orchestration across millions of production clusters. Liveness probes detect crashed, deadlocked, or hung containers and trigger automatic restarts—Shopify runs 100,000+ containers with liveness probes preventing manual intervention for common failure modes like memory leaks and deadlocks. Readiness probes control traffic flow: during rolling updates, new pods must pass readiness checks before receiving traffic, enabling zero-downtime deployments. Startup probes protect slow-starting applications (Java apps with 60+ second startup times) by delaying liveness checks until initialization completes. Health checks integrate with Services and Ingress controllers: unhealthy pods are removed from endpoint lists, preventing load balancers from routing to failed instances. Pattern composition: Health Checks + Rolling Updates (progressive deployment with validation) + HorizontalPodAutoscaler (scale based on health + metrics) + PodDisruptionBudgets (maintain minimum healthy pods during disruptions). Rationale: Container orchestration at scale requires automated failure detection and recovery. Manual monitoring cannot track health across thousands of ephemeral pods launching, crashing, and relocating constantly. Health checks enable Kubernetes' self-healing promise: detect failures in seconds, restart unhealthy pods automatically, prevent traffic to instances not ready, and maintain SLAs without operator intervention. Impact: Shopify achieved 99.98% uptime across 100,000+ pods using health checks for automatic failure recovery; reduced incident response time by 90% by eliminating manual restarts; enabled safe deployments of 50,000+ releases per day with health-check-gated rollouts preventing bad versions from impacting users; handled infrastructure failures (node crashes, network partitions) transparently by detecting and replacing unhealthy pods within 30 seconds.",
+      source:
+        "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+    },
+    {
+      systemId: "aws-elb-autoscaling",
+      systemName: "AWS Auto Scaling with ELB Health Checks",
+      howUsed:
+        "AWS Elastic Load Balancer (ELB) health checks enable self-healing auto-scaling groups serving millions of customers including Airbnb, Lyft, and Slack. ELB performs HTTP health checks every 30 seconds against /health endpoints on EC2 instances in target groups. Instances failing 2 consecutive checks (unhealthy threshold) are marked unhealthy and removed from load balancer rotation—no new connections are routed, existing connections drain gracefully. Auto Scaling integrates with ELB health: when instances become unhealthy, Auto Scaling terminates them and launches replacements to maintain desired capacity. Health checks validate application-level functionality, not just instance reachability: database connectivity, cache availability, downstream API responsiveness. Pattern composition: Health Checks + Elastic Load Balancing (distribute traffic to healthy instances) + Auto Scaling (replace unhealthy instances) + CloudWatch Alarms (aggregate health metrics for alerting) + Multi-AZ Deployment (health checks detect AZ failures and shift traffic). Rationale: EC2 instance health is not binary—instances can be running but application-level failures (database connection exhaustion, memory leaks, dependency outages) prevent serving traffic. Health checks detect these failure modes, preventing user-facing errors. Auto Scaling combined with health checks provides self-healing: failing instances are automatically replaced, maintaining capacity and availability without manual intervention. Impact: Airbnb scaled to 150M users with 99.9% uptime using ELB health checks for automatic failure detection; reduced incident response time from 15 minutes (manual detection) to 1 minute (automated health checks); prevented cascading failures during AWS AZ outages by detecting and removing degraded instances; enabled zero-downtime deployments by validating new AMIs via health checks before switching traffic.",
+      source:
+        "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html",
+    },
+    {
+      systemId: "spring-boot-production",
+      systemName: "Spring Boot Applications with Actuator",
+      howUsed:
+        "Spring Boot Actuator provides production-grade health checking for millions of Java applications including those at Stripe, Booking.com, and LinkedIn. Actuator exposes /actuator/health/liveness and /actuator/health/readiness endpoints that Kubernetes, AWS ELB, and Azure health probes use for traffic management. Health indicators validate critical dependencies: database connection pools (DataSourceHealthIndicator), Redis cache (RedisHealthIndicator), disk space (DiskSpaceHealthIndicator), and custom application logic. Liveness checks are lightweight (process responsiveness only) to avoid false positives that trigger unnecessary restarts, while readiness checks comprehensively validate all dependencies before accepting traffic. Actuator supports health groups for composing multiple indicators and conditional health checks that activate based on application lifecycle events. Pattern composition: Health Checks + Spring Boot Actuator (unified monitoring) + Micrometer Metrics (health trends) + Kubernetes Probes (orchestration integration) + Circuit Breaker (Resilience4j coordinates with health state). Rationale: Enterprise Java applications run in complex environments with numerous dependencies (databases, message queues, APIs). Manual health validation is error-prone and slow. Actuator provides standardized, extensible health checking that integrates with cloud-native infrastructure, enabling automated deployment validation, traffic management, and failure recovery. The framework-level integration ensures consistent health checking across all Spring Boot applications in an organization. Impact: Stripe processes billions of API requests daily with 99.99% uptime using Actuator health checks for deployment validation and traffic routing; reduced false positive restarts by 80% using separate liveness (simple) and readiness (comprehensive) probes; detected and recovered from database connection pool exhaustion within seconds via automatic traffic removal; enabled safe Kubernetes deployments with health-check-gated rollouts preventing regressions from reaching production.",
+      source:
+        "https://spring.io/blog/2020/03/25/liveness-and-readiness-probes-with-spring-boot/",
+    },
+    {
+      systemId: "google-cloud-production",
+      systemName: "Google Cloud Platform Health Checks",
+      howUsed:
+        "Google Cloud Platform health checks enable self-healing infrastructure for companies including Spotify, Snap, and Twitter running on GCP. Cloud Load Balancing uses health checks to route traffic only to healthy backend instances across regions and zones. Health checks support HTTP, HTTPS, TCP, SSL, and HTTP/2 protocols with configurable intervals (1-300 seconds), timeouts, and healthy/unhealthy thresholds. GCP distinguishes between regional health checks (single region load balancers) and global health checks (cross-region load balancing) for geographic failover. Managed instance groups integrate with health checks for autohealing: instances failing health checks are automatically deleted and recreated, maintaining fleet health without operator intervention. Health checks enable blue-green and canary deployments: new versions are deployed to separate instance groups, validated via health checks, and promoted to production only after passing health thresholds. Pattern composition: Health Checks + Cloud Load Balancing (global traffic distribution) + Managed Instance Groups (autohealing) + Cloud Monitoring (health metrics aggregation) + Multi-Region Deployment (health-based geographic failover). Rationale: GCP's global infrastructure spans 35+ regions—manual health monitoring across thousands of instances is impossible. Automated health checks enable intelligent traffic routing (avoid unhealthy zones), self-healing (replace failing instances), and safe deployments (validate before promoting). Health checks form the foundation of GCP's high-availability promise, detecting and recovering from failures at infrastructure and application layers. Impact: Spotify serves 500M users with 99.9% uptime using GCP health checks for automatic failover across regions; reduced incident response time from 10 minutes to 30 seconds by automating detection and traffic shifting; prevented cascading failures during zonal outages by health-check-driven traffic migration; enabled 10,000+ weekly deployments with health-validated canary releases preventing bad code from impacting users.",
+      source:
+        "https://cloud.google.com/load-balancing/docs/health-check-concepts",
+    },
+  ],
+
+  tags: [
+    "reliability",
+    "observability",
+    "health-monitoring",
+    "kubernetes",
+    "self-healing",
+    "load-balancing",
+  ],
+  difficulty: "intermediate",
 };

@@ -178,56 +178,165 @@ await inventoryBulkhead.execute(() => inventoryService.reserve(items));`,
       runnable: true,
       contextDilation: {
         level: "module",
-        scope: "A reusable bulkhead class that limits concurrent executions",
-        prerequisites: ["Promises", "Async/await", "Semaphores"],
-        systemPosition: "Wraps calls to external services in service layer",
+        scope:
+          "Semaphore-based bulkhead class limiting concurrent executions per external dependency to isolate failures and prevent resource exhaustion",
+        prerequisites: [
+          "Promises",
+          "Async/await",
+          "Semaphores",
+          "Resource pooling",
+        ],
+        systemPosition:
+          "Wraps calls to external services in service layer, creating isolated resource pools per dependency to prevent cascading failures",
       },
       annotations: [
         {
-          id: "bulkhead-permits",
-          lines: [2, 2],
-          action: "Track available permits (slots)",
+          id: "bulkhead-permits-init",
+          lines: [2, 4],
+          action: "Initialize permits counter to maximum concurrent limit",
           reason:
-            "Permits represent the current capacity; when zero, new requests must wait",
+            "Permits represent available execution slots—tracking count enables semaphore-style concurrency control; maxConcurrent defines isolation boundary (e.g., payment gets 5 slots, inventory gets 10)",
           contextLevel: "local",
+        },
+        {
+          id: "bulkhead-waiting-queue",
+          lines: [3, 3],
+          action: "Maintain waiting queue for requests when permits exhausted",
+          reason:
+            "When all permits in use, queue pending requests instead of rejecting immediately; queue enables fairness (FIFO) and automatic execution when permits become available; bounded queue would add backpressure",
+          contextLevel: "module",
+        },
+        {
+          id: "bulkhead-config",
+          lines: [5, 6],
+          action:
+            "Configure maximum concurrent executions via constructor parameter",
+          reason:
+            "Externalized concurrency limit enables per-service tuning based on criticality and capacity—critical services get larger pools, non-critical get minimal slots; tuning prevents one service from monopolizing all threads",
+          contextLevel: "module",
+        },
+        {
+          id: "bulkhead-acquire-release",
+          lines: [9, 15],
+          action:
+            "Wrap function execution with acquire-execute-release pattern",
+          reason:
+            "Semaphore pattern ensures resource tracking even if function throws—try-finally guarantees release; prevents permit leaks that would gradually reduce available capacity",
+          contextLevel: "module",
         },
         {
           id: "bulkhead-acquire",
-          lines: [14, 23],
-          action: "Acquire a permit before executing",
+          lines: [10, 10],
+          action: "Acquire permit before executing wrapped function",
           reason:
-            "If permits available, proceed immediately; otherwise queue the request",
-          contextLevel: "local",
-          relatedConcepts: ["semaphore"],
-        },
-        {
-          id: "bulkhead-release",
-          lines: [25, 32],
-          action: "Release permit and wake waiting requests",
-          reason:
-            "Ensures resources are returned and queued requests can proceed",
+            "Permit acquisition enforces concurrency limit—blocks execution until slot available; prevents exceeding maxConcurrent threshold which would violate isolation guarantees",
           contextLevel: "local",
         },
         {
-          id: "bulkhead-usage",
-          lines: [36, 37],
-          action: "Create separate bulkheads per dependency",
+          id: "bulkhead-execute",
+          lines: [12, 12],
+          action: "Execute wrapped function after acquiring permit",
           reason:
-            "Isolation means payment failures cannot consume inventory capacity",
+            "Function executes with guaranteed resource slot—no risk of resource exhaustion; execution happens within isolated pool, preventing noisy neighbor problems",
+          contextLevel: "local",
+        },
+        {
+          id: "bulkhead-release-finally",
+          lines: [13, 14],
+          action: "Release permit in finally block to guarantee cleanup",
+          reason:
+            "Finally ensures permit returned even if function throws or times out; without finally, failed operations would leak permits, gradually exhausting pool and deadlocking future requests",
+          contextLevel: "local",
+        },
+        {
+          id: "bulkhead-fast-path",
+          lines: [18, 21],
+          action:
+            "Check if permits available for immediate execution (fast path)",
+          reason:
+            "Fast path optimization avoids queuing overhead when capacity available—most requests should hit fast path under normal load; decrement permits and return resolved promise immediately",
+          contextLevel: "local",
+        },
+        {
+          id: "bulkhead-slow-path",
+          lines: [23, 26],
+          action: "Queue request when permits exhausted (slow path)",
+          reason:
+            "Slow path queues request to wait for permit—stores resolve callback to be called when permit available; queuing provides fairness (FIFO) and automatic retry when capacity frees up",
+          contextLevel: "module",
+        },
+        {
+          id: "bulkhead-release-wake",
+          lines: [29, 34],
+          action: "Check waiting queue on permit release and wake next request",
+          reason:
+            "Releasing permit makes capacity available—wake first waiting request (FIFO fairness) by calling its resolve callback; if no waiters, increment permits counter for next fast-path request",
+          contextLevel: "module",
+        },
+        {
+          id: "bulkhead-separate-instances",
+          lines: [39, 40],
+          action: "Create separate bulkhead instances per external dependency",
+          reason:
+            "Isolation is key bulkhead principle—payment service gets dedicated pool (5 slots), inventory gets separate pool (10 slots); payment failures exhaust only payment pool, inventory continues with full capacity",
           contextLevel: "system",
-          relatedConcepts: ["fault-isolation"],
+        },
+        {
+          id: "bulkhead-payment-execute",
+          lines: [43, 43],
+          action: "Execute payment operation through payment bulkhead",
+          reason:
+            "Payment wrapped in isolated bulkhead—if payment service degrades (slow responses), only 5 threads blocked; other services (inventory, shipping) unaffected and continue operating",
+          contextLevel: "system",
+        },
+        {
+          id: "bulkhead-inventory-execute",
+          lines: [44, 44],
+          action: "Execute inventory operation through inventory bulkhead",
+          reason:
+            "Inventory wrapped in separate isolated bulkhead—prevents payment issues from affecting inventory operations; independent pools enable independent failure domains",
+          contextLevel: "system",
         },
       ],
       highlights: [
         {
-          lines: [14, 32],
-          label: "Semaphore-style acquire/release",
+          lines: [1, 6],
+          label:
+            "Bulkhead class with configurable concurrency limit per instance",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [18, 21],
+          label: "Fast path: immediate execution when permits available",
           sbvpDomain: "behavior",
         },
         {
-          lines: [36, 41],
-          label: "Isolated pools per service",
+          lines: [23, 26],
+          label: "Slow path: queue request when capacity exhausted",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [29, 34],
+          label:
+            "Release logic waking next queued request or incrementing permits",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [39, 40],
+          label: "Per-service bulkhead isolation in system architecture",
           sbvpDomain: "structure",
+        },
+        {
+          lines: [5, 5],
+          label:
+            "Concurrency limits defining isolation boundaries between services",
+          sbvpDomain: "philosophy",
+        },
+        {
+          lines: [42, 44],
+          label:
+            "Ship bulkhead metaphor: isolated compartments prevent single breach from sinking entire ship",
+          sbvpDomain: "philosophy",
         },
       ],
     },

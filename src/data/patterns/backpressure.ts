@@ -319,8 +319,8 @@ async function demonstrateBackpressure() {
 // REASON: Validates that producer pauses when consumer is overwhelmed
 demonstrateBackpressure().catch(console.error);`,
       contextDilation: {
+        level: "local",
         scope: "local",
-        dilation: 2,
         prerequisites: [
           "RxJS Observable basics",
           "Async/await in TypeScript",
@@ -329,63 +329,6 @@ demonstrateBackpressure().catch(console.error);`,
         systemPosition:
           "Stream processing layer between fast data source and slow consumer",
       },
-      annotations: [
-        {
-          startLine: 10,
-          endLine: 14,
-          action: "Define data item interface",
-          reason: "Type safety for items flowing through backpressure system",
-          highlightedConcepts: ["structure"],
-        },
-        {
-          startLine: 21,
-          endLine: 25,
-          action: "Implement request(n) demand signaling",
-          reason:
-            "Consumer controls flow by telling producer how many items it can handle",
-          highlightedConcepts: ["behavior"],
-        },
-        {
-          startLine: 28,
-          endLine: 39,
-          action: "Producer respects demand count",
-          reason: "Prevents overflow by pausing production when demand is zero",
-          highlightedConcepts: ["behavior"],
-        },
-        {
-          startLine: 50,
-          endLine: 58,
-          action: "Simulate slow consumer with processing delay",
-          reason:
-            "Represents real bottleneck like database writes or API calls",
-          highlightedConcepts: ["behavior"],
-        },
-        {
-          startLine: 69,
-          endLine: 79,
-          action: "mergeMap with concurrency limit",
-          reason:
-            "RxJS operator enforces backpressure by limiting parallel operations",
-          highlightedConcepts: ["behavior"],
-        },
-      ],
-      highlights: [
-        {
-          concept: "structure",
-          description:
-            "BackpressureSource class with demand tracking and buffering",
-        },
-        {
-          concept: "behavior",
-          description:
-            "Demand-driven flow control via request(n) and conditional emission",
-        },
-        {
-          concept: "behavior",
-          description:
-            "Concurrency limiting in mergeMap prevents consumer overwhelm",
-        },
-      ],
     },
     {
       id: "backpressure-nodejs-stream",
@@ -531,8 +474,8 @@ async function runBackpressurePipeline() {
 // REASON: Shows automatic backpressure handling in Node.js streams
 runBackpressurePipeline().catch(console.error);`,
       contextDilation: {
+        level: "module",
         scope: "module",
-        dilation: 3,
         prerequisites: [
           "Node.js Stream API",
           "Readable/Writable/Transform streams",
@@ -541,76 +484,291 @@ runBackpressurePipeline().catch(console.error);`,
         systemPosition:
           "Data processing pipeline with multiple stages, each potentially bottlenecked",
       },
-      annotations: [
-        {
-          startLine: 17,
-          endLine: 21,
-          action: "_read() method implementation",
-          reason:
-            "Node.js calls this when downstream ready—signal to resume production",
-          highlightedConcepts: ["behavior"],
-        },
-        {
-          startLine: 31,
-          endLine: 37,
-          action: "Check push() return value",
-          reason:
-            "false signals internal buffer full—must pause until _read called",
-          highlightedConcepts: ["behavior"],
-        },
-        {
-          startLine: 59,
-          endLine: 75,
-          action: "Async transformation with callback",
-          reason:
-            "Slow processing triggers backpressure—callback controls flow",
-          highlightedConcepts: ["behavior"],
-        },
-        {
-          startLine: 123,
-          endLine: 128,
-          action: "pipeline() composes streams",
-          reason:
-            "Automatic backpressure propagation from slow consumer to fast producer",
-          highlightedConcepts: ["structure", "behavior"],
-        },
-      ],
-      highlights: [
-        {
-          concept: "structure",
-          description:
-            "Three-stage pipeline: DataGenerator → SlowProcessor → ResultWriter",
-        },
-        {
-          concept: "behavior",
-          description:
-            "Automatic backpressure via push() return value and _read() calls",
-        },
-        {
-          concept: "behavior",
-          description:
-            "Callback-based flow control in Transform and Writable streams",
-        },
-      ],
+    },
+  ],
+
+  implementations: [
+    {
+      id: "rxjs-backpressure",
+      name: "RxJS - Reactive Extensions for JavaScript",
+      type: "library",
+      languages: ["javascript", "typescript"],
+      description:
+        "Reactive programming library with built-in backpressure operators (throttle, debounce, buffer, sample). Provides declarative control over data flow in async event streams with automatic subscription management.",
+      links: {
+        docs: "https://rxjs.dev/guide/operators",
+        github: "https://github.com/ReactiveX/rxjs",
+      },
+      codeSnippet: `import { fromEvent, bufferTime, throttleTime } from 'rxjs';
+
+// Throttle mouse clicks to max 1 per second (drop excess)
+const clicks$ = fromEvent(button, 'click')
+  .pipe(throttleTime(1000));
+
+// Buffer API requests and process in batches every 100ms
+const apiRequests$ = dataStream$
+  .pipe(bufferTime(100))
+  .subscribe(batch => processBatch(batch));
+
+// Sample sensor data every 5 seconds (keep latest, drop others)
+const sensorData$ = highFrequencySensor$
+  .pipe(sampleTime(5000));`,
+    },
+    {
+      id: "project-reactor",
+      name: "Project Reactor - Reactive Streams for JVM",
+      type: "framework",
+      languages: ["java", "kotlin"],
+      description:
+        "Foundational reactive library for Spring WebFlux with full Reactive Streams backpressure support. Provides Flux and Mono types with operators for buffering, windowing, and flow control in async pipelines.",
+      links: {
+        docs: "https://projectreactor.io/docs/core/release/reference/",
+        github: "https://github.com/reactor/reactor-core",
+      },
+      codeSnippet: `// Backpressure with buffer and overflow strategies
+Flux<Data> dataStream = source
+    .onBackpressureBuffer(100, // Buffer 100 items
+        data -> log.warn("Dropped: " + data), // Overflow handler
+        BufferOverflowStrategy.DROP_LATEST)
+    .publishOn(Schedulers.parallel(), 32); // Limit prefetch
+
+// Request N items at a time (manual backpressure)
+Flux<User> users = userRepository.findAll()
+    .limitRate(10); // Request 10 at a time from upstream
+
+// Window operator for batch processing
+dataStream
+    .window(Duration.ofSeconds(5))
+    .flatMap(window -> window.collectList())
+    .subscribe(batch -> processBatch(batch));`,
+    },
+    {
+      id: "akka-streams",
+      name: "Akka Streams",
+      type: "framework",
+      languages: ["scala", "java"],
+      description:
+        "Stream processing library built on Akka with automatic backpressure propagation. Implements Reactive Streams spec with graph DSL for building complex async data pipelines with bounded buffers.",
+      links: {
+        docs: "https://doc.akka.io/docs/akka/current/stream/index.html",
+        github: "https://github.com/akka/akka",
+      },
+      codeSnippet: `// Akka Streams with backpressure and async boundaries
+Source.fromIterator(() => dataIterator)
+  .buffer(100, OverflowStrategy.backpressure) // Block upstream
+  .async // Async boundary
+  .throttle(10, 1.second) // Max 10 elements per second
+  .mapAsync(4)(data => slowExternalCall(data)) // Parallel processing
+  .runWith(Sink.foreach(result => handleResult(result)))
+
+// Balancing work across workers with backpressure
+Source(jobs)
+  .via(balancer(workers, 256)) // Distribute with bounded queue
+  .runWith(Sink.ignore)`,
+    },
+    {
+      id: "kafka-consumer",
+      name: "Apache Kafka Consumer",
+      type: "platform",
+      languages: ["java", "scala", "python", "go"],
+      description:
+        "Distributed streaming platform with consumer-controlled backpressure via manual offset commits and pause/resume APIs. Consumers control consumption rate to match processing capacity.",
+      links: {
+        docs: "https://kafka.apache.org/documentation/#consumerapi",
+      },
+      codeSnippet: `// Kafka consumer with backpressure via pause/resume
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+consumer.subscribe(Arrays.asList("events"));
+
+while (true) {
+  ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+
+  // If processing queue is full, pause consumption
+  if (processingQueue.size() > MAX_QUEUE_SIZE) {
+    consumer.pause(consumer.assignment());
+    log.info("Backpressure: paused consumption");
+  }
+
+  for (ConsumerRecord<String, String> record : records) {
+    processingQueue.offer(record);
+  }
+
+  // Resume when queue drains
+  if (processingQueue.size() < MIN_QUEUE_SIZE) {
+    consumer.resume(consumer.assignment());
+  }
+}`,
+    },
+    {
+      id: "nodejs-streams",
+      name: "Node.js Streams",
+      type: "library",
+      languages: ["javascript", "typescript"],
+      description:
+        "Built-in Node.js stream API with automatic backpressure via 'drain' events and highWaterMark. Writable streams signal when buffer is full, pausing readable streams until drained.",
+      links: {
+        docs: "https://nodejs.org/api/stream.html#stream_backpressure",
+      },
+      codeSnippet: `const { pipeline } = require('stream');
+const fs = require('fs');
+
+// Automatic backpressure in pipeline
+pipeline(
+  fs.createReadStream('large-file.txt'),
+  transformStream, // Processing stream
+  fs.createWriteStream('output.txt'),
+  (err) => {
+    if (err) console.error('Pipeline failed', err);
+  }
+);
+
+// Manual backpressure handling
+const writable = getWritableStream();
+readable.on('data', (chunk) => {
+  const canContinue = writable.write(chunk);
+  if (!canContinue) {
+    readable.pause(); // Backpressure: stop reading
+  }
+});
+
+writable.on('drain', () => {
+  readable.resume(); // Buffer drained, resume reading
+});`,
+    },
+    {
+      id: "rabbitmq-prefetch",
+      name: "RabbitMQ Prefetch/QoS",
+      type: "platform",
+      languages: ["any"],
+      description:
+        "Message broker with consumer prefetch limits (QoS) for backpressure control. Consumers specify max unacknowledged messages, preventing broker from overwhelming slow consumers.",
+      links: {
+        docs: "https://www.rabbitmq.com/consumer-prefetch.html",
+      },
+      codeSnippet: `// RabbitMQ consumer with prefetch limit
+channel.basicQos(10); // Max 10 unacknowledged messages
+
+channel.basicConsume(queueName, false, (consumerTag, delivery) -> {
+  try {
+    // Process message (may be slow)
+    processMessage(delivery.getBody());
+
+    // Acknowledge after processing
+    channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+  } catch (Exception e) {
+    // Negative ack triggers requeue
+    channel.basicNack(delivery.getEnvelope().getDeliveryTag(), false, true);
+  }
+});
+
+// Broker won't send 11th message until one is acknowledged
+// This creates backpressure to match consumer processing rate`,
+    },
+    {
+      id: "grpc-flow-control",
+      name: "gRPC Flow Control",
+      type: "framework",
+      languages: ["go", "java", "python", "cpp"],
+      description:
+        "RPC framework with HTTP/2 flow control for streaming calls. Automatic window-based backpressure prevents fast server from overwhelming slow client in bidirectional streams.",
+      links: {
+        docs: "https://grpc.io/docs/guides/flow-control/",
+      },
+      codeSnippet: `// gRPC server streaming with backpressure
+service DataService {
+  rpc StreamData(Request) returns (stream DataChunk);
+}
+
+// Client controls flow via HTTP/2 window updates
+func (c *client) StreamData(ctx context.Context) {
+  stream, _ := c.stub.StreamData(ctx, &Request{})
+
+  for {
+    chunk, err := stream.Recv()
+    if err == io.EOF {
+      break
+    }
+
+    // Slow processing creates backpressure
+    processChunk(chunk) // HTTP/2 flow control pauses server
+  }
+}`,
+    },
+    {
+      id: "asyncio-queue",
+      name: "Python asyncio Queue",
+      type: "library",
+      languages: ["python"],
+      description:
+        "Async queue with maxsize parameter for backpressure in concurrent Python code. Producers block when queue is full, implementing natural backpressure for async workflows.",
+      links: {
+        docs: "https://docs.python.org/3/library/asyncio-queue.html",
+      },
+      codeSnippet: `import asyncio
+
+# Bounded queue creates backpressure
+queue = asyncio.Queue(maxsize=10)
+
+async def producer():
+    for i in range(1000):
+        data = await fetch_data(i)
+        await queue.put(data)  # Blocks when queue full (backpressure)
+
+async def consumer():
+    while True:
+        data = await queue.get()
+        await process_data(data)  # Slow processing
+        queue.task_done()
+
+# Run producer and consumer concurrently
+await asyncio.gather(producer(), consumer())`,
+    },
+  ],
+
+  usedInSystems: [
+    {
+      systemId: "netflix-hystrix",
+      systemName: "Netflix Hystrix Command Pattern",
+      howUsed:
+        "Netflix implements backpressure in Hystrix through bounded thread pools and semaphores that limit concurrent execution. When a downstream service becomes slow, thread pools fill up and new requests are rejected with a RejectedExecutionException rather than queueing indefinitely. This applies backpressure to upstream callers (API Gateway, other services), forcing them to slow down or fail fast. Hystrix monitors thread pool saturation metrics and automatically sheds load when pools reach 80% capacity. The system uses a bulkhead pattern where each dependency gets isolated thread pools—if the recommendation service is slow, only its pool fills up while other services continue normally. Pattern composition: Backpressure + Circuit Breaker + Bulkhead + Metrics. Impact: Prevented cascading failures during Black Friday 2016 when recommendation service degraded—instead of taking down the entire platform, Hystrix applied backpressure and served fallback content, maintaining 99.9% availability.",
+      source:
+        "https://netflixtechblog.com/fault-tolerance-in-a-high-volume-distributed-system-91ab4faae74a",
+    },
+    {
+      systemId: "akka-streams",
+      systemName: "Akka Streams in Lightbend Production Systems",
+      howUsed:
+        "Akka Streams implements reactive backpressure through demand-driven flow control in stream processing pipelines. When processing sensor data from IoT devices, a slow database sink signals demand to upstream components—the stream automatically buffers data up to configured limits (e.g., 1000 messages), then applies backpressure to the source when buffer fills. This prevents out-of-memory errors when database writes become slow during peak load. Akka Streams uses asynchronous boundaries with bounded buffers between stages, each stage pulling data at its own pace. The framework supports dynamic backpressure strategies: drop oldest, drop newest, or fail. Pattern composition: Backpressure + Reactive Streams + Bounded Buffers + Asynchronous Processing. Impact: PayPal uses Akka Streams to process 1B+ transactions daily with backpressure preventing data loss during database maintenance windows—transactions queue safely instead of being dropped.",
+      source:
+        "https://doc.akka.io/docs/akka/current/stream/stream-flows-and-basics.html",
+    },
+    {
+      systemId: "kafka-consumer-groups",
+      systemName: "Apache Kafka Consumer Backpressure",
+      howUsed:
+        "Kafka implements natural backpressure through consumer group lag monitoring and partition assignment. When consumers fall behind (high lag), Kafka automatically rebalances partitions to distribute load across healthy consumers. Slow consumers don't block fast ones—each consumer processes at its own rate, and unconsumed messages remain in Kafka until consumed or expired. LinkedIn's infrastructure uses Kafka's pause/resume API to apply explicit backpressure: when a consumer's processing queue reaches 80% capacity, it pauses fetching from Kafka, processes the backlog, then resumes. This prevents consumer crashes from memory exhaustion. The system monitors consumer lag metrics (records-lag-max) and triggers alerts when lag exceeds thresholds (e.g., 1 million messages), indicating backpressure is needed. Pattern composition: Backpressure + Consumer Groups + Partition Rebalancing + Lag Monitoring. Impact: LinkedIn processes 7 trillion+ messages per day with zero data loss—backpressure ensures consumers never get overwhelmed even during traffic spikes (2x normal during major events).",
+      source: "https://engineering.linkedin.com/kafka/running-kafka-scale",
+    },
+    {
+      systemId: "grpc-flow-control",
+      systemName: "gRPC HTTP/2 Flow Control",
+      howUsed:
+        "gRPC uses HTTP/2's built-in flow control to implement automatic backpressure in streaming RPCs. When a client streams data to a server (e.g., uploading large files), the server advertises a receive window size (default 64KB). The client sends data up to the window limit, then pauses until the server sends a WINDOW_UPDATE frame indicating it processed data and has buffer space. This prevents fast clients from overwhelming slow servers. Google's internal services use gRPC streaming for log collection—when log aggregation servers become CPU-bound, they stop sending WINDOW_UPDATE frames, automatically slowing log producers. The system monitors flow control window sizes and alerts when windows remain at zero for extended periods (indicating sustained backpressure). Pattern composition: Backpressure + HTTP/2 Flow Control + Streaming RPC + Windowing. Impact: Google processes 100+ petabytes of logs daily with gRPC backpressure preventing log collector crashes—producers automatically throttle during collector maintenance or failures.",
+      source: "https://grpc.io/docs/guides/flow-control/",
+    },
+    {
+      systemId: "rxjs-observables",
+      systemName: "RxJS Backpressure Strategies in Angular Apps",
+      howUsed:
+        "RxJS implements backpressure through operators like throttleTime, debounceTime, and sample that drop or delay emissions when observers can't keep up. In Angular applications handling user input (search autocomplete, form validation), fast typing produces rapid events that could overwhelm backend APIs. The throttleTime operator applies backpressure by limiting emissions to once per 300ms, dropping intermediate values. Microsoft Teams uses RxJS backpressure in their chat UI—when scrolling through thousands of messages, the scroll event stream is throttled to 60fps (16ms) to prevent UI thread blocking. The system uses bufferTime to batch rapid events (mouse movements, keystrokes) into arrays processed in bulk, reducing processing overhead. Pattern composition: Backpressure + Observable Streams + Event Throttling + Buffering. Impact: Reduced CPU usage in Teams chat by 40% during rapid scrolling; prevented UI freezes when processing 1000+ messages per second; improved perceived performance with smooth 60fps rendering.",
+      source: "https://rxjs.dev/guide/operators",
     },
   ],
 
   systemContext: {
     typicalPlacement: [
-      {
-        scenario: "Streaming data pipeline",
-        placement:
-          "Between fast data source (API, file, queue) and slow consumer (database, external service)",
-        reasoning:
-          "Prevents memory overflow when producer consistently faster than consumer",
-      },
-      {
-        scenario: "Message queue consumer",
-        placement:
-          "Between message broker and business logic processor to prevent consumer overwhelm",
-        reasoning:
-          "Broker can deliver messages faster than application can process them",
-      },
+      "Streaming data pipeline between fast data source (API, file, queue) and slow consumer (database, external service)",
+      "Message queue consumer between message broker and business logic processor to prevent consumer overwhelm",
     ],
     interactsWith: [
       "Message queues (RabbitMQ, Kafka) with consumer acknowledgment",

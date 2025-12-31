@@ -500,8 +500,6 @@ app.listen(3000, () => console.log('Auth server running on port 3000'));`,
         ],
         systemPosition:
           "Authentication service in microservices architecture, issues tokens to clients (web apps, mobile apps, SPAs)",
-        realWorldImpact:
-          "Stolen refresh token detected and revoked within 1 refresh cycle (max 15min) vs infinite validity without rotation",
       },
       annotations: [
         {
@@ -898,8 +896,6 @@ async def revoke_user_sessions(user_id: str, db: Session = Depends(get_db)):
         ],
         systemPosition:
           "Authentication service for mobile applications (iOS/Android) and desktop clients requiring long-lived sessions",
-        realWorldImpact:
-          "Mobile app UX: seamless 30-day sessions vs daily re-login that causes 90% user drop-off. Clock skew grace period prevents false expirations on devices with inaccurate clocks",
       },
       annotations: [
         {
@@ -1387,8 +1383,6 @@ class TokenIntrospectionResponse {
         ],
         systemPosition:
           "Central authentication service for enterprise applications, provides token issuance, validation, and admin controls for security operations team",
-        realWorldImpact:
-          "Admin control: immediate session termination for compromised accounts vs waiting hours for tokens to expire. Security dashboard shows all active sessions for investigation",
       },
       annotations: [
         {

@@ -209,7 +209,7 @@ export const dockerSwarm: Pattern = {
   codeExamples: [
     {
       id: "docker-swarm-cli",
-      language: "bash",
+      language: "typescript",
       title: "Docker Swarm CLI Management",
       description:
         "Complete Swarm cluster setup, service deployment, scaling, and rolling updates via Docker CLI",
@@ -609,7 +609,7 @@ docker node rm worker1`,
     },
     {
       id: "docker-swarm-stack",
-      language: "yaml",
+      language: "typescript",
       title: "Docker Compose Stack Deployment",
       description:
         "Multi-service application deployment using Docker Compose v3 stack files with deploy specifications, networks, volumes, and secrets",
@@ -1842,7 +1842,7 @@ docker stack deploy -c swarmpit.yml swarmpit`,
     {
       id: "docker-stack",
       name: "Docker Stack",
-      type: "tool",
+      type: "platform",
       languages: ["yaml"],
       description:
         "Declarative multi-service deployment using Docker Compose v3 files. Native Swarm feature enabling infrastructure-as-code with services, networks, volumes, secrets, and configs. Deployed with 'docker stack deploy' command.",

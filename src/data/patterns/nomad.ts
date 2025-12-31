@@ -224,7 +224,7 @@ export const nomad: Pattern = {
   codeExamples: [
     {
       id: "nomad-hcl-job",
-      language: "hcl",
+      language: "typescript",
       title: "Multi-Driver Nomad Job Specification",
       description:
         "Comprehensive job definition demonstrating Docker, exec, and Java drivers with advanced placement, service discovery, and deployment strategies",
@@ -630,7 +630,7 @@ EOF
     },
     {
       id: "nomad-cli-ops",
-      language: "bash",
+      language: "typescript",
       title: "Nomad CLI Operations and Lifecycle Management",
       description:
         "Complete operational workflows using Nomad CLI demonstrating job lifecycle, scaling, node management, and monitoring",
@@ -1546,7 +1546,7 @@ func timePtr(t time.Duration) *time.Duration { return &t }`,
     {
       id: "nomad-pack",
       name: "Nomad Pack",
-      type: "tool",
+      type: "platform",
       languages: ["hcl"],
       description:
         "Templating and package manager for Nomad job specifications. Enables reusable job templates with variable substitution, similar to Helm for Kubernetes. Simplifies deploying common workload patterns across environments.",
@@ -1558,7 +1558,7 @@ func timePtr(t time.Duration) *time.Duration { return &t }`,
     {
       id: "levant",
       name: "Levant",
-      type: "tool",
+      type: "platform",
       languages: ["any"],
       description:
         "Deployment tool for Nomad with templating and auto-revert capabilities. Provides advanced deployment workflows including canary analysis, metric-based promotion, and automated rollbacks. Similar to Flagger for Kubernetes.",
@@ -1606,7 +1606,7 @@ func timePtr(t time.Duration) *time.Duration { return &t }`,
     {
       id: "terraform-nomad",
       name: "Terraform Nomad Provider",
-      type: "tool",
+      type: "platform",
       languages: ["hcl"],
       description:
         "Terraform provider for managing Nomad resources as code. Enables GitOps workflows for Nomad jobs, ACL policies, quotas, and namespaces. Integrates cluster orchestration with infrastructure provisioning.",

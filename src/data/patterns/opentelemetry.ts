@@ -566,14 +566,6 @@ app.listen(PORT, () => {
         ],
         systemPosition:
           "Payment processing service in e-commerce platform, exporting telemetry to Jaeger for distributed tracing and Prometheus for metrics",
-        performanceComparison: {
-          withoutPattern:
-            "Manual logging: 15+ services log independently, engineers spend 30-45 minutes correlating logs during incidents, no visibility into cross-service latency bottlenecks",
-          withPattern:
-            "OTel traces: Single trace ID spans all 15 services, incident root cause identified in 2-3 minutes via flame graph, P95 latency breakdowns show exact bottleneck (Redis cache miss adding 200ms)",
-          quantifiedImprovement:
-            "Mean time to resolution (MTTR) reduced from 45min to 3min (93% faster), caught 12 production issues in staging via trace analysis before customer impact",
-        },
       },
       annotations: [
         {
@@ -1132,14 +1124,6 @@ if __name__ == "__main__":
         ],
         systemPosition:
           "Inventory service in retail platform, communicating with warehouse-router service, exporting telemetry to OTLP collector (Jaeger + Prometheus)",
-        performanceComparison: {
-          withoutPattern:
-            "Manual logging: Separate log files for FastAPI, SQLAlchemy, Redis. During P99 latency spike (2.5s checkout), engineers grep logs across 3 services for 20 minutes, find slow query but can't correlate to user action or cache behavior.",
-          withPattern:
-            "OTel traces: Single trace shows full request flow: cache miss (5ms) → DB query (1.2s - missing index!) → warehouse router call (800ms - timeout retry). Trace context in logs links ERROR log to exact span. Root cause found in 90 seconds via Jaeger UI.",
-          quantifiedImprovement:
-            "MTTR reduced 93% (20min → 90sec). Caught slow query in staging via P99 trace analysis before production deploy. Metrics showed cache hit rate dropped from 85% to 12% during incident, guiding fix priority.",
-        },
       },
       annotations: [
         {
@@ -1847,14 +1831,6 @@ class PaymentFailedException extends RuntimeException {
         ],
         systemPosition:
           "Order orchestration service in e-commerce platform, coordinating inventory-service, payment-gateway, and Kafka message broker, exporting to OTLP collector",
-        performanceComparison: {
-          withoutPattern:
-            "Manual logging: Order creation involves 4 services (order → inventory → payment → kafka). During Black Friday, 15% of orders fail silently. Engineers check logs across 4 services, find payment gateway timeout after 1 hour, but can't determine which orders affected or if inventory was rolled back. Estimated $50K lost revenue.",
-          withPattern:
-            "OTel traces: Failed order trace shows: inventory-reserve (200ms, OK) → payment-process (5s, TIMEOUT) → kafka-publish (skipped). Trace query 'status=error payment.method=credit_card' finds all 1,247 affected orders. Automatic retry added, reducing failure rate to 0.3%. Micrometer metrics show payment latency P99 spiked from 300ms to 8s at incident start.",
-          quantifiedImprovement:
-            "MTTR: 1hr → 5min (92% faster). Revenue recovery: $50K (proactive retry of failed orders). Prevented: 3 similar incidents caught in staging via trace P99 alerts before production deploy. Java agent overhead: 3% CPU, 8% memory (acceptable for observability ROI).",
-        },
       },
       annotations: [
         {
@@ -2260,6 +2236,105 @@ storage:
     backend: s3
     s3:
       bucket: tempo-traces`,
+    },
+    {
+      id: "aws-xray-otel",
+      name: "AWS X-Ray with OpenTelemetry",
+      type: "service",
+      languages: ["any"],
+      description:
+        "AWS X-Ray transitioned to OpenTelemetry in 2025 as recommended approach for AWS application tracing. X-Ray now ingests OTLP natively via AWS Distro for OpenTelemetry (ADOT). Auto-integration with Lambda, ECS, EKS, API Gateway, App Runner. CloudWatch Transaction Search enables querying traces across all AWS services. Best for AWS-centric workloads wanting managed observability.",
+      links: {
+        docs: "https://docs.aws.amazon.com/xray/latest/devguide/xray-otel.html",
+      },
+      codeSnippet: `// AWS Distro for OpenTelemetry (ADOT)
+import { getNodeAutoInstrumentations } from '@aws/otel-node';
+import { XRayExporter } from '@aws/otel-xray-exporter';
+
+const sdk = new NodeSDK({
+  serviceName: 'my-service',
+  instrumentations: [getNodeAutoInstrumentations()],
+  traceExporter: new XRayExporter(),
+});`,
+    },
+    {
+      id: "google-cloud-trace-otel",
+      name: "Google Cloud Trace with OpenTelemetry",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Google Cloud Trace natively supports OpenTelemetry via OTLP protocol. Automatic integration with GKE (Google Kubernetes Engine), Cloud Run, App Engine, Cloud Functions. Global distributed tracing across Google Cloud services. Leverages Google's Dapper lineage for enterprise-grade tracing at massive scale.",
+      links: {
+        docs: "https://cloud.google.com/trace/docs/setup/opentelemetry",
+      },
+      codeSnippet: `// Export OTel to Google Cloud Trace
+const { TraceExporter } = require('@google-cloud/opentelemetry-cloud-trace-exporter');
+
+const exporter = new TraceExporter({
+  projectId: 'my-gcp-project',
+});
+
+const provider = new NodeTracerProvider({
+  exporter: exporter,
+});`,
+    },
+    {
+      id: "azure-monitor-otel",
+      name: "Azure Monitor with OpenTelemetry",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Azure Monitor (Application Insights) provides first-class OpenTelemetry support. Azure SDK libraries ship with built-in OTel instrumentation for Storage, Cosmos DB, Service Bus. Native OTLP ingestion eliminates need for vendor-specific SDKs. Enables hybrid cloud observability (Azure + AWS/on-prem) via OTel's vendor neutrality.",
+      links: {
+        docs: "https://learn.microsoft.com/en-us/azure/azure-monitor/app/opentelemetry-overview",
+      },
+      codeSnippet: `// Export OTel to Azure Monitor
+const { AzureMonitorTraceExporter } = require('@azure/monitor-opentelemetry-exporter');
+
+const exporter = new AzureMonitorTraceExporter({
+  connectionString: process.env.APPLICATIONINSIGHTS_CONNECTION_STRING,
+});
+
+const provider = new NodeTracerProvider({
+  exporter: exporter,
+});`,
+    },
+    {
+      id: "signoz-otel",
+      name: "SigNoz",
+      type: "platform",
+      languages: ["any via OTLP"],
+      description:
+        "Open-source APM built natively on OpenTelemetry and ClickHouse. Single pane for traces, metrics, and logs with unified query interface. DataDog/New Relic alternative with 90% cost savings. Self-hosted or SigNoz Cloud. Query language supports complex analytics across all telemetry signals.",
+      links: {
+        docs: "https://signoz.io/docs/",
+        github: "https://github.com/SigNoz/signoz",
+      },
+      codeSnippet: `# Send OTel to SigNoz
+export OTEL_EXPORTER_OTLP_ENDPOINT="https://ingest.signoz.io:443"
+export OTEL_EXPORTER_OTLP_HEADERS="signoz-access-token=<token>"
+export OTEL_EXPORTER_OTLP_PROTOCOL="grpc"
+
+node --require ./tracing.js app.js`,
+    },
+    {
+      id: "honeycomb-otel",
+      name: "Honeycomb",
+      type: "service",
+      languages: ["any via OTLP"],
+      description:
+        "Observability platform optimized for high-cardinality OpenTelemetry data. BubbleUp feature auto-identifies anomaly root causes. Best for debugging complex distributed systems with rich trace attributes. Query engine handles millions of unique attribute combinations (user IDs, feature flags, versions).",
+      links: {
+        docs: "https://docs.honeycomb.io/getting-data-in/opentelemetry/",
+      },
+      codeSnippet: `// Export OTel to Honeycomb
+const exporter = new OTLPTraceExporter({
+  url: 'https://api.honeycomb.io/v1/traces',
+  headers: {
+    'x-honeycomb-team': process.env.HONEYCOMB_API_KEY,
+    'x-honeycomb-dataset': 'my-service',
+  },
+});`,
     },
   ],
 

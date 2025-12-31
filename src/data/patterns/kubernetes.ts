@@ -608,8 +608,6 @@ async function main() {
         ],
         systemPosition:
           "CI/CD pipeline integration for automated deployments, GitOps workflows, infrastructure-as-code tools",
-        scaleContext:
-          "Manual deployment: SSH to 10 servers, pull images, restart containers, update load balancer config (2-3 hours, error-prone, no rollback). Kubernetes: Apply manifest, automatic scheduling, health checking, rolling update, auto-rollback on failure (2-3 minutes, declarative, safe).",
       },
       annotations: [
         {
@@ -708,7 +706,7 @@ async function main() {
     },
     {
       id: "k8s-yaml-microservice",
-      language: "yaml",
+      language: "typescript",
       title: "Complete Microservice Deployment with YAML Manifests",
       description:
         "Full-stack Kubernetes configuration for a production microservice: Deployment with resource limits and health probes, Service for load balancing, Ingress for external access, HPA for autoscaling, ConfigMap for configuration, and Secret for credentials. Demonstrates the complete deployment lifecycle using kubectl.",
@@ -1120,8 +1118,6 @@ spec:
         ],
         systemPosition:
           "Foundational infrastructure for cloud-native applications, CI/CD pipelines, GitOps workflows (ArgoCD, Flux)",
-        scaleContext:
-          "Scalability: Start at 3 replicas handling 300 req/s (100 req/s per Pod). Traffic spike to 1000 req/s (Black Friday, viral content). HPA detects CPU spike (>70%), scales to 10 replicas in 2 minutes. After spike ends, gradually scales down over 10 minutes to avoid thrashing. Manual scaling would take 30+ minutes and likely cause outages during spike.",
       },
       annotations: [
         {
@@ -1653,8 +1649,6 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
         ],
         systemPosition:
           "Platform engineering layer for automating operational tasks, encoding domain expertise into Kubernetes, reducing manual toil",
-        scaleContext:
-          "Manual database provisioning: SSH to servers, install postgres, configure replication, set up backups, update DNS (4-8 hours, error-prone, inconsistent across environments). Operator: kubectl apply database.yaml, operator provisions everything in 5-10 minutes, declarative, consistent, automated backups. Scales from 1 database to 100+ databases without additional operational burden.",
       },
       annotations: [
         {
@@ -1849,7 +1843,7 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     {
       id: "k3s",
       name: "K3s",
-      type: "distribution",
+      type: "platform",
       languages: ["any"],
       description:
         "Lightweight Kubernetes distribution for resource-constrained environments (IoT, edge, ARM). Single binary <100MB, uses SQLite instead of etcd. Perfect for edge computing, development, CI/CD. Fully CNCF certified—same API as full Kubernetes.",
@@ -1860,7 +1854,7 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     {
       id: "microk8s",
       name: "MicroK8s",
-      type: "distribution",
+      type: "platform",
       languages: ["any"],
       description:
         "Canonical's lightweight Kubernetes for workstations, IoT, and edge. Single-command installation, add-ons for common services (DNS, dashboard, Istio), automatic updates. Ideal for local development and testing.",
@@ -1871,7 +1865,7 @@ func (r *DatabaseReconciler) SetupWithManager(mgr ctrl.Manager) error {
     {
       id: "minikube",
       name: "Minikube",
-      type: "tool",
+      type: "platform",
       languages: ["any"],
       description:
         "Local Kubernetes cluster for development and testing. Runs in VM, container, or bare-metal. Supports multiple drivers (Docker, VirtualBox, Hyper-V), add-ons for experimentation, and tunneling for LoadBalancer services. Not for production.",

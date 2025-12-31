@@ -180,57 +180,167 @@ try {
 }`,
       runnable: true,
       contextDilation: {
-        level: "local",
-        scope: "A reusable timeout wrapper for any Promise",
-        prerequisites: ["Promises", "setTimeout", "AbortController"],
+        level: "module",
+        scope:
+          "Generic Promise timeout wrapper with AbortController integration for bounding wait time and preventing indefinite resource blocking",
+        prerequisites: [
+          "Promises",
+          "setTimeout",
+          "AbortController",
+          "Race conditions",
+        ],
         systemPosition:
-          "Utility function used by HTTP clients and service calls",
+          "Utility wrapper used by HTTP clients, service calls, and database queries to enforce maximum wait times and enable early cancellation",
       },
       annotations: [
         {
-          id: "timeout-error",
+          id: "timeout-error-class",
           lines: [1, 6],
-          action: "Define a custom TimeoutError class",
+          action:
+            "Define custom TimeoutError class extending Error for timeout identification",
           reason:
-            "Allows callers to distinguish timeout failures from other errors",
+            "Custom error type enables callers to distinguish timeout failures from other errors (network, validation, business logic); specific error type allows targeted error handling (retry timeout, don't retry validation)",
           contextLevel: "local",
         },
         {
-          id: "timeout-timer",
-          lines: [14, 17],
-          action: "Start a timer that rejects after ms milliseconds",
+          id: "timeout-error-message",
+          lines: [3, 3],
+          action:
+            "Include timeout duration in error message for debugging context",
           reason:
-            "This is the enforcement mechanism—if the promise does not settle in time, we reject",
+            "Error message containing timeout value helps debugging—engineers can see if timeout too aggressive (100ms) vs reasonable (5000ms); timeout value appears in logs for correlation with performance metrics",
+          contextLevel: "micro",
+        },
+        {
+          id: "timeout-generic-type",
+          lines: [8, 12],
+          action:
+            "Accept generic Promise type parameter for type-safe wrapping",
+          reason:
+            "Generic type preserves return type through wrapper—withTimeout<User> returns Promise<User>, not Promise<unknown>; type safety enables IDE autocomplete and compile-time checking",
+          contextLevel: "module",
+        },
+        {
+          id: "timeout-abort-signal",
+          lines: [11, 11],
+          action:
+            "Accept optional AbortSignal for external cancellation support",
+          reason:
+            "AbortSignal enables external cancellation (user navigates away, request superseded by newer request); without abort support, timeout would continue running even when result no longer needed",
+          contextLevel: "module",
+        },
+        {
+          id: "timeout-promise-wrapper",
+          lines: [13, 13],
+          action: "Create new Promise wrapper racing against timeout timer",
+          reason:
+            "Promise wrapper enables racing original promise against timer—whichever settles first wins; wrapper pattern allows transparent timeout addition without modifying original promise",
           contextLevel: "local",
         },
         {
-          id: "timeout-abort",
+          id: "timeout-timer-setup",
+          lines: [15, 17],
+          action: "Start setTimeout timer that rejects with TimeoutError",
+          reason:
+            "Timer is enforcement mechanism—if original promise doesn't settle within ms milliseconds, timer fires and rejects wrapper promise; timeout moves from 'nice to have' to guaranteed upper bound",
+          contextLevel: "local",
+        },
+        {
+          id: "timeout-abort-listener",
           lines: [20, 23],
-          action: "Listen for abort signal to cancel early",
+          action: "Register abort signal listener to cancel timeout early",
           reason:
-            "Allows external cancellation (e.g., user navigates away) to clean up the timeout",
+            "Abort signal enables caller to cancel operation before timeout (user cancels request, component unmounts, newer request supersedes); early cancellation prevents wasted work and improves resource utilization",
+          contextLevel: "module",
+        },
+        {
+          id: "timeout-abort-cleanup",
+          lines: [21, 22],
+          action: "Clear timeout timer and reject with abort reason on signal",
+          reason:
+            "When abort fires, clear timeout timer to prevent memory leak; reject with abort reason (not timeout error) to distinguish user cancellation from timeout; cleanup prevents timer callback from firing later",
           contextLevel: "local",
-          relatedConcepts: ["abort-controller", "cancellation"],
+        },
+        {
+          id: "timeout-success-handler",
+          lines: [27, 30],
+          action: "Chain original promise success handler to resolve wrapper",
+          reason:
+            "When original promise succeeds before timeout, resolve wrapper with result; clear timeout timer to prevent late rejection; success path is optimistic case (normal operation)",
+          contextLevel: "local",
+        },
+        {
+          id: "timeout-error-handler",
+          lines: [31, 34],
+          action: "Chain original promise error handler to reject wrapper",
+          reason:
+            "When original promise fails before timeout, propagate error to wrapper; clear timeout timer since operation completed (even if failed); failure path preserves original error for proper error handling",
+          contextLevel: "local",
         },
         {
           id: "timeout-cleanup",
-          lines: [26, 33],
-          action: "Clear timer when promise settles",
+          lines: [28, 33],
+          action: "Clear timeout in both success and error handlers",
           reason:
-            "Prevents timer from firing after the promise has already resolved or rejected",
-          contextLevel: "micro",
+            "Timer must be cleared on any promise settlement to prevent timeout firing after operation completed; without cleanup, timer would reject settled promise (no-op but wastes memory); cleanup prevents timer leak",
+          contextLevel: "local",
+        },
+        {
+          id: "timeout-error-catch",
+          lines: [43, 46],
+          action:
+            "Catch TimeoutError specifically to enable timeout-specific handling",
+          reason:
+            "TimeoutError indicates operation was slow (not failed)—may be retryable with longer timeout; distinguishing timeout from errors (4xx, network) enables appropriate recovery (retry timeout, don't retry 400)",
+          contextLevel: "module",
+        },
+        {
+          id: "timeout-fetch-usage",
+          lines: [39, 42],
+          action:
+            "Wrap fetch with timeout and AbortController for cancellable HTTP request",
+          reason:
+            "Fetch API respects AbortSignal for early cancellation; timeout wrapper bounds maximum wait time; combination enables both timeout enforcement and user cancellation",
+          contextLevel: "module",
         },
       ],
       highlights: [
         {
-          lines: [14, 17],
-          label: "Timeout enforcement",
+          lines: [1, 6],
+          label: "Custom TimeoutError class for error type discrimination",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [15, 17],
+          label: "setTimeout-based timeout enforcement rejecting on expiration",
           sbvpDomain: "behavior",
         },
         {
-          lines: [26, 33],
-          label: "Cleanup on completion",
+          lines: [20, 23],
+          label: "AbortSignal integration for external cancellation support",
           sbvpDomain: "behavior",
+        },
+        {
+          lines: [26, 35],
+          label: "Promise settlement handlers with timer cleanup",
+          sbvpDomain: "behavior",
+        },
+        {
+          lines: [10, 10],
+          label: "Timeout duration as configurable maximum wait bound",
+          sbvpDomain: "philosophy",
+        },
+        {
+          lines: [8, 12],
+          label:
+            "Utility wrapper positioned to wrap any async operation requiring time bounds",
+          sbvpDomain: "structure",
+        },
+        {
+          lines: [39, 43],
+          label:
+            "Fail-fast timeout philosophy: bound wait time to prevent indefinite resource blocking",
+          sbvpDomain: "philosophy",
         },
       ],
     },

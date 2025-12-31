@@ -35,7 +35,8 @@ import { contractTesting } from "./contract-testing";
 import { cooperativeYielding } from "./cooperative-yielding";
 import { coordinatedCheckpoint } from "./coordinated-checkpoint";
 import { copyOnWrite } from "./copy-on-write";
-import { dataloader } from "./dataloader";
+import { cqrs } from "./cqrs";
+import { dataLoader } from "./dataloader";
 import { deadlinePropagation } from "./deadline-propagation";
 import { deadlineScheduling } from "./deadline-scheduling";
 import { debouncing } from "./debouncing";
@@ -47,11 +48,13 @@ import { directoryBased } from "./directory-based";
 import { divideAndConquer } from "./divide-and-conquer";
 import { dockerSwarm } from "./docker-swarm";
 import { dynamicProgramming } from "./dynamic-programming";
-import { e2eEncryption } from "./e2e-encryption";
-import { ecsFargate } from "./ecs-fargate";
+import { distributedTracing } from "./distributed-tracing";
+import { e2EEncryption } from "./e2e-encryption";
+import { eCSFargate } from "./ecs-fargate";
 import { encryptionAtRest } from "./encryption-at-rest";
 import { envelopeEncryption } from "./envelope-encryption";
 import { exactlyOnceDelivery } from "./exactly-once-delivery";
+import { eventSourcing } from "./event-sourcing";
 import { exponentialBackoff } from "./exponential-backoff";
 import { fallback } from "./fallback";
 import { fixedInterval } from "./fixed-interval";
@@ -71,13 +74,13 @@ import { healthCheck } from "./health-check";
 import { heaps } from "./heaps";
 import { idempotency } from "./idempotency";
 import { incrementalCheckpoint } from "./incremental-checkpoint";
-import { influxdb } from "./influxdb";
+import { influxDB } from "./influxdb";
 import { invertedIndex } from "./inverted-index";
-import { ipHash } from "./ip-hash";
+import { iPHash } from "./ip-hash";
 import { jaeger } from "./jaeger";
 import { jitter } from "./jitter";
 import { jumpHash } from "./jump-hash";
-import { jwt } from "./jwt";
+import { jWT } from "./jwt";
 import { keyRotation } from "./key-rotation";
 import { kubernetes } from "./kubernetes";
 import { lazyInitialization } from "./lazy-initialization";
@@ -92,6 +95,7 @@ import { lossless } from "./lossless";
 import { lossy } from "./lossy";
 import { lotteryScheduling } from "./lottery-scheduling";
 import { maxMinFairness } from "./max-min-fairness";
+import { messageQueue } from "./message-queue";
 import { memoization } from "./memoization";
 import { microBatching } from "./micro-batching";
 import { microFrontends } from "./micro-frontends";
@@ -103,11 +107,11 @@ import { multiLevelQueue } from "./multi-level-queue";
 import { multiThreading } from "./multi-threading";
 import { nagleSAlgorithm } from "./nagle-s-algorithm";
 import { nomad } from "./nomad";
-import { oauth20 } from "./oauth-2-0";
+import { oAuth20 } from "./oauth-2-0";
 import { objectPooling } from "./object-pooling";
-import { oidc } from "./oidc";
+import { oIDC } from "./oidc";
 import { openState } from "./open-state";
-import { opentelemetry } from "./opentelemetry";
+import { openTelemetry } from "./opentelemetry";
 import { pagination } from "./pagination";
 import { periodicCheckpoint } from "./periodic-checkpoint";
 import { physicalLogging } from "./physical-logging";
@@ -129,7 +133,7 @@ import { readQuorum } from "./read-quorum";
 import { readReplicas } from "./read-replicas";
 import { readThrough } from "./read-through";
 import { readTimeout } from "./read-timeout";
-import { redMethod } from "./red-method";
+import { rEDMethod } from "./red-method";
 import { refreshAhead } from "./refresh-ahead";
 import { refreshTokens } from "./refresh-tokens";
 import { rendezvousHashing } from "./rendezvous-hashing";
@@ -138,17 +142,17 @@ import { retry } from "./retry";
 import { retryBudget } from "./retry-budget";
 import { roundRobin } from "./round-robin";
 import { runLengthEncoding } from "./run-length-encoding";
-import { saml } from "./saml";
+import { sAML } from "./saml";
 import { sampling } from "./sampling";
 import { serverIsolation } from "./server-isolation";
 import { sharedLibraries } from "./shared-libraries";
 import { shortestJobFirst } from "./shortest-job-first";
-import { simd } from "./simd";
+import { sIMD } from "./simd";
 import { simpleMajority } from "./simple-majority";
 import { singleflight } from "./singleflight";
 import { skipLists } from "./skip-lists";
 import { spatialIndex } from "./spatial-index";
-import { statsd } from "./statsd";
+import { statsD } from "./statsd";
 import { streaming } from "./streaming";
 import { stringInterning } from "./string-interning";
 import { tempo } from "./tempo";
@@ -158,11 +162,11 @@ import { threadPooling } from "./thread-pooling";
 import { throttling } from "./throttling";
 import { timeSlicing } from "./time-slicing";
 import { timeout } from "./timeout";
-import { tlsSsl } from "./tls-ssl";
+import { tLSSSL } from "./tls-ssl";
 import { tokenBucket } from "./token-bucket";
 import { transactionCheckpoint } from "./transaction-checkpoint";
 import { trees } from "./trees";
-import { useMethod } from "./use-method";
+import { uSEMethod } from "./use-method";
 import { virtualScrolling } from "./virtual-scrolling";
 import { weighted } from "./weighted";
 import { weightedFairQueuing } from "./weighted-fair-queuing";
@@ -207,7 +211,8 @@ export { contractTesting };
 export { cooperativeYielding };
 export { coordinatedCheckpoint };
 export { copyOnWrite };
-export { dataloader };
+export { cqrs };
+export { dataLoader };
 export { deadlinePropagation };
 export { deadlineScheduling };
 export { debouncing };
@@ -219,11 +224,13 @@ export { directoryBased };
 export { divideAndConquer };
 export { dockerSwarm };
 export { dynamicProgramming };
-export { e2eEncryption };
-export { ecsFargate };
+export { distributedTracing };
+export { e2EEncryption };
+export { eCSFargate };
 export { encryptionAtRest };
 export { envelopeEncryption };
 export { exactlyOnceDelivery };
+export { eventSourcing };
 export { exponentialBackoff };
 export { fallback };
 export { fixedInterval };
@@ -243,13 +250,13 @@ export { healthCheck };
 export { heaps };
 export { idempotency };
 export { incrementalCheckpoint };
-export { influxdb };
+export { influxDB };
 export { invertedIndex };
-export { ipHash };
+export { iPHash };
 export { jaeger };
 export { jitter };
 export { jumpHash };
-export { jwt };
+export { jWT };
 export { keyRotation };
 export { kubernetes };
 export { lazyInitialization };
@@ -264,6 +271,7 @@ export { lossless };
 export { lossy };
 export { lotteryScheduling };
 export { maxMinFairness };
+export { messageQueue };
 export { memoization };
 export { microBatching };
 export { microFrontends };
@@ -275,11 +283,11 @@ export { multiLevelQueue };
 export { multiThreading };
 export { nagleSAlgorithm };
 export { nomad };
-export { oauth20 };
+export { oAuth20 };
 export { objectPooling };
-export { oidc };
+export { oIDC };
 export { openState };
-export { opentelemetry };
+export { openTelemetry };
 export { pagination };
 export { periodicCheckpoint };
 export { physicalLogging };
@@ -301,7 +309,7 @@ export { readQuorum };
 export { readReplicas };
 export { readThrough };
 export { readTimeout };
-export { redMethod };
+export { rEDMethod };
 export { refreshAhead };
 export { refreshTokens };
 export { rendezvousHashing };
@@ -310,17 +318,17 @@ export { retry };
 export { retryBudget };
 export { roundRobin };
 export { runLengthEncoding };
-export { saml };
+export { sAML };
 export { sampling };
 export { serverIsolation };
 export { sharedLibraries };
 export { shortestJobFirst };
-export { simd };
+export { sIMD };
 export { simpleMajority };
 export { singleflight };
 export { skipLists };
 export { spatialIndex };
-export { statsd };
+export { statsD };
 export { streaming };
 export { stringInterning };
 export { tempo };
@@ -330,11 +338,11 @@ export { threadPooling };
 export { throttling };
 export { timeSlicing };
 export { timeout };
-export { tlsSsl };
+export { tLSSSL };
 export { tokenBucket };
 export { transactionCheckpoint };
 export { trees };
-export { useMethod };
+export { uSEMethod };
 export { virtualScrolling };
 export { weighted };
 export { weightedFairQueuing };
@@ -380,7 +388,8 @@ export const patterns: Record<string, Pattern> = {
   "cooperative-yielding": cooperativeYielding,
   "coordinated-checkpoint": coordinatedCheckpoint,
   "copy-on-write": copyOnWrite,
-  dataloader: dataloader,
+  cqrs: cqrs,
+  dataloader: dataLoader,
   "deadline-propagation": deadlinePropagation,
   "deadline-scheduling": deadlineScheduling,
   debouncing: debouncing,
@@ -392,11 +401,13 @@ export const patterns: Record<string, Pattern> = {
   "divide-and-conquer": divideAndConquer,
   "docker-swarm": dockerSwarm,
   "dynamic-programming": dynamicProgramming,
-  "e2e-encryption": e2eEncryption,
-  "ecs-fargate": ecsFargate,
+  "distributed-tracing": distributedTracing,
+  "e2e-encryption": e2EEncryption,
+  "ecs-fargate": eCSFargate,
   "encryption-at-rest": encryptionAtRest,
   "envelope-encryption": envelopeEncryption,
   "exactly-once-delivery": exactlyOnceDelivery,
+  "event-sourcing": eventSourcing,
   "exponential-backoff": exponentialBackoff,
   fallback: fallback,
   "fixed-interval": fixedInterval,
@@ -416,13 +427,13 @@ export const patterns: Record<string, Pattern> = {
   heaps: heaps,
   idempotency: idempotency,
   "incremental-checkpoint": incrementalCheckpoint,
-  influxdb: influxdb,
+  influxdb: influxDB,
   "inverted-index": invertedIndex,
-  "ip-hash": ipHash,
+  "ip-hash": iPHash,
   jaeger: jaeger,
   jitter: jitter,
   "jump-hash": jumpHash,
-  jwt: jwt,
+  jwt: jWT,
   "key-rotation": keyRotation,
   kubernetes: kubernetes,
   "lazy-initialization": lazyInitialization,
@@ -437,6 +448,7 @@ export const patterns: Record<string, Pattern> = {
   lossy: lossy,
   "lottery-scheduling": lotteryScheduling,
   "max-min-fairness": maxMinFairness,
+  "message-queue": messageQueue,
   memoization: memoization,
   "micro-batching": microBatching,
   "micro-frontends": microFrontends,
@@ -448,11 +460,11 @@ export const patterns: Record<string, Pattern> = {
   "multi-threading": multiThreading,
   "nagle-s-algorithm": nagleSAlgorithm,
   nomad: nomad,
-  "oauth-2-0": oauth20,
+  "oauth-2-0": oAuth20,
   "object-pooling": objectPooling,
-  oidc: oidc,
+  oidc: oIDC,
   "open-state": openState,
-  opentelemetry: opentelemetry,
+  opentelemetry: openTelemetry,
   pagination: pagination,
   "periodic-checkpoint": periodicCheckpoint,
   "physical-logging": physicalLogging,
@@ -474,7 +486,7 @@ export const patterns: Record<string, Pattern> = {
   "read-replicas": readReplicas,
   "read-through": readThrough,
   "read-timeout": readTimeout,
-  "red-method": redMethod,
+  "red-method": rEDMethod,
   "refresh-ahead": refreshAhead,
   "refresh-tokens": refreshTokens,
   "rendezvous-hashing": rendezvousHashing,
@@ -483,17 +495,17 @@ export const patterns: Record<string, Pattern> = {
   "retry-budget": retryBudget,
   "round-robin": roundRobin,
   "run-length-encoding": runLengthEncoding,
-  saml: saml,
+  saml: sAML,
   sampling: sampling,
   "server-isolation": serverIsolation,
   "shared-libraries": sharedLibraries,
   "shortest-job-first": shortestJobFirst,
-  simd: simd,
+  simd: sIMD,
   "simple-majority": simpleMajority,
   singleflight: singleflight,
   "skip-lists": skipLists,
   "spatial-index": spatialIndex,
-  statsd: statsd,
+  statsd: statsD,
   streaming: streaming,
   "string-interning": stringInterning,
   tempo: tempo,
@@ -503,11 +515,11 @@ export const patterns: Record<string, Pattern> = {
   throttling: throttling,
   "time-slicing": timeSlicing,
   timeout: timeout,
-  "tls-ssl": tlsSsl,
+  "tls-ssl": tLSSSL,
   "token-bucket": tokenBucket,
   "transaction-checkpoint": transactionCheckpoint,
   trees: trees,
-  "use-method": useMethod,
+  "use-method": uSEMethod,
   "virtual-scrolling": virtualScrolling,
   weighted: weighted,
   "weighted-fair-queuing": weightedFairQueuing,
