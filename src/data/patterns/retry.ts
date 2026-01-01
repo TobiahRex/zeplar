@@ -347,10 +347,11 @@ function sleep(ms: number): Promise<void> {
 
   systemContext: {
     typicalPlacement: [
-      "HTTP Client",
-      "Service Layer",
-      "Message Consumer",
-      "Database Connection Pool",
+      "HTTP Client Wrappers - Retry logic is most commonly implemented as a decorator or middleware around HTTP clients (axios, fetch, RestTemplate, HttpClient); when a service makes 1000s of API calls per hour to external services, wrapping the client with retry logic (3-5 attempts, exponential backoff with jitter) handles transient network failures, temporary 503 errors, and rate limit 429 responses without polluting business logic with retry code; the client wrapper becomes the single retry control point for all outbound HTTP traffic.",
+      "Service Layer Method Decorators - Service-layer methods that call external dependencies (payment gateways, shipping APIs, geocoding services) wrap operations in retry decorators (@Retry, @Retryable annotations, or retry() wrapper functions); when processPayment() calls Stripe API, the retry decorator catches network exceptions and 5xx errors, automatically re-attempting with exponential backoff while business code remains clean; this placement keeps retry logic visible in service contracts but decoupled from business logic.",
+      "Message Queue Consumers - Message consumers implement retry logic to handle transient failures when processing messages from RabbitMQ, SQS, Kafka; when a consumer fails to process a message (database timeout, downstream service unavailable), retry logic re-processes the message after exponential backoff delays (1s, 2s, 4s); after max retries, the message moves to a dead letter queue for manual intervention; this pattern ensures transient failures don't lose messages while preventing infinite retry loops that block queue processing.",
+      "Database Connection Pool Operations - Database drivers and ORMs wrap connection acquisition and query execution in retry logic to handle transient failures (connection pool exhaustion, read replica lag, deadlock detection); when getConnection() fails with 'too many connections' error, retry logic waits 500ms for connections to return to pool, then retries; query execution retries handle serialization failures and deadlock errors that resolve on retry; this placement transparently handles database-level transient issues without exposing retry complexity to application code.",
+      "Distributed System Client SDKs - Client libraries for distributed systems (AWS SDK, Google Cloud client libraries, gRPC stubs, Kubernetes client-go) bake retry logic directly into SDK methods; every S3.putObject(), BigQuery.query(), and k8s.createPod() call includes automatic retry with exponential backoff for transient failures; this placement enables zero-code-change resilience—applications get automatic retry behavior by using the SDK, no custom retry logic needed; the SDK becomes the resilience boundary.",
     ],
     interactsWith: [
       "circuit-breaker",
@@ -359,10 +360,10 @@ function sleep(ms: number): Promise<void> {
       "fallback",
     ],
     architecturalBoundaries: [
-      "Network calls",
-      "Database operations",
-      "External API integrations",
-      "Message queue publishing",
+      "Network I/O Boundary - Retry wraps all network calls (HTTP requests, RPC calls, message queue operations) to handle packet loss, connection resets, DNS failures, and temporary network partitions; the retry wrapper sits between application code and network socket layer, catching IOException, SocketTimeoutException, and connection refused errors; this boundary handles the fundamental unreliability of network communication, converting transient network failures into delayed success.",
+      "Database Transaction Boundary - Retry surrounds database queries and transactions to handle optimistic lock failures, deadlock detection, connection timeouts, and read replica lag; when a transaction fails with 'serialization failure' or 'deadlock detected', retry logic re-attempts after a brief delay (10-100ms) allowing conflicting transactions to complete; this boundary makes database concurrency issues transparent to application code, improving success rates without complex locking.",
+      "External Service Integration Boundary - Retry wraps calls to third-party APIs (payment processors, shipping providers, authentication services) to handle rate limiting (429), temporary unavailability (503), and provider-side failures; when calling Stripe API, retry logic handles throttling responses by backing off exponentially (1s, 2s, 4s, 8s) until succeeding or exhausting attempts; this boundary absorbs external service instability, making integrations appear more reliable than the underlying providers.",
+      "Message Processing Boundary - Retry encapsulates message queue consumption and processing to handle transient processing failures (downstream service unavailable, temporary database lock); when a Kafka consumer fails to process a message, retry logic re-attempts processing after exponential backoff; after max retries (typically 3-5), messages move to dead letter queue for manual intervention; this boundary ensures 'at-least-once' message processing semantics while preventing poison messages from blocking queue processing.",
     ],
   },
 
@@ -1219,4 +1220,47 @@ spec:
     "transient-failures",
   ],
   difficulty: "beginner",
+
+  references: [
+    {
+      title: "Exponential Backoff And Jitter - AWS Architecture Blog",
+      url: "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/",
+      type: "article",
+      author: "Marc Brooker",
+    },
+    {
+      title: "The Network is Reliable - ACM Queue",
+      url: "https://queue.acm.org/detail.cfm?id=2655736",
+      type: "research-paper",
+      author: "Peter Bailis and Kyle Kingsbury",
+    },
+    {
+      title:
+        "Release It! - Stability Patterns: Timeouts, Retries, and Circuit Breakers",
+      url: "https://pragprog.com/titles/mnee2/release-it-second-edition/",
+      type: "book",
+      author: "Michael T. Nygard",
+    },
+    {
+      title: "Implementing Retry Pattern for Resilience in Microservices",
+      url: "https://martinfowler.com/articles/patterns-of-distributed-systems/retry.html",
+      type: "article",
+      author: "Martin Fowler",
+    },
+    {
+      title: "Google Cloud Architecture: Error Handling and Retries",
+      url: "https://cloud.google.com/apis/design/errors#error_retries",
+      type: "documentation",
+    },
+    {
+      title: "Stripe API: Retries and Idempotency",
+      url: "https://stripe.com/docs/error-handling#retries",
+      type: "documentation",
+    },
+    {
+      title: "gRPC Retry Design - GitHub",
+      url: "https://github.com/grpc/proposal/blob/master/A6-client-retries.md",
+      type: "documentation",
+    },
+  ],
 };

@@ -613,6 +613,27 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
 
   // 1. Placement decision: "Where should you place X in architecture?"
   if (pattern.systemContext.typicalPlacement) {
+    // Generate architectural placement diagram
+    const placementDiagram = `graph TB
+    subgraph "System Architecture"
+        CLIENT[Client Applications]:::client
+        API[API Gateway/Load Balancer]:::gateway
+        SERVICE[Application Services]:::service
+        PATTERN[${pattern.concept.name}]:::pattern
+        DATA[Data Layer]:::data
+    end
+
+    CLIENT --> API
+    API --> SERVICE
+    SERVICE --> PATTERN
+    PATTERN --> DATA
+
+    classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:2px,color:#000
+    classDef gateway fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef service fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef pattern fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    classDef data fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000`;
+
     cards.push({
       id: getCardKey(pattern.id, 4, "placement-decision"),
       patternId: pattern.id,
@@ -626,6 +647,7 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
       back: {
         text: pattern.systemContext.typicalPlacement.join("\n\n"),
         details: pattern.systemContext.architecturalBoundaries,
+        diagram: placementDiagram,
       },
       difficulty: 3,
       grammarCoordinates: {
@@ -643,6 +665,23 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
     const interactionsToQuery = pattern.systemContext.interactsWith.slice(0, 3);
 
     interactionsToQuery.forEach((relatedPattern, index) => {
+      // Generate pattern integration diagram
+      const integrationDiagram = `graph LR
+    subgraph "Pattern Integration"
+        MAIN[${pattern.concept.name}]:::main
+        RELATED[${relatedPattern}]:::related
+        INPUT[Input/Request]:::io
+        OUTPUT[Output/Response]:::io
+    end
+
+    INPUT --> MAIN
+    MAIN <--> RELATED
+    MAIN --> OUTPUT
+
+    classDef main fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    classDef related fill:#e8eaf6,stroke:#283593,stroke-width:2px,color:#000
+    classDef io fill:#e0f2f1,stroke:#004d40,stroke-width:2px,color:#000`;
+
       cards.push({
         id: getCardKey(pattern.id, 4, `integration-${index + 1}`),
         patternId: pattern.id,
@@ -656,6 +695,7 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
         back: {
           text: `${pattern.concept.name} and ${relatedPattern} work together: ${pattern.concept.name} handles ${pattern.hierarchy.family || pattern.hierarchy.strategy} while ${relatedPattern} provides complementary functionality.`,
           details: pattern.systemContext?.architecturalBoundaries || [],
+          diagram: integrationDiagram,
         },
         difficulty: 3,
         grammarCoordinates: {
@@ -674,6 +714,27 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
     pattern.systemContext.architecturalBoundaries &&
     pattern.systemContext.architecturalBoundaries.length > 0
   ) {
+    // Generate layered architecture boundary diagram
+    const boundaryDiagram = `graph TB
+    subgraph "Architectural Layers"
+        PRESENTATION[Presentation Layer]:::presentation
+        APPLICATION[Application Layer]:::application
+        PATTERN[${pattern.concept.name}<br/>Pattern Layer]:::pattern
+        DOMAIN[Domain Layer]:::domain
+        INFRA[Infrastructure Layer]:::infrastructure
+    end
+
+    PRESENTATION --> APPLICATION
+    APPLICATION --> PATTERN
+    PATTERN --> DOMAIN
+    DOMAIN --> INFRA
+
+    classDef presentation fill:#e3f2fd,stroke:#0d47a1,stroke-width:2px,color:#000
+    classDef application fill:#f3e5f5,stroke:#4a148c,stroke-width:2px,color:#000
+    classDef pattern fill:#fff3e0,stroke:#e65100,stroke-width:3px,color:#000
+    classDef domain fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px,color:#000
+    classDef infrastructure fill:#fce4ec,stroke:#880e4f,stroke-width:2px,color:#000`;
+
     cards.push({
       id: getCardKey(pattern.id, 4, "architectural-boundaries"),
       patternId: pattern.id,
@@ -686,6 +747,7 @@ export function generateL4Cards(pattern: Pattern): Flashcard[] {
       back: {
         text: pattern.systemContext.architecturalBoundaries.join("\n\n"),
         details: pattern.systemContext.typicalPlacement,
+        diagram: boundaryDiagram,
       },
       difficulty: 3,
       grammarCoordinates: {
@@ -724,6 +786,24 @@ export function generateL5Cards(pattern: Pattern): Flashcard[] {
   const firstThreeImpls = pattern.implementations.slice(0, 3);
 
   firstThreeImpls.forEach((impl, index) => {
+    // Generate technology stack diagram
+    const techStackDiagram = `graph TB
+    subgraph "Technology Stack"
+        APP[Your Application]:::app
+        IMPL[${impl.name}]:::implementation
+        PATTERN[${pattern.concept.name}<br/>Pattern]:::pattern
+        RUNTIME[${impl.languages.join(" / ")} Runtime]:::runtime
+    end
+
+    APP -->|uses| IMPL
+    IMPL -->|implements| PATTERN
+    IMPL -->|runs on| RUNTIME
+
+    classDef app fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef implementation fill:#e1f5fe,stroke:#01579b,stroke-width:3px,color:#000
+    classDef pattern fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000
+    classDef runtime fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000`;
+
     cards.push({
       id: getCardKey(pattern.id, 5, `tool-identification-${index + 1}`),
       patternId: pattern.id,
@@ -737,6 +817,7 @@ export function generateL5Cards(pattern: Pattern): Flashcard[] {
       back: {
         text: impl.name,
         details: [impl.description],
+        diagram: techStackDiagram,
       },
       difficulty: 2,
       grammarCoordinates: {
@@ -754,6 +835,25 @@ export function generateL5Cards(pattern: Pattern): Flashcard[] {
     const impl1 = pattern.implementations[0];
     const impl2 = pattern.implementations[1];
 
+    // Generate technology comparison diagram
+    const comparisonDiagram = `graph LR
+    subgraph "Technology Comparison"
+        CHOICE{Choose Implementation}
+        IMPL1[${impl1.name}]:::impl1
+        IMPL2[${impl2.name}]:::impl2
+        LANG1[${impl1.languages.join(", ")}]:::lang
+        LANG2[${impl2.languages.join(", ")}]:::lang
+    end
+
+    CHOICE -->|"${impl1.type}"| IMPL1
+    CHOICE -->|"${impl2.type}"| IMPL2
+    IMPL1 --> LANG1
+    IMPL2 --> LANG2
+
+    classDef impl1 fill:#e8f5e9,stroke:#2e7d32,stroke-width:3px,color:#000
+    classDef impl2 fill:#e1f5fe,stroke:#01579b,stroke-width:3px,color:#000
+    classDef lang fill:#fff3e0,stroke:#e65100,stroke-width:2px,color:#000`;
+
     cards.push({
       id: getCardKey(pattern.id, 5, "technology-choice"),
       patternId: pattern.id,
@@ -769,6 +869,7 @@ export function generateL5Cards(pattern: Pattern): Flashcard[] {
           `${impl1.name} languages: ${impl1.languages.join(", ")}`,
           `${impl2.name} languages: ${impl2.languages.join(", ")}`,
         ],
+        diagram: comparisonDiagram,
       },
       difficulty: 3,
       grammarCoordinates: {
@@ -807,6 +908,31 @@ export function generateL6Cards(pattern: Pattern): Flashcard[] {
   const firstThreeCases = pattern.usedInSystems.slice(0, 3);
 
   firstThreeCases.forEach((caseStudy, index) => {
+    // Generate real-world system architecture diagram
+    const systemArchDiagram = `graph TB
+    subgraph "${caseStudy.systemName} Architecture"
+        USERS[Users/Clients]:::users
+        LB[Load Balancer]:::lb
+        SERVICE[Service Layer]:::service
+        PATTERN[${pattern.concept.name}]:::pattern
+        DATA[Data Store]:::data
+        MONITOR[Monitoring]:::monitor
+    end
+
+    USERS --> LB
+    LB --> SERVICE
+    SERVICE --> PATTERN
+    PATTERN --> DATA
+    SERVICE -.-> MONITOR
+    PATTERN -.-> MONITOR
+
+    classDef users fill:#e3f2fd,stroke:#1565c0,stroke-width:2px,color:#000
+    classDef lb fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px,color:#000
+    classDef service fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000
+    classDef pattern fill:#fff3e0,stroke:#e65100,stroke-width:4px,color:#000
+    classDef data fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    classDef monitor fill:#e0f2f1,stroke:#00695c,stroke-width:2px,color:#000,stroke-dasharray: 5 5`;
+
     cards.push({
       id: getCardKey(pattern.id, 6, `case-study-${index + 1}`),
       patternId: pattern.id,
@@ -820,6 +946,7 @@ export function generateL6Cards(pattern: Pattern): Flashcard[] {
       back: {
         text: caseStudy.howUsed,
         details: caseStudy.source ? [`Source: ${caseStudy.source}`] : [],
+        diagram: systemArchDiagram,
       },
       difficulty: 3,
       grammarCoordinates: {

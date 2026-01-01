@@ -1314,6 +1314,98 @@ spec:
     },
   ],
 
+  references: [
+    {
+      title: "Kubernetes Liveness and Readiness Probes",
+      url: "https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-startup-probes/",
+      type: "documentation",
+      author: "Kubernetes",
+    },
+    {
+      title: "AWS ELB Health Checks",
+      url: "https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html",
+      type: "documentation",
+      author: "AWS",
+    },
+    {
+      title: "HashiCorp Consul Health Checks",
+      url: "https://www.consul.io/docs/discovery/checks",
+      type: "documentation",
+      author: "HashiCorp",
+    },
+    {
+      title: "Release It! - Stability Patterns",
+      url: "https://pragprog.com/titles/mnee2/release-it-second-edition/",
+      type: "book",
+      author: "Michael T. Nygard",
+    },
+    {
+      title: "Site Reliability Engineering - Monitoring Distributed Systems",
+      url: "https://sre.google/sre-book/monitoring-distributed-systems/",
+      type: "book",
+      author: "Google SRE Team",
+    },
+  ],
+
+  philosophy: {
+    coreProblem:
+      "Without automated health detection, failed services continue receiving traffic causing user-facing errors and requiring manual intervention",
+    designPrinciple:
+      "Continuously probe service health and automatically remove unhealthy instances from traffic rotation",
+    historicalContext:
+      "Health checks emerged from manual service monitoring where operators would SSH to servers, check logs, and manually remove failed instances from load balancers—automation became essential as systems scaled to thousands of instances",
+    alternativesRejected: [
+      "Manual monitoring - doesn't scale, slow detection and recovery",
+      "Passive monitoring only - discovers failures after users impacted",
+      "Single health check type - misses application-level vs infrastructure failures",
+      "No unhealthy threshold - flapping from transient failures",
+    ],
+    mentalModel:
+      "Health checks are like a doctor taking your pulse and temperature regularly: early detection of problems enables treatment before they become critical",
+  },
+
+  visualization: {
+    staticDiagram: `graph LR
+    LB[Load Balancer] -->|health check| S1[Server 1: ✓ Healthy]
+    LB -->|health check| S2[Server 2: ✗ Unhealthy]
+    LB -->|health check| S3[Server 3: ✓ Healthy]
+
+    LB -->|route traffic| S1
+    LB -->|route traffic| S3
+    LB -.->|no traffic| S2
+
+    style S1 fill:#90ee90
+    style S2 fill:#ffe1e1
+    style S3 fill:#90ee90
+    style LB fill:#e1f5e1`,
+    realWorldAnalogy:
+      "Health checks are like a restaurant hostess checking if tables are clean and ready: she only seats customers at ready tables, never at tables that haven't been bussed yet",
+    useCases: [
+      {
+        domain: "Container Orchestration",
+        scenario:
+          "Kubernetes uses liveness probes to restart failed containers and readiness probes to control traffic routing",
+        patternRole: "Enables automatic recovery and zero-downtime deployments",
+        companies: ["Google", "Spotify", "Airbnb"],
+      },
+      {
+        domain: "Load Balancing",
+        scenario:
+          "AWS ELB health checks detect unhealthy EC2 instances and stop routing traffic to them",
+        patternRole: "Prevents user requests from reaching failed servers",
+        companies: ["AWS", "Netflix", "Airbnb"],
+      },
+      {
+        domain: "Service Discovery",
+        scenario:
+          "Consul health checks mark services unhealthy in service registry preventing new connections",
+        patternRole:
+          "Provides health-aware service discovery for microservices",
+        companies: ["HashiCorp", "Uber", "Cloudflare"],
+      },
+    ],
+  },
+
   tags: [
     "reliability",
     "observability",

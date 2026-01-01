@@ -703,10 +703,11 @@ if __name__ == "__main__":
 
   systemContext: {
     typicalPlacement: [
-      "HTTP Client",
-      "Database Queries",
-      "RPC Calls",
-      "Message Queue Consumers",
+      "HTTP Client Configuration - Timeouts are universally configured in HTTP clients (fetch, axios, HttpClient, RestTemplate) as default or per-request settings; when an API client makes 1000s of requests per hour, setting a 5-second connection timeout and 30-second read timeout prevents indefinite hangs from network partitions, overloaded services, or crashed backends; the client becomes the first line of defense against unbounded waiting, immediately freeing resources when requests exceed acceptable latency thresholds; timeout configuration at the client level ensures every outbound request has a maximum wait bound without requiring explicit timeout logic in business code.",
+      "Database Query Execution - Database drivers and ORMs wrap query execution with configurable timeouts to prevent long-running queries from monopolizing connection pool connections; when executing SELECT queries against large tables, a 10-second query timeout prevents poorly-optimized queries (missing indexes, full table scans) from holding database connections indefinitely; JDBC setQueryTimeout(), SQLAlchemy pool_timeout, and ActiveRecord statement_timeout enforce these bounds; this placement protects connection pools from exhaustion while enabling rapid detection of query performance issues that would otherwise manifest as mysterious application hangs.",
+      "gRPC Service Call Deadlines - gRPC enforces timeouts through deadline propagation where each RPC call carries an absolute deadline that propagates through the entire call chain; when Service A calls Service B (deadline: T+5s), which calls Service C, the deadline automatically propagates with decreasing time remaining (T+4s to Service C); this placement ensures distributed call chains fail fast together rather than having intermediate services wait indefinitely while upstream callers have already timed out; the deadline mechanism turns a series of independent timeouts into a coordinated distributed timeout system.",
+      "Message Queue Consumer Processing - Message consumers implement per-message processing timeouts to prevent poison messages or slow operations from blocking queue consumption; when consuming from RabbitMQ, SQS, or Kafka, wrapping message handlers with a timeout (e.g., 30 seconds per message) ensures that a single stuck message (deadlock, infinite loop, external service hang) doesn't stop the entire queue from processing; after timeout, the message is rejected or sent to dead letter queue while the consumer continues processing subsequent messages; this placement maintains queue throughput even when individual messages trigger problematic code paths.",
+      "User-Facing Request Handlers - Web frameworks and API gateways apply top-level request timeouts to prevent slow endpoints from monopolizing worker threads; when a web server handles concurrent requests with limited workers (e.g., 100 threads), setting a 60-second request timeout ensures no single request can hold a worker thread indefinitely due to slow database queries, external API calls, or runaway computations; frameworks like Express (http.Server.setTimeout), Spring Boot (server.connection-timeout), and nginx (proxy_read_timeout) enforce these bounds at the entry point; this placement protects server capacity and provides predictable worst-case response times to clients, even when downstream dependencies fail.",
     ],
     interactsWith: [
       "retry",
@@ -715,60 +716,358 @@ if __name__ == "__main__":
       "bulkhead",
     ],
     architecturalBoundaries: [
-      "Service-to-service calls",
-      "External API integrations",
-      "Database connections",
-      "User-facing request handling",
+      "Network I/O Boundary - Timeouts wrap all network operations (TCP connects, socket reads, DNS lookups) to bound wait time when packets are dropped, connections hang, or remote hosts become unresponsive; socket-level timeouts (connect timeout: 2s, read timeout: 30s) prevent indefinite blocking on network system calls; this boundary transforms unpredictable network failures (silent packet drops, black hole routing) into fast, actionable timeout errors that enable rapid recovery and resource reclamation; without timeouts, network failures manifest as mysterious infinite hangs rather than explicit errors.",
+      "Database Access Boundary - Timeouts surround database operations (connection acquisition, query execution, transaction commits) to handle overloaded databases, network partitions to database hosts, and long-running queries; connection pool timeouts (5s) prevent applications from waiting indefinitely for available connections when pool is exhausted; query timeouts (30s) abort runaway queries before they consume excessive database resources; this boundary ensures database problems don't cascade into application-wide resource exhaustion and provides clear signals for database performance issues.",
+      "External Service Integration Boundary - Timeouts wrap calls to third-party APIs and services (payment gateways, geocoding, authentication providers) to handle slow or unresponsive external systems; when calling Stripe API with 10-second timeout, slow responses from Stripe's infrastructure trigger timeout rather than indefinite wait; this boundary isolates your application from external service degradation—if a third-party has an outage, your system fails fast with timeouts rather than accumulating hung requests that exhaust your own resources; timeout acts as a firewall preventing external slowness from propagating into your infrastructure.",
+      "Distributed Transaction Boundary - Timeouts bound the execution time of distributed transactions (two-phase commit, saga orchestration) to prevent indefinite waiting for coordinator responses or participant votes; when coordinating a distributed transaction across multiple services, setting transaction timeout (e.g., 30 seconds) ensures that network partitions or crashed participants don't leave the system in limbo indefinitely; after timeout, the coordinator aborts the transaction and releases locks; this boundary provides liveness guarantees in distributed transactions—the system will eventually reach a terminal state (committed or aborted) rather than hanging forever waiting for unreachable participants.",
     ],
   },
 
   implementations: [
     {
       id: "axios-timeout",
-      name: "Axios timeout",
+      name: "Axios HTTP Client Timeout",
       type: "library",
       languages: ["javascript", "typescript"],
-      description: "Built-in timeout option for HTTP requests",
+      description:
+        "Built-in timeout configuration for HTTP requests with separate connection and response timeouts. Supports global defaults and per-request overrides. Automatically aborts requests when timeout expires.",
       links: {
         docs: "https://axios-http.com/docs/req_config",
         github: "https://github.com/axios/axios",
       },
+      codeSnippet: `import axios from 'axios';
+
+// Global default timeout
+const api = axios.create({
+  timeout: 5000, // 5 second timeout for all requests
+  timeoutErrorMessage: 'Request timeout - server took too long to respond'
+});
+
+// Per-request timeout override
+const response = await api.get('/api/users/123', {
+  timeout: 10000 // Override with 10 seconds for this request
+});
+
+// Handling timeout errors
+try {
+  await api.get('/slow-endpoint');
+} catch (error) {
+  if (error.code === 'ECONNABORTED') {
+    console.log('Request timed out');
+  }
+}`,
+    },
+    {
+      id: "fetch-abort-controller",
+      name: "Fetch API with AbortController",
+      type: "platform",
+      languages: ["javascript", "typescript"],
+      description:
+        "Browser and Node.js native fetch API with timeout support via AbortController and AbortSignal. Enables cancellable HTTP requests with time bounds.",
+      links: {
+        docs: "https://developer.mozilla.org/en-US/docs/Web/API/AbortController",
+      },
+      codeSnippet: `// Fetch with timeout using AbortSignal.timeout (modern browsers)
+try {
+  const response = await fetch('/api/data', {
+    signal: AbortSignal.timeout(5000) // 5 second timeout
+  });
+  const data = await response.json();
+} catch (error) {
+  if (error.name === 'AbortError') {
+    console.log('Request timed out after 5 seconds');
+  }
+}
+
+// Manual timeout with AbortController (broader compatibility)
+const controller = new AbortController();
+const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+try {
+  const response = await fetch('/api/data', {
+    signal: controller.signal
+  });
+  clearTimeout(timeoutId);
+  return await response.json();
+} catch (error) {
+  if (error.name === 'AbortError') {
+    console.log('Fetch aborted due to timeout');
+  }
+  throw error;
+}`,
     },
     {
       id: "context-timeout",
       name: "Go context.WithTimeout",
       type: "library",
       languages: ["go"],
-      description: "Context-based timeout propagation in Go stdlib",
+      description:
+        "Context-based timeout propagation in Go standard library. Provides cancellation signals that automatically propagate through call chains. Integrated with HTTP client, database drivers, and gRPC.",
       links: {
         docs: "https://pkg.go.dev/context#WithTimeout",
       },
+      codeSnippet: `package main
+
+import (
+    "context"
+    "net/http"
+    "time"
+)
+
+func fetchData(parentCtx context.Context) (*Data, error) {
+    // Create context with 5-second timeout
+    ctx, cancel := context.WithTimeout(parentCtx, 5*time.Second)
+    defer cancel() // Always call cancel to release resources
+
+    req, _ := http.NewRequestWithContext(ctx, "GET", "https://api.example.com/data", nil)
+
+    client := &http.Client{}
+    resp, err := client.Do(req)
+    if err != nil {
+        if ctx.Err() == context.DeadlineExceeded {
+            return nil, fmt.Errorf("request timed out after 5 seconds")
+        }
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    // Parse response...
+    return data, nil
+}`,
     },
     {
       id: "asyncio-timeout",
       name: "Python asyncio.timeout",
       type: "library",
       languages: ["python"],
-      description: "Async context manager for timeouts",
+      description:
+        "Async context manager for timeouts in Python 3.11+. Automatically cancels async operations when deadline exceeds. Works with any awaitable operation.",
       links: {
         docs: "https://docs.python.org/3/library/asyncio-task.html#asyncio.timeout",
       },
+      codeSnippet: `import asyncio
+import aiohttp
+
+async def fetch_data():
+    # Modern Python 3.11+ syntax
+    async with asyncio.timeout(5.0):  # 5 second timeout
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://api.example.com/data') as response:
+                return await response.json()
+
+# For Python 3.10 and earlier, use asyncio.wait_for
+async def fetch_data_legacy():
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get('https://api.example.com/data') as response:
+                data = await asyncio.wait_for(response.json(), timeout=5.0)
+                return data
+    except asyncio.TimeoutError:
+        print("Request timed out after 5 seconds")
+        raise`,
+    },
+    {
+      id: "jdbc-query-timeout",
+      name: "JDBC Statement Timeout",
+      type: "platform",
+      languages: ["java"],
+      description:
+        "Database query timeout enforcement in JDBC standard. Prevents long-running queries from monopolizing database connections. Supported by all major database drivers.",
+      links: {
+        docs: "https://docs.oracle.com/javase/8/docs/api/java/sql/Statement.html#setQueryTimeout-int-",
+      },
+      codeSnippet: `import java.sql.*;
+
+public class DatabaseService {
+    public User fetchUser(String userId) throws SQLException {
+        String sql = "SELECT * FROM users WHERE id = ?";
+
+        try (Connection conn = dataSource.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+
+            // Set query timeout to 10 seconds
+            stmt.setQueryTimeout(10);
+            stmt.setString(1, userId);
+
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return mapToUser(rs);
+                }
+                return null;
+            } catch (SQLException e) {
+                if (e.getErrorCode() == /* timeout error code */) {
+                    throw new TimeoutException("Query exceeded 10 second timeout");
+                }
+                throw e;
+            }
+        }
+    }
+}`,
+    },
+    {
+      id: "grpc-deadline",
+      name: "gRPC Deadline Propagation",
+      type: "platform",
+      languages: ["any"],
+      description:
+        "Built-in deadline mechanism in gRPC that propagates timeout context across service boundaries. Automatically decrements remaining time through call chains.",
+      links: {
+        docs: "https://grpc.io/docs/guides/deadlines/",
+      },
+      codeSnippet: `// Go gRPC client with deadline
+import (
+    "context"
+    "time"
+    "google.golang.org/grpc"
+)
+
+func callService() (*Response, error) {
+    // Create context with 5-second deadline
+    ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+    defer cancel()
+
+    // Deadline automatically propagates to server
+    response, err := client.GetUser(ctx, &pb.UserRequest{Id: "123"})
+    if err != nil {
+        if ctx.Err() == context.DeadlineExceeded {
+            return nil, fmt.Errorf("RPC call exceeded deadline")
+        }
+        return nil, err
+    }
+    return response, nil
+}
+
+// Java gRPC client with deadline
+Deadline deadline = Deadline.after(5, TimeUnit.SECONDS);
+UserResponse response = userStub
+    .withDeadline(deadline)
+    .getUser(UserRequest.newBuilder().setId("123").build());`,
+    },
+    {
+      id: "nginx-proxy-timeout",
+      name: "Nginx Proxy Timeouts",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Reverse proxy timeout configuration for connection, read, and send operations. Protects upstream services from slow clients and provides request-level time bounds.",
+      links: {
+        docs: "https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_read_timeout",
+      },
+      codeSnippet: `# nginx.conf
+http {
+    upstream backend {
+        server backend1.example.com;
+        server backend2.example.com;
+    }
+
+    server {
+        listen 80;
+
+        location /api/ {
+            proxy_pass http://backend;
+
+            # Timeout for establishing connection to upstream
+            proxy_connect_timeout 5s;
+
+            # Timeout for reading response from upstream
+            proxy_read_timeout 30s;
+
+            # Timeout for sending request to upstream
+            proxy_send_timeout 30s;
+
+            # Return 504 Gateway Timeout on timeout
+            proxy_next_upstream error timeout;
+        }
+    }
+}`,
     },
   ],
 
   usedInSystems: [
     {
-      systemId: "google",
-      systemName: "Google",
+      systemId: "google-grpc",
+      systemName: "Google gRPC",
       howUsed:
-        "gRPC deadline propagation ensures timeouts cascade through the entire call chain",
+        "Google's gRPC framework implements deadline propagation where timeouts automatically cascade through distributed call chains. When a client makes an RPC call with a 10-second deadline, the deadline propagates to all downstream services with remaining time automatically decremented at each hop (9.5s, 8.7s, 7.2s). The server checks the deadline before starting expensive operations—if insufficient time remains, it returns DEADLINE_EXCEEDED immediately rather than wasting resources. This mechanism prevents cascading timeout failures where upstream services timeout while downstream services continue processing. Pattern composition: Deadline Propagation + Context Cancellation + Automatic Time Decrementation. Rationale: Microservice architectures often have call depths of 5-10 services; without coordinated timeouts, upstream services timeout while downstream services waste resources on results that will never be used. Impact: Reduced wasted computation by 70% during partial outages; enabled consistent timeout behavior across 10,000+ microservices; prevented resource exhaustion during cascading failures by allowing fast failure detection at every service boundary.",
       source: "https://grpc.io/docs/guides/deadlines/",
     },
     {
-      systemId: "aws",
-      systemName: "AWS",
+      systemId: "aws-lambda",
+      systemName: "AWS Lambda",
       howUsed:
-        "Lambda functions have configurable timeouts (max 15 minutes) to prevent runaway executions",
+        "AWS Lambda enforces function-level timeouts (configurable from 1 second to 15 minutes) to prevent runaway executions and ensure predictable billing. Each Lambda invocation has a hard deadline enforced by the Lambda runtime—when timeout expires, the execution is forcibly terminated, resources are reclaimed, and InvocationTimeoutError is returned to the caller. This timeout acts as a safety bound for arbitrary user code that might contain infinite loops, deadlocks, or hung network calls. The timeout also caps maximum cost per invocation (execution time × memory allocation = cost). Pattern composition: Hard Timeout + Resource Reclamation + Billing Cap + Forced Termination. Rationale: Serverless functions run arbitrary third-party code on shared infrastructure; without timeouts, a single buggy function could monopolize resources indefinitely. Impact: Processed 100+ trillion invocations with deterministic execution bounds; prevented resource exhaustion from runaway functions; enabled predictable cost modeling (max cost = timeout × memory × invocation rate); maintained infrastructure stability despite executing untrusted customer code at massive scale.",
+    },
+    {
+      systemId: "netflix-hystrix",
+      systemName: "Netflix Hystrix",
+      howUsed:
+        "Netflix's Hystrix library implements execution timeouts for all remote service calls with configurable per-command timeout values. When wrapping a call to a downstream service (e.g., user recommendation API), Hystrix starts a timer thread that races against the actual call—if the call doesn't complete within the configured timeout (default 1 second), Hystrix interrupts the execution thread and triggers fallback logic. The timeout mechanism integrates with circuit breakers: repeated timeouts count as failures that can trip the circuit, preventing further timeout-prone calls. Thread pool bulkheads ensure timing out calls don't exhaust all threads. Pattern composition: Timeout + Circuit Breaker + Bulkhead + Fallback. Rationale: Netflix's microservice architecture has 500+ services with deep call chains; slow dependencies can cascade latency through entire request paths. Impact: Reduced P99 latency from 5 seconds to 1.2 seconds by failing fast on slow dependencies; prevented cascading failures during partial outages; enabled graceful degradation with fallback responses when services timeout; maintained acceptable user experience even when 30% of backend services were degraded.",
+      source:
+        "https://github.com/Netflix/Hystrix/wiki/Configuration#execution.isolation.thread.timeoutInMilliseconds",
+    },
+    {
+      systemId: "stripe-api",
+      systemName: "Stripe Payment API",
+      howUsed:
+        "Stripe implements aggressive client-side timeouts (default 80 seconds) on all API requests to prevent hung payment operations from blocking merchant applications. The Stripe SDK configures HTTP client timeouts at both connection (10 seconds) and read (70 seconds) levels. If a payment request times out, the SDK returns a clear timeout error to the merchant, who can then query the payment status via idempotency key to determine if the charge actually succeeded despite the timeout. This prevents the ambiguous state where merchant doesn't know if payment completed. Pattern composition: Connection Timeout + Read Timeout + Idempotency + Status Polling. Rationale: Payment operations are critical path operations that block checkout flows; hung requests create terrible user experience and abandoned carts. Impact: Reduced checkout abandonment by 15% through faster timeout detection; prevented resource leaks from hung connections; enabled merchants to implement retry logic with idempotency guarantees; maintained 99.99% API availability despite network instability by failing fast rather than accumulating hung connections.",
+      source: "https://stripe.com/docs/api/errors#timeouts",
+    },
+    {
+      systemId: "elasticsearch",
+      systemName: "Elasticsearch",
+      howUsed:
+        "Elasticsearch implements multi-level timeouts: cluster-level timeouts for distributed search coordination, node-level timeouts for individual shard queries, and client-level timeouts for entire requests. When executing a distributed search across 100 shards with a 30-second timeout, the coordinator node enforces the timeout by cancelling slow shard queries and returning partial results from responsive shards. Each shard query also has its own timeout (configurable per index) to prevent runaway queries from monopolizing resources. Client libraries set request-level timeouts (default: no timeout) that bound the entire operation including network time. Pattern composition: Hierarchical Timeouts + Partial Results + Query Cancellation + Resource Limits. Rationale: Search queries can be arbitrarily complex and expensive; without timeouts, a single heavy query can overload the cluster and cause cascading slowness. Impact: Maintained cluster stability under heavy query load by cancelling expensive queries after timeout; enabled partial result returns ensuring some data is better than infinite wait; prevented query-induced outages that previously required cluster restarts; supported multi-tenant workloads where one tenant's expensive queries don't impact others through enforced timeouts.",
+      source:
+        "https://www.elastic.co/guide/en/elasticsearch/reference/current/search-timeout.html",
+    },
+  ],
+
+  references: [
+    {
+      title:
+        "Timeouts, Retries, and Backoff with Jitter - AWS Architecture Blog",
+      url: "https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/",
+      type: "article",
+      author: "AWS Architecture Team",
+    },
+    {
+      title: "Deadlines - gRPC Documentation",
+      url: "https://grpc.io/docs/guides/deadlines/",
+      type: "documentation",
+      author: "Google gRPC Team",
+    },
+    {
+      title:
+        "Release It! - Design and Deploy Production-Ready Software (Chapter: Timeouts)",
+      url: "https://pragprog.com/titles/mnee2/release-it-second-edition/",
+      type: "book",
+      author: "Michael T. Nygard",
+    },
+    {
+      title:
+        "Designing Data-Intensive Applications (Chapter: Timeouts and Unbounded Delays)",
+      url: "https://dataintensive.net/",
+      type: "book",
+      author: "Martin Kleppmann",
+    },
+    {
+      title: "Hystrix Configuration - Execution Timeout",
+      url: "https://github.com/Netflix/Hystrix/wiki/Configuration#execution.isolation.thread.timeoutInMilliseconds",
+      type: "documentation",
+      author: "Netflix",
+    },
+    {
+      title:
+        "Distributed Systems: For Fun and Profit (Chapter: Time and Order)",
+      url: "http://book.mixu.net/distsys/time.html",
+      type: "article",
+      author: "Mikito Takada",
+    },
+    {
+      title: "Site Reliability Engineering - Addressing Cascading Failures",
+      url: "https://sre.google/sre-book/addressing-cascading-failures/",
+      type: "book",
+      author: "Google SRE Team",
     },
   ],
 

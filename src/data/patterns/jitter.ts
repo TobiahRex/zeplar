@@ -658,13 +658,17 @@ conn, err := grpc.Dial(
 
   systemContext: {
     typicalPlacement: [
-      "Jitter is implemented in client-side retry logic within HTTP clients (axios, fetch), message queue consumers, database connection pools, and service mesh proxies. It sits at the boundary between the application and external dependencies, wrapping any operation that might fail and require retries. In microservices architectures, jitter is typically configured in the service mesh (Istio, Linkerd) or client libraries (gRPC, REST clients) to apply uniformly across all outbound calls.",
+      "HTTP Client Retry Interceptors - Jitter is implemented in HTTP client middleware (axios-retry, fetch interceptors, okhttp retry) where retry delays are calculated; when an HTTP request fails with 503 Service Unavailable, the interceptor calculates exponential backoff (e.g., 1000ms) then applies full jitter: sleep = random(0, 1000ms), preventing clients from retrying simultaneously; this placement ensures all outbound HTTP traffic benefits from jitter without requiring changes to business logic; the interceptor configuration typically specifies jitter strategy (full, equal, decorrelated) and random number source (Math.random, crypto.getRandomValues); HTTP clients are the most common jitter placement because network failures tend to be synchronized (entire service fails, all clients fail at once).",
+      "Service Mesh Sidecar Proxy Retry Policies - Service mesh sidecars (Envoy, Linkerd proxies) implement jitter at the L7 proxy layer, applying randomized delays to all service-to-service retries; when Service A calls Service B through the mesh and receives connection timeout, the sidecar applies jittered backoff before retrying—configured via VirtualService retry policies in Istio or RetryPolicy in Linkerd; this placement provides infrastructure-level jitter enforcement without application code awareness; mesh configuration enables operators to tune jitter strategies globally across all services, preventing thundering herd during cascading failures; the sidecar position is optimal because it sees all inter-service traffic and can coordinate retry timing across the mesh fabric.",
+      "Cloud SDK Client Configuration - Cloud service SDKs (AWS SDK, Google Cloud SDK, Azure SDK) embed jittered retry logic in their request execution pipelines; when creating an AWS S3 client, the SDK configures default retry behavior with exponential backoff and full jitter—each throttling error (429) or server error (5xx) triggers retries with sleep = random(0, base_delay * 2^attempt); this placement protects both the application (prevents frozen requests from synchronized retries) and cloud provider (prevents customer retry storms from amplifying outages); SDK jitter configuration is typically exposed through retry modes (standard, adaptive) with different jitter strategies; cloud SDKs are mission-critical jitter placements because they mediate billions of API calls where synchronized failures are common.",
+      "Database Connection Pool Retry Logic - Connection pool libraries (HikariCP, c3p0, pgpool) implement jitter when retrying failed connection acquisitions; when an application requests a database connection from an exhausted pool (all 100 connections in use), the acquisition logic retries with jittered backoff—base 100ms delay with ±20% jitter creates random(80ms, 120ms) delays between attempts; this placement prevents connection pool thundering herds where hundreds of threads simultaneously retry connection acquisition, creating lock contention and CPU spikes; connection pool jitter is critical during database failovers when primary fails and all application instances simultaneously reconnect to the new primary; the pool configuration allows tuning jitter percentage based on expected concurrent connection requests.",
+      "Message Queue Consumer Retry Backoff - Message queue consumers (Kafka, RabbitMQ, SQS) apply jitter to message reprocessing delays when handlers fail; when a Kafka consumer fails to process a message due to downstream service unavailability, the retry policy applies jittered delay before reprocessing—a DLQ retry topic might use 1min base delay with decorrelated jitter creating variable delays (1.2min, 3.8min, 9.3min); this placement prevents message processing storms where thousands of failed messages simultaneously retry, overwhelming the downstream service that's trying to recover; queue consumer jitter is especially important for poison messages that fail consistently—without jitter, they would retry in lockstep creating periodic load spikes.",
     ],
     architecturalBoundaries: [
-      "Client Libraries: HTTP clients, SDK retry policies, gRPC interceptors",
-      "Service Mesh: Envoy/Istio retry configuration with jittered backoff",
-      "Message Consumers: Kafka, RabbitMQ consumers retrying failed message processing",
-      "Infrastructure: Load balancer health check retry intervals with jitter",
+      "Client-Server Retry Boundary - Jitter operates at the boundary where clients initiate retries to servers, randomizing request timing to prevent synchronized load; when 10,000 mobile apps simultaneously fail an API call at 3:00 PM (server deployment), jitter spreads their retry attempts across the next 2 seconds instead of all hitting the server at 3:00:02; this boundary is critical because it's where the thundering herd phenomenon manifests—synchronized client failures lead to synchronized retries without jitter; implementing jitter at this boundary (in HTTP client, not server) ensures each client independently randomizes its retry timing; the boundary position enables observability—retry jitter metrics show retry distribution over time, detecting synchronized failure patterns.",
+      "Service Mesh Data Plane Boundary - Jitter sits at the L7 proxy boundary in service meshes, between application containers and mesh routing fabric; when an application makes an outbound request through its sidecar proxy, the proxy applies jittered retry delays for failures—this boundary provides centralized jitter enforcement without application code changes; the mesh data plane position enables consistent jitter policies across heterogeneous applications (Python, Java, Go services all get same jitter behavior); this boundary also enables sophisticated jitter strategies like circuit breaker-aware jitter (larger jitter when circuit breaker is half-open) that applications wouldn't implement themselves.",
+      "SDK Client Initialization Boundary - Jitter is configured at SDK initialization time, becoming part of the client's request processing pipeline for its lifetime; when creating an AWS DynamoDB client, retry policy with full jitter is bound to the client instance and applied to all requests made through that client; this boundary ensures consistent jitter behavior across all SDK operations (PutItem, GetItem, Query all use same jitter) without per-request configuration; the initialization boundary also enables jitter strategy selection based on workload characteristics (batch jobs might use larger jitter than interactive requests); SDK telemetry at this boundary tracks jitter effectiveness—average retry delay vs theoretical exponential backoff.",
+      "Connection Pool Acquisition Boundary - Jitter operates at the boundary where application threads request connections from shared pools, randomizing acquisition retry timing; when 200 concurrent requests simultaneously need database connections from a 100-connection pool, jitter spreads acquisition attempts across time windows instead of synchronized attempts; this boundary is unique because the resource (connection pool) is finite and shared—synchronized retries create lock contention on pool internals; implementing jitter at this boundary prevents pool lock starvation where many threads spin waiting for locks instead of backing off; the boundary position enables pool-aware jitter (larger jitter when pool utilization >90%) that optimizes for pool dynamics.",
     ],
     interactsWith: [
       "circuit-breaker",
@@ -674,4 +678,114 @@ conn, err := grpc.Dial(
       "rate-limiting",
     ],
   },
+
+  references: [
+    {
+      title: "Exponential Backoff And Jitter - AWS Architecture Blog",
+      url: "https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/",
+      type: "article",
+      author: "Marc Brooker",
+    },
+    {
+      title: "gRPC Retry Design - Exponential Backoff and Jitter",
+      url: "https://github.com/grpc/proposal/blob/master/A6-client-retries.md",
+      type: "documentation",
+      author: "Google gRPC Team",
+    },
+    {
+      title: "Envoy Proxy - Retry Back Off Configuration",
+      url: "https://www.envoyproxy.io/docs/envoy/latest/configuration/http/http_filters/router_filter#retry-back-off",
+      type: "documentation",
+      author: "Envoy Proxy",
+    },
+    {
+      title: "Google Cloud Storage Retry Strategy",
+      url: "https://cloud.google.com/storage/docs/retry-strategy#exponential-backoff",
+      type: "documentation",
+      author: "Google Cloud",
+    },
+    {
+      title: "Performance Under Load - Understanding Jitter",
+      url: "https://brooker.co.za/blog/2015/03/21/backoff.html",
+      type: "article",
+      author: "Marc Brooker",
+    },
+  ],
+
+  philosophy: {
+    coreProblem:
+      "Synchronized client retries create thundering herd traffic spikes that prevent service recovery and can cascade failures across distributed systems",
+    designPrinciple:
+      "Add controlled randomness to retry timing to break synchronization—spread load over time instead of concentrated bursts",
+    historicalContext:
+      "Jitter emerged from AWS's experience with service outages where synchronized client retries prevented recovery; their 2015 research showed full jitter reduces retry collision rate by 95%",
+    alternativesRejected: [
+      "No jitter (pure exponential backoff) - creates synchronized retry storms",
+      "Client-side rate limiting - too complex, doesn't prevent synchronization",
+      "Server-side request throttling - reactive rather than preventive",
+      "Fixed jitter amount - doesn't scale with backoff delay",
+    ],
+    mentalModel:
+      "Jitter is like a traffic light with randomized green phase timing: if all lights turned green at exactly the same time every hour, traffic would surge in waves; by randomizing green times slightly (±30 seconds), traffic flows smoothly throughout the hour instead of concentrated bursts",
+  },
+
+  visualization: {
+    staticDiagram: `graph TB
+    subgraph Without Jitter
+    F1[10k clients fail] --> R1[All retry at 1s]
+    R1 --> S1[10k simultaneous requests]
+    S1 --> O1[Server overwhelmed]
+    end
+
+    subgraph With Jitter
+    F2[10k clients fail] --> R2[Retry 0-1s]
+    R2 --> S2[Requests spread over 1s]
+    S2 --> O2[Server handles load]
+    end
+
+    style F1 fill:#ffe1e1
+    style R1 fill:#ffcb9a
+    style S1 fill:#f44336
+    style O1 fill:#d32f2f
+    style F2 fill:#ffe1e1
+    style R2 fill:#fff4e1
+    style S2 fill:#ffeb3b
+    style O2 fill:#4caf50`,
+    realWorldAnalogy:
+      "Jitter is like people leaving a concert venue: if everyone tried to exit through the same door at exactly the same time (synchronized), it creates a dangerous crush. But if people naturally leave at slightly different times (randomized), everyone exits smoothly. The door (server) handles the same total number of people, just spread over time instead of all at once.",
+    useCases: [
+      {
+        domain: "Cloud APIs",
+        scenario:
+          "AWS SDK uses full jitter to prevent synchronized retry storms during service outages affecting millions of clients",
+        patternRole: "Spreads retry load over time to allow service recovery",
+        companies: ["AWS", "Google Cloud", "Azure"],
+      },
+      {
+        domain: "Service Mesh",
+        scenario:
+          "Envoy proxies apply jitter to retry delays preventing cascading failures in microservices",
+        patternRole: "Breaks synchronization in service-to-service retries",
+        companies: ["Lyft", "Istio", "Linkerd"],
+      },
+      {
+        domain: "Database Clients",
+        scenario:
+          "Connection pools use jitter to prevent thundering herd during failovers",
+        patternRole:
+          "Randomizes connection retry timing across application instances",
+        companies: ["HikariCP", "Cassandra Driver", "PostgreSQL"],
+      },
+    ],
+  },
+
+  tags: [
+    "reliability",
+    "fault-tolerance",
+    "retry",
+    "randomization",
+    "thundering-herd",
+    "backoff",
+  ],
+  difficulty: "intermediate",
 };

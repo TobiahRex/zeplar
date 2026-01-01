@@ -285,7 +285,7 @@ export default function Dashboard() {
                 </CardTitle>
               </summary>
               <p className="text-sm text-muted-foreground mt-2 ml-6">
-                Track your L1, L2, and L3 mastery for each pattern
+                Track your L1-L6 mastery progression for each pattern
               </p>
               <CardContent className="pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -301,6 +301,7 @@ export default function Dashboard() {
                         patternEmoji={pattern.concept.emoji}
                         family={pattern.hierarchy.family}
                         layerUnlocks={layerStatus}
+                        onClick={() => handlePatternClick(pattern)}
                       />
                     );
                   })}

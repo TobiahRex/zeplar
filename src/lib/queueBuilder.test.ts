@@ -68,9 +68,15 @@ function createMockLayerUnlocks(
       l1Unlocked: true,
       l2Unlocked: true,
       l3Unlocked: true,
+      l4Unlocked: true,
+      l5Unlocked: true,
+      l6Unlocked: true,
       l1Mastery: 100,
       l2Mastery: 100,
       l3Mastery: 100,
+      l4Mastery: 100,
+      l5Mastery: 100,
+      l6Mastery: 100,
     };
   });
   return unlocks;

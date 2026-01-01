@@ -2,7 +2,7 @@
  * Layer Unlock Logic
  *
  * Manages layer unlock progression based on mastery thresholds.
- * L1 is always unlocked. L2 unlocks at 80% L1 mastery. L3 unlocks at 80% L2 mastery.
+ * L1 is always unlocked. Each subsequent layer unlocks at 80% mastery of the previous layer.
  */
 
 import type { CardProgress } from "@/lib/sm2";
@@ -14,6 +14,9 @@ import type { CardProgress } from "@/lib/sm2";
 export const UNLOCK_THRESHOLDS = {
   L2: 80, // Require 80% L1 mastery to unlock L2
   L3: 80, // Require 80% L2 mastery to unlock L3
+  L4: 80, // Require 80% L3 mastery to unlock L4
+  L5: 80, // Require 80% L4 mastery to unlock L5
+  L6: 80, // Require 80% L5 mastery to unlock L6
 } as const;
 
 /**
@@ -30,9 +33,15 @@ export interface LayerUnlockStatus {
   l1Unlocked: boolean; // Always true
   l2Unlocked: boolean;
   l3Unlocked: boolean;
+  l4Unlocked: boolean;
+  l5Unlocked: boolean;
+  l6Unlocked: boolean;
   l1Mastery: number; // 0-100
   l2Mastery: number; // 0-100
   l3Mastery: number; // 0-100
+  l4Mastery: number; // 0-100
+  l5Mastery: number; // 0-100
+  l6Mastery: number; // 0-100
 }
 
 // =============================================================================
@@ -45,13 +54,13 @@ export interface LayerUnlockStatus {
  * Mastery is defined as the percentage of cards with easeFactor >= 2.5
  *
  * @param patternId - Pattern identifier
- * @param layer - Layer number ('L1', 'L2', or 'L3')
+ * @param layer - Layer number ('L1' through 'L6')
  * @param cardProgress - Record of all card progress
  * @returns Mastery percentage (0-100)
  */
 export function calculateLayerMastery(
   patternId: string,
-  layer: "L1" | "L2" | "L3",
+  layer: "L1" | "L2" | "L3" | "L4" | "L5" | "L6",
   cardProgress: Record<string, CardProgress>,
 ): number {
   const layerCards = Object.values(cardProgress).filter(
@@ -76,13 +85,13 @@ export function calculateLayerMastery(
  * Check if a specific layer should be unlocked for a pattern
  *
  * @param patternId - Pattern identifier
- * @param targetLayer - Layer to check ('L2' or 'L3')
+ * @param targetLayer - Layer to check ('L2' through 'L6')
  * @param layerUnlocks - Current unlock status for all patterns
  * @returns True if layer should be unlocked
  */
 export function checkLayerUnlock(
   patternId: string,
-  targetLayer: "L2" | "L3",
+  targetLayer: "L2" | "L3" | "L4" | "L5" | "L6",
   layerUnlocks: Record<string, LayerUnlockStatus>,
 ): boolean {
   const status = layerUnlocks[patternId];
@@ -94,6 +103,18 @@ export function checkLayerUnlock(
 
   if (targetLayer === "L3") {
     return status.l2Mastery >= UNLOCK_THRESHOLDS.L3 && status.l2Unlocked;
+  }
+
+  if (targetLayer === "L4") {
+    return status.l3Mastery >= UNLOCK_THRESHOLDS.L4 && status.l3Unlocked;
+  }
+
+  if (targetLayer === "L5") {
+    return status.l4Mastery >= UNLOCK_THRESHOLDS.L5 && status.l4Unlocked;
+  }
+
+  if (targetLayer === "L6") {
+    return status.l5Mastery >= UNLOCK_THRESHOLDS.L6 && status.l5Unlocked;
   }
 
   return false;
@@ -116,6 +137,9 @@ export function checkCardUnlocked(
   if (card.layer === "L1") return true;
   if (card.layer === "L2") return status.l2Unlocked;
   if (card.layer === "L3") return status.l3Unlocked;
+  if (card.layer === "L4") return status.l4Unlocked;
+  if (card.layer === "L5") return status.l5Unlocked;
+  if (card.layer === "L6") return status.l6Unlocked;
 
   return false;
 }
@@ -126,7 +150,7 @@ export function checkCardUnlocked(
 
 /**
  * Initialize unlock status for a pattern
- * L1 is always unlocked, L2 and L3 start locked
+ * L1 is always unlocked, L2-L6 start locked
  *
  * @returns Initial unlock status
  */
@@ -135,9 +159,15 @@ export function initializeLayerUnlockStatus(): LayerUnlockStatus {
     l1Unlocked: true,
     l2Unlocked: false,
     l3Unlocked: false,
+    l4Unlocked: false,
+    l5Unlocked: false,
+    l6Unlocked: false,
     l1Mastery: 0,
     l2Mastery: 0,
     l3Mastery: 0,
+    l4Mastery: 0,
+    l5Mastery: 0,
+    l6Mastery: 0,
   };
 }
 
@@ -160,11 +190,20 @@ export function updateLayerUnlockStatus(
   status.l1Mastery = calculateLayerMastery(patternId, "L1", cardProgress);
   status.l2Mastery = calculateLayerMastery(patternId, "L2", cardProgress);
   status.l3Mastery = calculateLayerMastery(patternId, "L3", cardProgress);
+  status.l4Mastery = calculateLayerMastery(patternId, "L4", cardProgress);
+  status.l5Mastery = calculateLayerMastery(patternId, "L5", cardProgress);
+  status.l6Mastery = calculateLayerMastery(patternId, "L6", cardProgress);
 
-  // Update unlock status
+  // Update unlock status (each layer unlocks when previous layer reaches 80%)
   status.l2Unlocked = status.l1Mastery >= UNLOCK_THRESHOLDS.L2;
   status.l3Unlocked =
     status.l2Mastery >= UNLOCK_THRESHOLDS.L3 && status.l2Unlocked;
+  status.l4Unlocked =
+    status.l3Mastery >= UNLOCK_THRESHOLDS.L4 && status.l3Unlocked;
+  status.l5Unlocked =
+    status.l4Mastery >= UNLOCK_THRESHOLDS.L5 && status.l4Unlocked;
+  status.l6Unlocked =
+    status.l5Mastery >= UNLOCK_THRESHOLDS.L6 && status.l5Unlocked;
 
   return status;
 }

@@ -884,6 +884,39 @@ record BulkheadMetrics(
     },
   ],
 
+  references: [
+    {
+      title: "Release It! - Bulkheads Pattern",
+      url: "https://pragprog.com/titles/mnee2/release-it-second-edition/",
+      type: "book",
+      author: "Michael T. Nygard",
+    },
+    {
+      title: "Netflix Hystrix - Bulkhead Pattern",
+      url: "https://github.com/Netflix/Hystrix/wiki/How-it-Works#bulkheads",
+      type: "documentation",
+      author: "Netflix",
+    },
+    {
+      title: "Resilience4j Bulkhead Documentation",
+      url: "https://resilience4j.readme.io/docs/bulkhead",
+      type: "documentation",
+      author: "Resilience4j",
+    },
+    {
+      title: "AWS Lambda Concurrency - Reserved and Provisioned",
+      url: "https://docs.aws.amazon.com/lambda/latest/dg/configuration-concurrency.html",
+      type: "documentation",
+      author: "AWS",
+    },
+    {
+      title: "Designing Data-Intensive Applications - Partitioning",
+      url: "https://dataintensive.net/",
+      type: "book",
+      author: "Martin Kleppmann",
+    },
+  ],
+
   philosophy: {
     coreProblem:
       "Shared resource pools create coupling where one failure can cascade to exhaust all resources",

@@ -718,4 +718,248 @@ try {
       ],
     },
   ],
+
+  systemContext: {
+    typicalPlacement: [
+      "HTTP Client Request Configuration - Request timeouts are configured at HTTP client instantiation or per-request level (axios timeout, fetch AbortController) to limit total request duration including all retries; when making API calls to payment services, a 5-second request timeout ensures the entire request-response cycle (including DNS, connection, TLS, transmission, processing) completes within SLA bounds; this placement wraps the entire HTTP roundtrip, unlike connection timeout which only covers TCP handshake; client libraries position request timeout as the outer boundary encompassing retries, redirects, and server processing time.",
+      "API Gateway Request Processing - Gateways (Nginx, Kong, AWS API Gateway) enforce request timeouts for client requests to prevent slow clients from exhausting gateway resources; when a mobile app uploads a 10MB file through the gateway with a 30-second request timeout, the gateway aborts the request if upload doesn't complete within that window; this placement protects gateway thread pools from being monopolized by slow or stalled client connections; gateway request timeouts are separate from upstream (backend) timeouts, providing defense in depth.",
+      "GraphQL Resolver Execution - GraphQL servers apply request timeouts to limit total query execution time across all nested resolvers; when executing a complex query with 50 field resolvers, a 10-second request timeout prevents runaway queries from consuming server resources indefinitely; this placement sits at the GraphQL execution engine layer, monitoring total elapsed time across all resolver invocations; timeout enforcement triggers even if individual resolvers are fast but cumulative time exceeds the limit.",
+      "gRPC Method Deadline - gRPC uses per-RPC deadlines (similar to request timeouts) propagated from clients through the call chain; when a client invokes a unary RPC with a 5-second deadline, that deadline applies to the entire method execution including marshaling, network transmission, server processing, and response unmarshaling; this placement enables deadline propagation where server-side calls to downstream services automatically inherit reduced deadlines (5s becomes 4.7s after 300ms of processing).",
+      "Serverless Function Timeout - Cloud function platforms (AWS Lambda, Azure Functions, Google Cloud Functions) enforce maximum execution timeouts (default 3s-15min depending on platform); when a Lambda processes an S3 event with 10-minute timeout, the function must complete all processing within that window or be forcibly terminated; this placement is infrastructure-enforced, operating at the container/runtime level rather than application code; function timeouts prevent runaway executions from consuming resources and billing costs.",
+    ],
+    architecturalBoundaries: [
+      "Client-Server Request/Response Boundary - Request timeout operates at the complete HTTP request lifecycle boundary, from client sending first byte to receiving last response byte; this boundary encompasses connection establishment (connection timeout), request transmission, server processing, and response transmission; when a REST client makes a POST request with 10s request timeout, the timeout covers all phases; this boundary is broader than connection or read timeouts, providing end-to-end latency SLA enforcement.",
+      "API Gateway Processing Boundary - Request timeout sits at the boundary between external clients and gateway infrastructure, enforcing maximum time for complete request processing; when a gateway receives a request, request timeout tracks time from first byte received to last byte sent in response; this boundary protects gateway resources from slow clients while being distinct from upstream backend timeouts which protect against slow backends; the dual-timeout approach (client-facing and backend-facing) provides layered defense.",
+      "Service Execution Boundary - Request timeout operates at the boundary of service method execution, wrapping all business logic, database queries, and external calls; when a microservice handles a request, the timeout covers the complete execution path including pre-processing, main logic, post-processing, and cleanup; this boundary enables fail-fast behavior—if 8 seconds have elapsed in a 10s timeout budget, starting a 5s database query is preemptively rejected; timeout-aware code can check remaining time and skip non-critical operations.",
+      "Function Invocation Boundary - Serverless request timeouts enforce maximum execution time at the function invocation boundary, from cold start through complete execution; when Lambda invokes a function, timeout countdown begins immediately including initialization code, framework bootstrapping, and handler execution; this boundary is unique because it's infrastructure-enforced and non-negotiable—exceeding timeout results in forcible termination and SIGKILL, not graceful error; function code cannot extend or override the timeout.",
+    ],
+    interactsWith: [
+      "timeout",
+      "connection-timeout",
+      "read-timeout",
+      "deadline-propagation",
+      "circuit-breaker",
+      "retry",
+    ],
+  },
+
+  implementations: [
+    {
+      id: "axios-timeout",
+      name: "Axios Request Timeout",
+      type: "library",
+      languages: ["javascript", "typescript"],
+      description:
+        "HTTP client with request timeout configuration. Timeout covers entire request including retries, redirects, and response body download.",
+      links: {
+        docs: "https://axios-http.com/docs/req_config",
+        github: "https://github.com/axios/axios",
+      },
+      codeSnippet: `import axios from 'axios';
+
+const api = axios.create({
+  baseURL: 'https://api.example.com',
+  timeout: 5000, // 5 second request timeout
+});
+
+// Per-request override
+const response = await api.post('/payments', data, {
+  timeout: 10000, // 10 seconds for payment processing
+});`,
+    },
+    {
+      id: "go-context-timeout",
+      name: "Go Context Timeout",
+      type: "framework",
+      languages: ["go"],
+      description:
+        "Go's context.WithTimeout provides request-scoped timeouts that propagate through function calls and cancel operations when exceeded.",
+      links: {
+        docs: "https://pkg.go.dev/context",
+      },
+      codeSnippet: `ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+defer cancel()
+
+req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+if err != nil {
+    return err
+}
+
+resp, err := client.Do(req)
+if err != nil {
+    // Includes context.DeadlineExceeded for timeout
+    return err
+}`,
+    },
+    {
+      id: "spring-mvc-timeout",
+      name: "Spring MVC Async Request Timeout",
+      type: "framework",
+      languages: ["java", "kotlin"],
+      description:
+        "Spring Boot async request timeout for DeferredResult and Callable endpoints. Enforces maximum processing time for async controllers.",
+      links: {
+        docs: "https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-ann-async",
+      },
+      codeSnippet: `@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
+        configurer.setDefaultTimeout(5000); // 5 second timeout
+    }
+}
+
+@GetMapping("/async")
+public DeferredResult<String> asyncEndpoint() {
+    DeferredResult<String> result = new DeferredResult<>(10000L); // 10s timeout
+    // Async processing...
+    return result;
+}`,
+    },
+    {
+      id: "aws-lambda-timeout",
+      name: "AWS Lambda Function Timeout",
+      type: "platform",
+      languages: ["any"],
+      description:
+        "Maximum execution time for Lambda functions. Enforced at runtime level with forcible termination when exceeded.",
+      links: {
+        docs: "https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-common.html#configuration-timeout-console",
+      },
+      codeSnippet: `# serverless.yml
+functions:
+  processPayment:
+    handler: handler.processPayment
+    timeout: 30  # 30 second max execution
+
+# Python handler with timeout awareness
+def lambda_handler(event, context):
+    remaining = context.get_remaining_time_in_millis()
+    if remaining < 5000:  # Less than 5s remaining
+        return {'error': 'Insufficient time'}
+    # Process...`,
+    },
+  ],
+
+  usedInSystems: [
+    {
+      systemId: "stripe-api",
+      systemName: "Stripe Payment API",
+      howUsed:
+        "Stripe API uses request timeouts to ensure payment operations complete within acceptable latency bounds for merchants. Each API endpoint has configurable request timeout (default 80s for most operations, 120s for long-running operations like payouts). When processing a payment charge, the request timeout covers authorization with card networks, fraud detection, and database updates—if the complete operation exceeds 80s, Stripe returns a timeout error to the client. The timeout is critical for preventing hung connections that would exhaust Stripe's API gateway capacity. During card network outages, aggressive request timeouts (reduced to 30s) allow Stripe to fail fast and return errors to merchants rather than queueing requests indefinitely. Pattern composition: Request Timeout + Idempotency Keys + Automatic Retries + Circuit Breaker. Impact: Maintained 99.99% API uptime despite external dependencies; prevented API gateway overload during partner outages; reduced P99 latency by 40% through timeout-driven fast failure.",
+      source: "https://stripe.com/docs/api/idempotent_requests",
+    },
+    {
+      systemId: "aws-api-gateway",
+      systemName: "AWS API Gateway",
+      howUsed:
+        "AWS API Gateway enforces a hard 29-second maximum integration timeout for all backend calls (Lambda, HTTP endpoints, AWS services). When a client request arrives, API Gateway starts a request timeout covering Lambda cold start, execution time, and response marshaling. The 29s limit (chosen to be under common load balancer 30s timeouts) prevents API Gateway from accumulating stale connections during backend slowdowns. For long-running operations exceeding 29s, AWS recommends async patterns (SQS + polling). The timeout is non-configurable and infrastructure-enforced—Lambda functions executing beyond 29s are terminated and return 504 Gateway Timeout. Pattern composition: Fixed Request Timeout + Lambda Timeout + Connection Pooling + Throttling. Impact: Prevented API Gateway resource exhaustion during Lambda cold start storms; enforced predictable latency SLAs for all API operations; forced adoption of async patterns for long operations improving system design.",
+      source:
+        "https://docs.aws.amazon.com/apigateway/latest/developerguide/limits.html",
+    },
+    {
+      systemId: "github-api",
+      systemName: "GitHub REST and GraphQL APIs",
+      howUsed:
+        "GitHub API uses aggressive request timeouts (10s for REST, 30s for GraphQL) to protect API infrastructure from expensive queries and slow clients. When executing a GraphQL query fetching repository data across 1000 repos, the 30s timeout prevents runaway queries from monopolizing API servers. For REST API, 10s timeout covers authentication, rate limit checks, database queries, and response rendering. During GitHub's 2018 outage caused by MySQL replication lag, request timeouts prevented complete system failure by failing queries quickly rather than queuing indefinitely. GraphQL queries include complexity analysis—queries estimated to exceed timeout are rejected before execution. Pattern composition: Request Timeout + Query Complexity Analysis + Rate Limiting + Circuit Breaker. Impact: Prevented API server overload from expensive queries; reduced incident severity during database slowdowns; improved overall API stability from 99.8% to 99.95% uptime.",
+      source:
+        "https://docs.github.com/en/graphql/overview/rate-limits-and-node-limits-for-the-graphql-api",
+    },
+  ],
+
+  references: [
+    {
+      title: "Axios Request Configuration - Timeout",
+      url: "https://axios-http.com/docs/req_config",
+      type: "documentation",
+      author: "Axios",
+    },
+    {
+      title: "Go Context Package - Timeouts and Cancellation",
+      url: "https://pkg.go.dev/context",
+      type: "documentation",
+      author: "Go Team",
+    },
+    {
+      title: "AWS Lambda Function Configuration - Timeout",
+      url: "https://docs.aws.amazon.com/lambda/latest/dg/configuration-function-common.html#configuration-timeout-console",
+      type: "documentation",
+      author: "AWS",
+    },
+    {
+      title: "Spring Framework - Async Request Processing",
+      url: "https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-ann-async",
+      type: "documentation",
+      author: "Spring",
+    },
+  ],
+
+  philosophy: {
+    coreProblem:
+      "Without end-to-end request timeouts, operations can hang indefinitely consuming resources and degrading user experience",
+    designPrinciple:
+      "Enforce maximum total request duration covering all phases to guarantee bounded latency and prevent resource exhaustion",
+    historicalContext:
+      "Request timeouts became essential with microservices where a single user request might traverse 10+ services—without cumulative timeout enforcement, tail latency grows unbounded",
+    alternativesRejected: [
+      "No timeout - allows indefinite hangs and resource leaks",
+      "Only connection timeout - doesn't protect against slow processing",
+      "Only read timeout - allows slow write/processing phases",
+      "Infinite timeout with manual cancellation - too complex and error-prone",
+    ],
+    mentalModel:
+      "Request timeout is like a cooking timer for the entire meal prep: you have 60 minutes total to shop, prep, cook, and plate—it doesn't matter which step takes longest, you must finish everything within the time limit",
+  },
+
+  visualization: {
+    staticDiagram: `graph LR
+    A[Request Start] --> B[Connect]
+    B --> C[Send Request]
+    C --> D[Server Process]
+    D --> E[Receive Response]
+    E --> F[Request Complete]
+
+    A -.->|Request Timeout: 10s| F
+
+    style A fill:#e1f5e1
+    style F fill:#90ee90
+    style B fill:#fff4e1
+    style C fill:#fff4e1
+    style D fill:#ffeb3b
+    style E fill:#fff4e1`,
+    realWorldAnalogy:
+      "Request timeout is like a restaurant's promise to serve your meal within 30 minutes—it covers everything from taking your order, cooking, and delivering to your table. If any step takes too long, they comp your meal",
+    useCases: [
+      {
+        domain: "Payment APIs",
+        scenario:
+          "Stripe enforces 80s request timeout for payment processing covering fraud checks and network authorization",
+        patternRole: "Ensures bounded latency for critical payment operations",
+        companies: ["Stripe", "Square", "PayPal"],
+      },
+      {
+        domain: "API Gateways",
+        scenario:
+          "AWS API Gateway has 29s maximum integration timeout for backend calls",
+        patternRole: "Prevents gateway resource exhaustion from slow backends",
+        companies: ["AWS", "Kong", "Nginx"],
+      },
+      {
+        domain: "Serverless",
+        scenario:
+          "Lambda functions have configurable request timeout (max 15min) for execution",
+        patternRole: "Bounds execution time to prevent runaway costs",
+        companies: ["AWS Lambda", "Azure Functions", "Google Cloud Functions"],
+      },
+    ],
+  },
+
+  tags: [
+    "reliability",
+    "fault-tolerance",
+    "timeout",
+    "request-lifecycle",
+    "latency",
+  ],
+  difficulty: "beginner",
 };

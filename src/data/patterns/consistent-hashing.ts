@@ -1622,13 +1622,11 @@ public class ChordDHT {
 
   systemContext: {
     typicalPlacement: [
-      "Distributed caches (Memcached, Redis clusters)",
-      "Load balancers (nginx upstream, HAProxy)",
-      "CDN routing (edge server selection)",
-      "Database sharding layers (Cassandra, DynamoDB)",
-      "Service mesh routing (Consul, linkerd)",
-      "P2P networks (BitTorrent DHT, IPFS)",
-      "Distributed session stores",
+      "Distributed Cache Clusters (Memcached, Redis) - Consistent hashing is most commonly implemented in distributed cache clusters to route cache keys to specific cache servers; when a Memcached cluster has 100 servers caching 10TB of data, each client uses a consistent hash ring to map keys to servers deterministically; the client library (libketama, hash-ring) hashes the cache key and performs binary search on a local ring structure to find the owning server; when cache servers are added during traffic spikes (Black Friday, product launches), only 1/N keys are invalidated instead of 99% with traditional modulo hashing, preserving cache effectiveness and preventing database overload; virtual nodes (150-500 per server) ensure even distribution despite server heterogeneity; this placement is critical for read-heavy systems where cache hit rates directly impact backend load and user-facing latency",
+      "Load Balancers and CDN Edge Routing - Load balancers like nginx, HAProxy, and CDN systems like Akamai and Cloudflare use consistent hashing to route requests to backend servers or edge caches based on request attributes (URL, session ID, source IP); nginx's 'hash $request_uri consistent' directive ensures the same URL always routes to the same backend server, maximizing backend cache hit rates and enabling stateful session affinity; in Akamai's 300,000+ edge server network, consistent hashing routes content requests to specific edge servers based on URL hash, so repeated requests for the same video or image hit the same edge cache (95%+ hit rate), dramatically reducing origin server load and improving latency; when edge servers are added in new regions or removed due to failures, only 1/N cached objects are invalidated, preventing cache stampedes that would overwhelm origin servers during topology changes",
+      "Database Sharding and Partitioning Layers (Cassandra, DynamoDB, Riak) - Distributed databases use consistent hashing as the foundational partitioning strategy to distribute data across storage nodes without a centralized coordinator; Cassandra assigns each node 256 virtual nodes (vnodes) by default, and partition keys are hashed using Murmur3 to determine which vnode (and thus physical node) owns each row; when nodes join or leave the cluster (scaling operations, failures, maintenance), only keys in the affected vnode ranges are rebalanced via streaming—typically 1/N of total data—while the cluster remains fully available for reads and writes; DynamoDB uses similar consistent hashing with automatic partition splitting as tables grow, transparently adding partitions and redistributing items without application changes; this placement is essential for horizontally scalable databases that must handle petabyte-scale data and millions of requests per second while maintaining predictable single-digit millisecond latencies",
+      "Service Mesh and Microservice Routing (Consul, Envoy, linkerd) - Modern service meshes implement consistent hashing at the sidecar proxy level to route requests from microservices to upstream service instances; Envoy's ring_hash load balancing policy hashes request attributes (headers, cookies, source IP) to consistently route requests to the same upstream instance, enabling stateful session affinity and backend caching; Consul Connect uses consistent hashing for service discovery and routing, ensuring requests for the same resource consistently hit the same service instance to maximize instance-local cache effectiveness; when service instances auto-scale (Kubernetes HPA adds pods during traffic spikes), consistent hashing minimizes cache disruption—only 1/N requests are re-routed to new instances, while existing instances maintain their cache effectiveness; this placement is critical in microservice architectures with hundreds of services and thousands of instances where centralized routing coordination would become a bottleneck",
+      "Peer-to-Peer Networks and Distributed Hash Tables (DHT) - P2P systems like BitTorrent DHT, IPFS, and Chord use consistent hashing as the foundation for decentralized routing without central coordination; in BitTorrent's Mainline DHT with 20+ million nodes, each node and content hash are mapped onto a shared 160-bit hash ring, and nodes store peer information for content hashes nearest to their own node ID; lookups use Kademlia's XOR metric (a variant of consistent hashing) with finger-table-like routing to find peer lists in O(log N) hops—typically 6-8 hops in a 20M-node network; when millions of peers join or leave per hour (aggressive churn), consistent hashing ensures only immediate neighbors in the hash space are affected, with O(log N) routing table updates per event; this placement enables fully decentralized, censorship-resistant content discovery at internet scale without any single point of failure or coordination",
     ],
     interactsWith: [
       "hash-sharding",
@@ -1638,10 +1636,10 @@ public class ChordDHT {
       "virtual-nodes",
     ],
     architecturalBoundaries: [
-      "Routing layer (client-side or proxy-based)",
-      "Storage layer (data partitioning)",
-      "Load distribution layer (traffic routing)",
-      "Replication coordination (replica placement)",
+      "Client-Side vs Proxy-Based Routing Boundary - Consistent hashing can be implemented on the client side (application library) or server side (proxy, load balancer); client-side hashing (libketama in Memcached clients, Cassandra Java driver) embeds the hash ring logic in each client application, eliminating proxy hops and reducing latency, but requires all clients to use identical hash functions and node lists, complicating deployments when server topology changes; proxy-based hashing (nginx upstream, Envoy, HAProxy) centralizes routing logic in a dedicated layer, simplifying client applications and enabling transparent topology changes, but introduces proxy as potential bottleneck and latency overhead; the boundary decision depends on latency requirements (client-side is faster), operational complexity (proxy is simpler for heterogeneous clients), and consistency needs (proxy ensures all clients route identically); in practice, high-performance caches use client-side hashing, while microservice architectures prefer proxy-based for operational flexibility",
+      "Data Partitioning and Ownership Boundary - Consistent hashing establishes clear data ownership boundaries in distributed systems: each key has a deterministic owner node based on its hash position, and ownership transfers only occur during topology changes (node joins/leaves); this boundary is critical for avoiding distributed coordination overhead—writes go directly to the owning node without two-phase commit or consensus protocols; however, this creates a tension with replication: primary ownership is based on consistent hash, but replicas must be placed on different nodes for fault tolerance; systems like Cassandra resolve this by storing replicas on the N-1 successor nodes clockwise from the primary, maintaining consistent hashing benefits while achieving replication factor N; the boundary determines whether the system prioritizes consistency (writes to all replicas, slower) or availability (writes to primary only, faster but risk data loss); this is fundamentally a data partitioning layer that must integrate with replication, quorum protocols, and conflict resolution strategies",
+      "Load Distribution and Hotspot Prevention Boundary - Consistent hashing is designed to prevent hotspots by distributing keys evenly across nodes, but this boundary is where architectural decisions about load fairness are made; without virtual nodes, physical nodes map to random positions on the ring, causing variance in load distribution—one node might own 30% of the keyspace while another owns 5%, creating severe imbalance; virtual nodes (vnodes) address this by giving each physical node 100-500 positions on the ring, smoothing variance to <5%; however, this introduces complexity: more vnodes improve distribution but increase routing table size and join/leave complexity; systems must also handle heterogeneous clusters where servers have different capacities—assigning vnodes proportional to capacity (weight-based hashing) ensures powerful servers handle more load; this boundary is where consistent hashing intersects with capacity planning, cost optimization, and SLA enforcement; inappropriate tuning leads to hotspots, wasted capacity, or SLA violations despite using consistent hashing",
+      "Not Recommended for Tight Consistency or Transactional Boundaries - Consistent hashing is fundamentally an eventual consistency pattern optimized for availability and partition tolerance (AP in CAP theorem); it is unsuitable for systems requiring strong consistency, ACID transactions, or immediate read-after-write guarantees across nodes; in banking systems, e-commerce order processing, or inventory management where consistency is paramount, consistent hashing's asynchronous replication and potential for network partition tolerance conflicts with correctness requirements; attempting to layer strong consistency (two-phase commit, Paxos) over consistent hashing undermines its performance benefits—you lose both the low latency of eventual consistency and the simplicity of strong consistency; instead, these systems should use consensus-based partitioning (Spanner, CockroachDB with Raft), range partitioning with centralized coordination, or single-leader architectures where consistency boundaries are explicit; consistent hashing excels at high-throughput, read-heavy, eventual consistency scenarios (caches, sessions, metrics, logs), not transactional workloads",
     ],
   },
 
@@ -1928,6 +1926,48 @@ class ChordNode:
         "Cassandra uses consistent hashing with virtual nodes (vnodes) as its core partitioning strategy for distributing data across clusters. Each node in a Cassandra cluster is assigned a default of 256 virtual nodes (configurable via num_tokens), and data is partitioned based on Murmur3 hash of partition keys. When a node joins the cluster, it claims 256 positions on the ring, taking ownership of small key ranges from 256 different existing nodes—distributing the rebalancing load evenly instead of overwhelming a single neighbor. This enables Cassandra to scale from 3-node development clusters to 1,000+ node production clusters (Apple reportedly runs clusters with 75,000+ nodes) without downtime. During node additions/removals, only 1/N data moves via streaming, and the cluster remains available for reads/writes. Pattern composition: Consistent Hashing + Virtual Nodes (256 default) + Replication (RF=3 typical) + Tunable Consistency (quorum reads/writes) + Gossip Protocol (peer discovery). Rationale: Cassandra targets linear scalability and fault tolerance for mission-critical applications. Consistent hashing enables adding capacity by simply joining new nodes without complex rebalancing procedures. Impact: Enabled linear scalability to 1,000+ nodes; achieved 99.99% uptime with automatic failover; Apple's 75k-node cluster serves 10 trillion requests per month with consistent performance.",
       source:
         "https://cassandra.apache.org/doc/latest/architecture/dynamo.html",
+    },
+  ],
+
+  references: [
+    {
+      title:
+        "Consistent Hashing and Random Trees: Distributed Caching Protocols for Relieving Hot Spots on the World Wide Web",
+      url: "https://dl.acm.org/doi/10.1145/258533.258660",
+      type: "research-paper",
+      author: "Karger et al., MIT",
+    },
+    {
+      title: "Dynamo: Amazon's Highly Available Key-value Store",
+      url: "https://www.allthingsdistributed.com/2007/10/amazons_dynamo.html",
+      type: "article",
+      author: "Werner Vogels",
+    },
+    {
+      title: "Akamai - Consistent Hashing for CDN (Technical Publication)",
+      url: "https://www.akamai.com/site/en/documents/research-paper/consistent-hashing-and-random-trees-distributed-caching-protocols-for-relieving-hot-spots-on-the-world-wide-web-technical-publication.pdf",
+      type: "documentation",
+      author: "Akamai Technologies",
+    },
+    {
+      title:
+        "Apache Cassandra Architecture - Consistent Hashing with Virtual Nodes",
+      url: "https://cassandra.apache.org/doc/latest/architecture/dynamo.html",
+      type: "documentation",
+      author: "Apache Cassandra",
+    },
+    {
+      title:
+        "Chord: A Scalable Peer-to-peer Lookup Protocol for Internet Applications",
+      url: "https://pdos.csail.mit.edu/papers/chord:sigcomm01/chord_sigcomm.pdf",
+      type: "research-paper",
+      author: "Stoica et al., MIT/Berkeley",
+    },
+    {
+      title: "The Ultimate Guide to Consistent Hashing",
+      url: "https://www.toptal.com/big-data/consistent-hashing",
+      type: "article",
+      author: "Toptal Engineering",
     },
   ],
 

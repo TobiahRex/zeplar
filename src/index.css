@@ -118,8 +118,24 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply text-foreground;
+    @apply text-foreground font-serif;
     background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #0f172a 100%);
     min-height: 100vh;
+    line-height: 1.75;
+  }
+
+  /* Constrain text elements to readable width, but let code blocks span full width */
+  .constrain-text.markdown-content > *:not(pre) {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Code blocks span full width of their container */
+  .constrain-text.markdown-content pre {
+    width: 100%;
+    max-width: 100%;
+    margin-left: 0;
+    margin-right: 0;
   }
 }

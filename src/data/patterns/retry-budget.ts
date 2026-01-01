@@ -50,26 +50,125 @@ export const retryBudget: Pattern = {
   structure: {
     participants: [
       {
-        name: "TODO: Participant name",
-        role: "TODO: Participant role",
-        responsibilities: ["TODO: Responsibility 1", "TODO: Responsibility 2"],
+        name: "Budget Tracker",
+        role: "Retry Budget Enforcer",
+        responsibilities: [
+          "Track total requests and retries in rolling window",
+          "Calculate current retry ratio",
+          "Enforce budget limits by blocking retries when exhausted",
+          "Provide metrics on budget utilization",
+        ],
+      },
+      {
+        name: "Retry Logic",
+        role: "Request Handler",
+        responsibilities: [
+          "Attempt operation and handle failures",
+          "Check budget before retrying",
+          "Record retry attempts with budget tracker",
+          "Fail fast when budget is exhausted",
+        ],
+      },
+      {
+        name: "Metrics Collector",
+        role: "Observability Provider",
+        responsibilities: [
+          "Expose current retry ratio",
+          "Track successful vs failed retries",
+          "Alert when budget utilization is high",
+          "Record budget exhaustion events",
+        ],
       },
     ],
-    diagram: `graph TB
-    Start([Start]) --> Action[TODO: Add Mermaid diagram]
-    Action --> End([End])
+    diagram: `sequenceDiagram
+    participant C as Client
+    participant R as Retry Logic
+    participant B as Budget Tracker
+    participant S as Service
 
-    style Start fill:#e1f5e1
-    style End fill:#e1f5e1`,
+    C->>R: Request operation
+    R->>B: recordRequest()
+    R->>S: Execute operation
+
+    alt Operation succeeds
+        S-->>R: Success
+        R-->>C: Result
+    else Operation fails
+        S-->>R: Error
+        R->>B: canRetry()?
+
+        alt Budget available
+            B-->>R: true (budget OK)
+            R->>B: recordRetry()
+            Note over R: Apply backoff delay
+            R->>S: Retry operation
+
+            alt Retry succeeds
+                S-->>R: Success
+                R->>B: recordRetrySuccess()
+                R-->>C: Result
+            else Retry fails
+                S-->>R: Error
+                R->>B: recordRetryFailure()
+                R-->>C: Error
+            end
+        else Budget exhausted
+            B-->>R: false (budget exhausted)
+            Note over R: Fail fast - no retry
+            R-->>C: Error (budget exhausted)
+        end
+    end`,
     flow: [
       {
         step: 1,
-        actor: "TODO: Actor name",
-        action: "TODO: Action",
-        description: "TODO: Description",
+        actor: "Client",
+        action: "Initiate Request",
+        description:
+          "Client calls operation through retry wrapper with configured max retries and budget",
+      },
+      {
+        step: 2,
+        actor: "Retry Logic",
+        action: "Record Request & Execute",
+        description:
+          "Record initial request attempt with budget tracker and execute operation",
+      },
+      {
+        step: 3,
+        actor: "Service",
+        action: "Process Request",
+        description: "Service attempts to process request, may succeed or fail",
+      },
+      {
+        step: 4,
+        actor: "Retry Logic",
+        action: "Check Budget on Failure",
+        description:
+          "On failure, check if retry budget allows another attempt based on current retry ratio",
+      },
+      {
+        step: 5,
+        actor: "Budget Tracker",
+        action: "Evaluate Budget",
+        description:
+          "Calculate retry ratio (retries/requests) in rolling window and compare to limit",
+      },
+      {
+        step: 6,
+        actor: "Retry Logic",
+        action: "Retry or Fail Fast",
+        description:
+          "If budget available, record retry and attempt again with backoff; if exhausted, fail immediately",
       },
     ],
-    invariants: ["TODO: List pattern invariants and constraints"],
+    invariants: [
+      "Retry ratio must never exceed configured limit (e.g., 20%)",
+      "All requests must be recorded before execution",
+      "Budget checks must occur before retry attempts",
+      "Rolling window must continuously clean up old metrics",
+      "Budget exhaustion must result in immediate failure (no retry)",
+      "Retry counts must include only actual retry attempts, not initial requests",
+    ],
   },
 
   codeExamples: [
@@ -577,4 +676,406 @@ simulateTraffic();`,
       ],
     },
   ],
+
+  systemContext: {
+    typicalPlacement: [
+      "HTTP Client Libraries - Retry budgets are commonly implemented in HTTP client wrappers (axios interceptors, fetch middleware, RestTemplate customizers) to prevent retry storms from overwhelming downstream services; when a client library handles 10,000 requests/hour to external APIs, configuring a 20% retry budget (2,000 max retries/hour) ensures that even if the API starts failing at 80% error rate, the retry amplification is bounded to 1.2x load instead of 4.8x load; the budget sits at the client initialization layer, tracking all outbound requests through a shared budget instance; this placement provides global retry coordination without requiring each call site to implement budget-aware logic.",
+      "Service Mesh Sidecars (Envoy, Linkerd, Istio) - Service mesh proxies implement retry budgets as part of their resilience features, enforcing per-destination retry limits across all traffic flowing through the mesh; when Service A's sidecar makes calls to Service B, the sidecar tracks retry ratio for the A→B traffic path in a 60-second rolling window; if Service B starts degrading and retry ratio hits 15%, the sidecar fails fast on subsequent failures rather than amplifying load; this placement provides transparent retry budget enforcement without application code changes, operating at the L7 network layer where all service-to-service traffic flows; configuration typically lives in ServiceEntry or VirtualService resources defining retry behavior per destination.",
+      "SDK Client Configuration - Cloud service SDKs (AWS SDK, Google Cloud SDK, Stripe SDK) integrate retry budgets into their client configuration to prevent customers from overwhelming cloud APIs during outages; when the AWS S3 SDK encounters high error rates (503 throttling, 500 internal errors), the SDK's retry budget blocks excessive retries that would worsen the service degradation; the budget is typically configured at SDK client instantiation (RetryPolicy, RetryConfig) with defaults like 20% retry budget over 1-minute windows; this placement protects both the customer application (prevents hung requests waiting for failing retries) and the cloud provider (prevents retry amplification during incidents); metrics are exposed through SDK telemetry for monitoring budget utilization.",
+      "API Gateway Rate Limiting - API gateways implement retry budgets as part of their traffic management policies to protect backend services from client retry storms; when a gateway routes traffic from thousands of clients to backend microservices, it tracks the aggregate retry ratio for each backend destination; if the retry ratio for the payment service exceeds 25%, the gateway starts returning 503 Service Unavailable with Retry-After headers instead of forwarding retry attempts; this placement provides centralized retry coordination across heterogeneous clients (mobile apps, web frontends, partner integrations) that may have different retry policies; the gateway acts as a chokepoint preventing uncoordinated client retries from cascading into backend overload.",
+      "Distributed Queue Consumers - Message queue consumers (Kafka, RabbitMQ, SQS workers) implement retry budgets to prevent poison messages from triggering unbounded reprocessing attempts; when a consumer processes 1000 messages/minute and encounters a 20% failure rate due to downstream database issues, a retry budget caps retry attempts at 200/minute rather than allowing each failed message to retry 5 times (creating 1000 retries/minute); the budget tracks retry ratio per queue or consumer group in a sliding window; this placement prevents message processing backlog growth during downstream degradation—failed messages either succeed on budget-allowed retries or move to dead letter queues, maintaining queue throughput even during partial failures.",
+    ],
+    interactsWith: [
+      "retry",
+      "circuit-breaker",
+      "exponential-backoff",
+      "rate-limiting",
+      "token-bucket",
+      "load-shedding",
+      "bulkhead",
+    ],
+    architecturalBoundaries: [
+      "Client-Server Boundary - Retry budgets are positioned at the client side of client-server interactions to regulate outbound retry traffic before it reaches the network; when a mobile app makes API calls through a networking layer, the retry budget wraps HTTP client logic to prevent the app from retry-bombing the backend during outages; this boundary is critical because retry amplification happens on the client side—each of 100,000 concurrent users retrying independently creates massive load multiplication; implementing the budget at this boundary means retries are throttled before consuming network bandwidth, connection pool slots, or server capacity; without client-side budget enforcement, servers receive the full brunt of retry amplification and must defend with aggressive rate limiting or circuit breaking.",
+      "Service Mesh Data Plane - Retry budgets operate at the L7 proxy layer in service meshes, sitting between application containers and the network fabric; when an application makes outbound HTTP calls, the sidecar proxy intercepts the traffic, applies retry logic with budget enforcement, and forwards to destination services; this boundary provides retry coordination without requiring application code changes—the budget is transparent to the application container but enforceable by the infrastructure; the data plane position enables centralized retry telemetry and policy enforcement across the entire service mesh; retry budgets at this boundary prevent retry storms from propagating through the mesh topology during cascading failures.",
+      "SDK Initialization Boundary - Retry budgets are configured at SDK initialization time, becoming part of the client's long-lived connection/request management layer; when initializing an AWS SDK client or Stripe API client, retry budget configuration is passed to the client constructor and remains active for the lifetime of the client instance; this boundary ensures all requests flowing through the client share the same budget, providing coordination across concurrent request threads; the initialization boundary is important because it guarantees budget enforcement cannot be bypassed—every request path goes through the configured retry logic; metrics collection and budget state are scoped to the client instance lifecycle.",
+      "Queue Message Processing Boundary - Retry budgets sit at the boundary between message queue consumption and message handler execution, regulating retry attempts for failed message processing; when a Kafka consumer pulls messages from a topic, the budget tracks processing retries across all partitions assigned to the consumer group; each message processing failure checks the budget before requeueing or retrying the message; this boundary prevents poison messages from monopolizing consumer threads and growing queue backlogs—failed messages either succeed within budget limits or move to dead letter topics; budget exhaustion triggers alerts indicating systemic processing issues (database down, schema mismatch) rather than transient failures.",
+    ],
+  },
+
+  implementations: [
+    {
+      id: "finagle-retry-budget",
+      name: "Twitter Finagle Retry Budget",
+      type: "library",
+      languages: ["scala", "java"],
+      description:
+        "Production-grade retry budget implementation in Twitter's Finagle RPC framework. Uses exponentially-weighted moving average to track retry ratio and enforces configurable budget limits. Integrates with circuit breakers and load balancers.",
+      links: {
+        docs: "https://twitter.github.io/finagle/guide/Clients.html#retries",
+        github: "https://github.com/twitter/finagle",
+      },
+      codeSnippet: `import com.twitter.finagle.Http
+import com.twitter.finagle.service.{RetryBudget, RetryPolicy}
+import com.twitter.util.{Duration, Future}
+
+// Create HTTP client with retry budget
+val client = Http.client
+  .withRetryBudget(
+    RetryBudget(
+      ttl = Duration.fromSeconds(10),        // Rolling window
+      minRetriesPerSec = 5,                  // Minimum retries allowed
+      percentCanRetry = 0.2                  // 20% retry budget
+    )
+  )
+  .withRetryPolicy(
+    RetryPolicy.tries(3)                     // Max 3 attempts per request
+  )
+  .newService("backend.example.com:8080")
+
+// Make request - retries are budget-controlled
+val response: Future[Response] = client(request)`,
+    },
+    {
+      id: "envoy-retry-budget",
+      name: "Envoy Proxy Retry Budget",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Envoy service mesh sidecar implements retry budgets through circuit breaking configuration. Tracks retry ratio per upstream cluster and enforces budget limits to prevent retry storms during service degradation.",
+      links: {
+        docs: "https://www.envoyproxy.io/docs/envoy/latest/intro/arch_overview/upstream/circuit_breaking",
+      },
+      codeSnippet: `# envoy.yaml
+static_resources:
+  clusters:
+  - name: backend_service
+    connect_timeout: 1s
+    type: STRICT_DNS
+    lb_policy: ROUND_ROBIN
+    circuit_breakers:
+      thresholds:
+      - max_retries: 1000          # Max concurrent retries
+    outlier_detection:
+      consecutive_5xx: 5
+      interval: 10s
+      base_ejection_time: 30s
+    load_assignment:
+      cluster_name: backend_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: backend.local
+                port_value: 8080
+    # Retry policy with budget
+    retry_policy:
+      retry_on: "5xx,reset,connect-failure"
+      num_retries: 3
+      retry_host_predicate:
+      - name: envoy.retry_host_predicates.previous_hosts
+      host_selection_retry_max_attempts: 3`,
+    },
+    {
+      id: "polly-retry-budget",
+      name: "Polly.Contrib.RetryBudget (.NET)",
+      type: "library",
+      languages: ["csharp"],
+      description:
+        ".NET resilience library Polly's retry budget extension. Implements sliding window retry tracking with configurable budget limits. Integrates with Polly's retry, circuit breaker, and timeout policies.",
+      links: {
+        docs: "https://github.com/Polly-Contrib/Polly.Contrib.RetryBudget",
+        github: "https://github.com/Polly-Contrib/Polly.Contrib.RetryBudget",
+      },
+      codeSnippet: `using Polly;
+using Polly.Contrib.RetryBudget;
+
+// Create retry policy with budget
+var retryBudget = new RetryBudget(
+    retryRatioLimit: 0.2,                    // 20% retry budget
+    windowDuration: TimeSpan.FromMinutes(1), // 1 minute window
+    minRequests: 10                          // Minimum requests before enforcing
+);
+
+var retryPolicy = Policy
+    .Handle<HttpRequestException>()
+    .RetryAsync(3, onRetry: (exception, retryCount) =>
+    {
+        if (!retryBudget.CanRetry())
+        {
+            throw new BudgetExhaustedException(
+                "Retry budget exhausted - failing fast"
+            );
+        }
+        retryBudget.RecordRetry();
+    });
+
+// Use policy
+await retryPolicy.ExecuteAsync(async () =>
+{
+    retryBudget.RecordRequest();
+    var response = await httpClient.GetAsync("/api/resource");
+    response.EnsureSuccessStatusCode();
+    return response;
+});`,
+    },
+    {
+      id: "resilience4j-retry-budget",
+      name: "Resilience4j Retry Registry",
+      type: "library",
+      languages: ["java", "kotlin"],
+      description:
+        "Java resilience library providing retry budget through retry registry with configurable limits. Tracks retry metrics and enforces budget caps using sliding time window algorithm.",
+      links: {
+        docs: "https://resilience4j.readme.io/docs/retry",
+        github: "https://github.com/resilience4j/resilience4j",
+      },
+      codeSnippet: `import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
+import io.github.resilience4j.retry.RetryRegistry;
+
+// Configure retry with budget-like behavior
+RetryConfig config = RetryConfig.custom()
+    .maxAttempts(3)
+    .waitDuration(Duration.ofMillis(100))
+    .retryOnException(e -> {
+        // Custom predicate to check budget
+        return retryBudget.canRetry();
+    })
+    .retryExceptionPredicate(throwable ->
+        throwable instanceof TimeoutException ||
+        throwable instanceof HttpServerException
+    )
+    .build();
+
+RetryRegistry registry = RetryRegistry.of(config);
+Retry retry = registry.retry("backendService");
+
+// Add event listeners for metrics
+retry.getEventPublisher()
+    .onRetry(event -> retryBudget.recordRetry())
+    .onSuccess(event -> retryBudget.recordSuccess())
+    .onError(event -> retryBudget.recordFailure());
+
+// Execute with retry budget enforcement
+Supplier<String> supplier = Retry.decorateSupplier(
+    retry,
+    () -> backendService.call()
+);
+
+String result = supplier.get();`,
+    },
+    {
+      id: "istio-retry-budget",
+      name: "Istio Service Mesh Retry Policy",
+      type: "service",
+      languages: ["any"],
+      description:
+        "Istio service mesh provides retry budget enforcement through VirtualService retry policies and outlier detection. Tracks retry ratio per destination service and enforces budget limits transparently.",
+      links: {
+        docs: "https://istio.io/latest/docs/reference/config/networking/virtual-service/#HTTPRetry",
+      },
+      codeSnippet: `apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: backend-retry-policy
+spec:
+  hosts:
+  - backend.example.com
+  http:
+  - route:
+    - destination:
+        host: backend.example.com
+        port:
+          number: 8080
+    retries:
+      attempts: 3                  # Max retry attempts
+      perTryTimeout: 2s            # Timeout per attempt
+      retryOn: 5xx,reset,refused   # Retry conditions
+    timeout: 10s
+---
+# Outlier detection for budget-like behavior
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: backend-circuit-breaker
+spec:
+  host: backend.example.com
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50`,
+    },
+  ],
+
+  usedInSystems: [
+    {
+      systemId: "twitter-finagle",
+      systemName: "Twitter Finagle RPC Framework",
+      howUsed:
+        "Twitter's Finagle RPC framework implements retry budgets as a core resilience mechanism across Twitter's massive microservices architecture (1000s of services, millions of RPC calls/second). Each Finagle client maintains a retry budget that tracks retry ratio using an exponentially-weighted moving average with a 10-second time window. The default budget allows 20% of requests to be retries—if a backend service starts failing at 50% error rate, Finagle blocks retries after the budget is consumed, preventing 2.5x load amplification. Pattern composition: Retry Budget + Circuit Breaker + Adaptive Load Balancing + Failure Accrual. Rationale: Twitter's architecture has deep call chains (5-10 service hops); uncontrolled retries during cascading failures could amplify load exponentially through the stack. Impact: Reduced retry-induced load amplification by 80% during service outages; prevented cascading failures that previously required manual service restarts; enabled service recovery within minutes instead of hours; retry budget became the default pattern for all inter-service RPC calls across Twitter's infrastructure.",
+      source: "https://twitter.github.io/finagle/guide/Clients.html#retries",
+    },
+    {
+      systemId: "google-stubby",
+      systemName: "Google Stubby/gRPC",
+      howUsed:
+        "Google's internal RPC framework (Stubby) and its open-source derivative (gRPC) implement retry budgets called 'retry throttling' to prevent retry storms in Google's planet-scale microservice mesh. When a gRPC client makes calls to a backend service, the client tracks the ratio of failed RPCs that were retried versus total RPCs in a configurable time window (default: 30 seconds). If the retry ratio exceeds a threshold (default: 10%), subsequent failures are not retried, failing fast instead. This retry throttling integrates with gRPC's per-method retry policies and deadline propagation. Pattern composition: Retry Throttling + Hedged Requests + Deadline Propagation + Load Balancing. Rationale: Google's microservices can have 15+ levels of call depth; each layer independently retrying would create exponential amplification (3 retries per layer = 3^15 amplification). Impact: Enabled Google to scale to billions of QPS across global infrastructure without retry-induced cascading failures; prevented 'retry storms' that previously caused multi-hour outages; reduced unnecessary backend load by 60% during partial failures; retry throttling became a required component for all production gRPC services.",
+      source: "https://grpc.io/docs/guides/retry/#retry-throttling",
+    },
+    {
+      systemId: "aws-sdk",
+      systemName: "AWS SDK Retry Strategies",
+      howUsed:
+        "AWS SDKs (Java, Python, JavaScript, Go, .NET) implement retry budgets through 'adaptive retry mode' that dynamically adjusts retry behavior based on observed error rates. When an SDK client encounters throttling errors (429) or server errors (503), the adaptive retry mode tracks the retry ratio and reduces retry attempts when the ratio exceeds thresholds. The SDK maintains a token bucket with a maximum capacity (500 tokens)—each retry consumes tokens based on response type (5 tokens for throttling errors, 10 for server errors), and the bucket refills slowly over time. When the bucket is depleted, retries are blocked. Pattern composition: Adaptive Retry + Token Bucket + Exponential Backoff + Jitter. Rationale: AWS services handle millions of customers making billions of API calls; uncoordinated client retries during service issues could create 10x load amplification preventing service recovery. Impact: Reduced client-induced load by 70% during DynamoDB and S3 service events; prevented customer retry storms from prolonging outages; improved service recovery time by 40% by giving AWS services breathing room during incidents; adaptive retry mode became the default for all AWS SDKs in 2020.",
+      source:
+        "https://aws.amazon.com/blogs/developer/introducing-adaptive-retry-strategy/",
+    },
+    {
+      systemId: "stripe-api",
+      systemName: "Stripe Payment API",
+      howUsed:
+        "Stripe's API infrastructure implements server-side retry budgets to protect payment processing services from client retry storms during incidents. When Stripe's API gateway receives requests, it tracks the retry ratio per customer account in a 5-minute rolling window. If a customer's retry ratio exceeds 30%, the gateway returns 429 Too Many Retries with Retry-After headers, blocking further retry attempts. This server-side budget complements Stripe's SDK client-side retry logic with exponential backoff. The budget is per-account to prevent noisy neighbors—one customer's retry storm doesn't consume budget for other customers. Pattern composition: Per-Account Retry Budget + Rate Limiting + Idempotency Keys + Circuit Breaking. Rationale: Payment operations are critical path for merchant revenue; retry storms during Stripe outages could both worsen the outage and create duplicate charges without idempotency protection. Impact: Prevented 95% of retry-induced load amplification during infrastructure incidents; protected payment processing backends from retry storms while maintaining 99.99% API uptime; enabled faster incident resolution by reducing load spikes that previously extended outages; retry budget enforcement became part of Stripe's API contract documented in their error handling guide.",
+      source: "https://stripe.com/docs/error-handling#retry-logic",
+    },
+    {
+      systemId: "netflix-zuul",
+      systemName: "Netflix Zuul API Gateway",
+      howUsed:
+        "Netflix's Zuul API gateway implements retry budgets as part of its resilience stack to protect backend microservices from client retry amplification. Zuul tracks retry ratios per backend destination (user service, recommendation service, video service) in 60-second sliding windows. When the retry ratio for a backend exceeds 20%, Zuul fails fast on subsequent errors rather than retrying, returning 503 Service Unavailable to clients. This gateway-level budget coordinates retry behavior across heterogeneous clients (web, mobile, smart TVs, game consoles) that may have different built-in retry logic. Pattern composition: Gateway Retry Budget + Hystrix Circuit Breaker + Origin Concurrency Protection + Dynamic Routing. Rationale: Netflix serves 200+ million subscribers globally; uncoordinated client retries during backend degradation could amplify load 5-10x, preventing service recovery. Impact: Reduced backend load during incidents by 60% through retry budget enforcement; prevented cascading failures across Netflix's microservice architecture (800+ services); enabled partial degradation strategies where some requests succeed while retry budgets protect struggling services; retry budgets became a standard Zuul filter applied to all backend destinations.",
+      source:
+        "https://netflixtechblog.com/zuul-2-the-netflix-journey-to-asynchronous-non-blocking-systems-45947377fb5c",
+    },
+  ],
+
+  references: [
+    {
+      title: "Retry Budgets - Twitter Finagle Documentation",
+      url: "https://twitter.github.io/finagle/guide/Clients.html#retries",
+      type: "documentation",
+      author: "Twitter Engineering",
+    },
+    {
+      title: "gRPC Retry Design - Retry Throttling",
+      url: "https://github.com/grpc/proposal/blob/master/A6-client-retries.md#throttling-retry-attempts-and-hedged-rpcs",
+      type: "documentation",
+      author: "Google gRPC Team",
+    },
+    {
+      title:
+        "AWS SDK Adaptive Retry Mode - Introducing Adaptive Retry Strategy",
+      url: "https://aws.amazon.com/blogs/developer/introducing-adaptive-retry-strategy/",
+      type: "article",
+      author: "AWS Developer Tools Team",
+    },
+    {
+      title:
+        "Release It! - Design and Deploy Production-Ready Software (Chapter: Circuit Breakers)",
+      url: "https://pragprog.com/titles/mnee2/release-it-second-edition/",
+      type: "book",
+      author: "Michael T. Nygard",
+    },
+    {
+      title: "Handling Overload - Site Reliability Engineering",
+      url: "https://sre.google/sre-book/handling-overload/",
+      type: "book",
+      author: "Google SRE Team",
+    },
+    {
+      title: "Stripe API - Error Handling and Retry Logic",
+      url: "https://stripe.com/docs/error-handling#retry-logic",
+      type: "documentation",
+      author: "Stripe",
+    },
+  ],
+
+  philosophy: {
+    coreProblem:
+      "Naive retry logic amplifies load on struggling services, preventing recovery and causing cascading failures",
+    designPrinciple:
+      "Cap total retry attempts system-wide to prevent retry storms while allowing retries for isolated transient failures",
+    historicalContext:
+      "Retry budgets emerged from production incidents at Twitter and Google where uncoordinated client retries turned isolated failures into full outages by amplifying load 10x-100x on already-struggling services",
+    alternativesRejected: [
+      "Unlimited retries - creates retry amplification and cascading failures",
+      "No retries - loses resilience to transient failures",
+      "Per-request retry limits - doesn't prevent system-wide retry storms",
+      "Circuit breakers alone - too slow to react, allow retry amplification before tripping",
+    ],
+    mentalModel:
+      "Like a household budget that prevents overspending: you allocate a percentage of income to discretionary spending (retries), and once that budget is exhausted, you stop spending (fail fast) to avoid financial ruin (service overload)",
+  },
+
+  visualization: {
+    staticDiagram: `graph TB
+    R1[Request 1] -->|recordRequest| B[Budget Tracker]
+    R2[Request 2] -->|recordRequest| B
+    R3[Request 3] -->|recordRequest| B
+
+    R1 -->|fails| C1{canRetry?}
+    C1 -->|yes| RT1[Retry Attempt]
+    RT1 -->|recordRetry| B
+
+    R2 -->|fails| C2{canRetry?}
+    C2 -->|yes| RT2[Retry Attempt]
+    RT2 -->|recordRetry| B
+
+    R3 -->|fails| C3{canRetry?}
+    C3 -->|no: budget exhausted| FF[Fail Fast]
+
+    B --> M[Metrics: 33% retry ratio]
+
+    style B fill:#ffeb3b
+    style C3 fill:#f44336
+    style FF fill:#f44336
+    style M fill:#4caf50`,
+    realWorldAnalogy:
+      "A retry budget is like a monthly restaurant budget: you allocate $200/month for dining out (20% retry ratio). After spending $150, you can still dine out, but you're tracking closely. Once you hit $200 (budget exhausted), you stop dining out for the rest of the month to avoid overspending, regardless of how appealing that new restaurant looks (regardless of how many more failures occur).",
+    useCases: [
+      {
+        domain: "Microservices",
+        scenario:
+          "A payment service calls 5 downstream services; when one service degrades, retry budget prevents the payment service from retry-bombing it",
+        patternRole:
+          "Coordinates retry behavior across multiple clients to prevent retry amplification",
+        companies: ["Twitter", "Google", "Stripe"],
+      },
+      {
+        domain: "API Clients",
+        scenario:
+          "Mobile app makes API calls to backend; when backend has an outage, retry budget prevents app from overwhelming backend with retry requests",
+        patternRole:
+          "Protects backend services from client retry storms during outages",
+        companies: ["AWS SDK", "Stripe SDK", "Google Cloud SDK"],
+      },
+      {
+        domain: "Service Mesh",
+        scenario:
+          "Envoy sidecars enforce retry budgets transparently for all service-to-service calls",
+        patternRole:
+          "Provides infrastructure-level retry storm prevention without application changes",
+        companies: ["Lyft", "Netflix", "Google"],
+      },
+    ],
+  },
+
+  tags: [
+    "reliability",
+    "fault-tolerance",
+    "retry",
+    "rate-limiting",
+    "circuit-breaker",
+    "resilience",
+    "load-shedding",
+  ],
+  difficulty: "intermediate",
 };

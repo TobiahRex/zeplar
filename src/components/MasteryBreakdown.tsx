@@ -9,6 +9,7 @@ interface MasteryBreakdownProps {
   patternEmoji: string;
   family: string;
   layerUnlocks: LayerUnlockStatus;
+  onClick?: () => void;
 }
 
 // Color mapping for family badges (matching Dashboard)
@@ -37,9 +38,13 @@ export function MasteryBreakdown({
   patternEmoji,
   family,
   layerUnlocks,
+  onClick,
 }: MasteryBreakdownProps) {
   return (
-    <div className="border rounded-lg p-4 space-y-3">
+    <div
+      className="border rounded-lg p-4 space-y-3 cursor-pointer hover:bg-accent transition-colors"
+      onClick={onClick}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xl">{patternEmoji}</span>
@@ -95,8 +100,62 @@ export function MasteryBreakdown({
               <span className="text-xs text-gray-400">🔒 Unlock at L2 80%</span>
             )}
           </div>
+          {layerUnlocks.l4Unlocked && (
+            <span className="text-xs text-green-500">✓ Unlocked L4!</span>
+          )}
         </div>
         {layerUnlocks.l3Unlocked && <Progress value={layerUnlocks.l3Mastery} />}
+      </div>
+
+      {/* L4 Progress */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <LayerBadge layer="L4" locked={!layerUnlocks.l4Unlocked} />
+            {layerUnlocks.l4Unlocked ? (
+              <span className="text-sm">{layerUnlocks.l4Mastery}%</span>
+            ) : (
+              <span className="text-xs text-gray-400">🔒 Unlock at L3 80%</span>
+            )}
+          </div>
+          {layerUnlocks.l5Unlocked && (
+            <span className="text-xs text-green-500">✓ Unlocked L5!</span>
+          )}
+        </div>
+        {layerUnlocks.l4Unlocked && <Progress value={layerUnlocks.l4Mastery} />}
+      </div>
+
+      {/* L5 Progress */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <LayerBadge layer="L5" locked={!layerUnlocks.l5Unlocked} />
+            {layerUnlocks.l5Unlocked ? (
+              <span className="text-sm">{layerUnlocks.l5Mastery}%</span>
+            ) : (
+              <span className="text-xs text-gray-400">🔒 Unlock at L4 80%</span>
+            )}
+          </div>
+          {layerUnlocks.l6Unlocked && (
+            <span className="text-xs text-green-500">✓ Unlocked L6!</span>
+          )}
+        </div>
+        {layerUnlocks.l5Unlocked && <Progress value={layerUnlocks.l5Mastery} />}
+      </div>
+
+      {/* L6 Progress */}
+      <div>
+        <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center gap-2">
+            <LayerBadge layer="L6" locked={!layerUnlocks.l6Unlocked} />
+            {layerUnlocks.l6Unlocked ? (
+              <span className="text-sm">{layerUnlocks.l6Mastery}%</span>
+            ) : (
+              <span className="text-xs text-gray-400">🔒 Unlock at L5 80%</span>
+            )}
+          </div>
+        </div>
+        {layerUnlocks.l6Unlocked && <Progress value={layerUnlocks.l6Mastery} />}
       </div>
     </div>
   );

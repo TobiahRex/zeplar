@@ -15,6 +15,9 @@ import {
   generateL1Cards,
   generateL2Cards,
   generateL3Cards,
+  generateL4Cards,
+  generateL5Cards,
+  generateL6Cards,
 } from "@/lib/cardGenerator";
 
 interface PatternCardModalProps {
@@ -33,11 +36,21 @@ export function PatternCardModal({
 
   if (!pattern) return null;
 
-  // Generate all cards for this pattern (L1, L2, L3)
+  // Generate all cards for this pattern (L1-L6)
   const l1Cards = generateL1Cards(pattern);
   const l2Cards = generateL2Cards(pattern);
   const l3Cards = generateL3Cards(pattern);
-  const allCards: Flashcard[] = [...l1Cards, ...l2Cards, ...l3Cards];
+  const l4Cards = generateL4Cards(pattern);
+  const l5Cards = generateL5Cards(pattern);
+  const l6Cards = generateL6Cards(pattern);
+  const allCards: Flashcard[] = [
+    ...l1Cards,
+    ...l2Cards,
+    ...l3Cards,
+    ...l4Cards,
+    ...l5Cards,
+    ...l6Cards,
+  ];
 
   if (allCards.length === 0) return null;
 
@@ -68,11 +81,14 @@ export function PatternCardModal({
     1: "bg-blue-500/20 text-blue-400",
     2: "bg-purple-500/20 text-purple-400",
     3: "bg-orange-500/20 text-orange-400",
+    4: "bg-green-500/20 text-green-400",
+    5: "bg-yellow-500/20 text-yellow-400",
+    6: "bg-pink-500/20 text-pink-400",
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[75vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3">
             <span className="text-2xl">{pattern.concept.emoji}</span>
@@ -97,84 +113,7 @@ export function PatternCardModal({
             </Badge>
           </div>
 
-          {/* Card content */}
-          <div className="min-h-[300px] p-6 rounded-lg border bg-card">
-            {!showBack ? (
-              // Front of card
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground uppercase tracking-wide">
-                  Question
-                </div>
-                <MarkdownRenderer
-                  content={currentCard.front.text}
-                  className="text-base"
-                />
-                {currentCard.front.hint && (
-                  <div className="mt-4 p-3 rounded bg-muted/50">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Hint
-                    </div>
-                    <MarkdownRenderer
-                      content={currentCard.front.hint}
-                      className="text-sm"
-                    />
-                  </div>
-                )}
-                {currentCard.hints && currentCard.hints.length > 0 && (
-                  <div className="mt-4 p-3 rounded bg-muted/50">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
-                      Hints
-                    </div>
-                    <div className="space-y-1">
-                      {currentCard.hints.map((hint, i) => (
-                        <MarkdownRenderer
-                          key={i}
-                          content={`- ${hint}`}
-                          className="text-sm"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              // Back of card
-              <div className="space-y-4">
-                <div className="text-sm text-muted-foreground uppercase tracking-wide">
-                  Answer
-                </div>
-                <MarkdownRenderer
-                  content={currentCard.back.text}
-                  className="text-base"
-                />
-                {currentCard.back.details &&
-                  currentCard.back.details.length > 0 && (
-                    <div className="mt-4 space-y-2">
-                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
-                        Details
-                      </div>
-                      {currentCard.back.details.map((detail, i) => (
-                        <MarkdownRenderer
-                          key={i}
-                          content={`- ${detail}`}
-                          className="text-sm"
-                        />
-                      ))}
-                    </div>
-                  )}
-                {currentCard.back.diagram && (
-                  <div className="mt-6">
-                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
-                      Diagram
-                    </div>
-                    <MermaidDiagram chart={currentCard.back.diagram} />
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Controls */}
+          {/* Controls - Fixed position above dynamic content */}
           <div className="flex items-center justify-between gap-4">
             <Button
               onClick={handlePrev}
@@ -205,6 +144,87 @@ export function PatternCardModal({
                 }`}
               />
             ))}
+          </div>
+
+          {/* Card content */}
+          <div className="min-h-[300px] p-6 rounded-lg border bg-card">
+            {!showBack ? (
+              // Front of card
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground uppercase tracking-wide">
+                  Question
+                </div>
+                <div className="mx-auto">
+                  <MarkdownRenderer
+                    content={currentCard.front.text}
+                    className="text-lg leading-[1.75] font-serif constrain-text"
+                  />
+                </div>
+                {currentCard.front.hint && (
+                  <div className="mt-4 p-3 rounded bg-muted/50 max-w-[500px] mx-auto">
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Hint
+                    </div>
+                    <MarkdownRenderer
+                      content={currentCard.front.hint}
+                      className="text-sm leading-[1.75] font-serif"
+                    />
+                  </div>
+                )}
+                {currentCard.hints && currentCard.hints.length > 0 && (
+                  <div className="mt-4 p-3 rounded bg-muted/50 max-w-[500px] mx-auto">
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-1">
+                      Hints
+                    </div>
+                    <div className="space-y-1">
+                      {currentCard.hints.map((hint, i) => (
+                        <MarkdownRenderer
+                          key={i}
+                          content={`- ${hint}`}
+                          className="text-sm leading-[1.75] font-serif"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // Back of card
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground uppercase tracking-wide">
+                  Answer
+                </div>
+                <div className="mx-auto">
+                  <MarkdownRenderer
+                    content={currentCard.back.text}
+                    className="text-base leading-[1.75] font-serif constrain-text"
+                  />
+                </div>
+                {currentCard.back.details &&
+                  currentCard.back.details.length > 0 && (
+                    <div className="mt-4 space-y-2 max-w-[500px] mx-auto">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wide">
+                        Details
+                      </div>
+                      {currentCard.back.details.map((detail, i) => (
+                        <MarkdownRenderer
+                          key={i}
+                          content={`- ${detail}`}
+                          className="text-sm leading-[1.75] font-serif"
+                        />
+                      ))}
+                    </div>
+                  )}
+                {currentCard.back.diagram && (
+                  <div className="mt-6">
+                    <div className="text-xs text-muted-foreground uppercase tracking-wide mb-3">
+                      Diagram
+                    </div>
+                    <MermaidDiagram chart={currentCard.back.diagram} />
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* References section - always visible */}

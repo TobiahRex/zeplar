@@ -47,26 +47,144 @@ export const serverIsolation: Pattern = {
   structure: {
     participants: [
       {
-        name: "TODO: Participant name",
-        role: "TODO: Participant role",
-        responsibilities: ["TODO: Responsibility 1", "TODO: Responsibility 2"],
+        name: "Infrastructure Orchestrator",
+        role: "Resource Allocator",
+        responsibilities: [
+          "Provision dedicated server pools for isolated workloads (payment, checkout, critical APIs)",
+          "Configure resource reservations and quotas per server pool (CPU, memory, network, disk)",
+          "Monitor server pool utilization and enforce capacity limits",
+          "Route traffic to appropriate isolated server pools based on service classification",
+        ],
+      },
+      {
+        name: "Isolated Server Pool",
+        role: "Dedicated Infrastructure",
+        responsibilities: [
+          "Provide guaranteed compute resources (CPU, RAM, network bandwidth) for specific workload",
+          "Run only designated services—no co-location with other workloads",
+          "Enforce resource boundaries preventing resource sharing with other server pools",
+          "Maintain isolation even under failure scenarios (no failover stealing resources from other pools)",
+        ],
+      },
+      {
+        name: "Load Balancer",
+        role: "Traffic Router",
+        responsibilities: [
+          "Route requests to appropriate isolated server pool based on service endpoint",
+          "Perform health checks on isolated pools and remove unhealthy servers",
+          "Distribute load evenly within each isolated pool",
+          "Prevent cross-pool traffic routing (payment traffic only to payment servers)",
+        ],
+      },
+      {
+        name: "Service Instance",
+        role: "Workload Executor",
+        responsibilities: [
+          "Execute specific service workload using dedicated server resources",
+          "Report health status and resource utilization to orchestrator",
+          "Operate within allocated resource quotas without sharing with other services",
+          "Handle requests routed from load balancer for its isolated pool",
+        ],
       },
     ],
-    diagram: `graph TB
-    Start([Start]) --> Action[TODO: Add Mermaid diagram]
-    Action --> End([End])
+    diagram: `sequenceDiagram
+    participant LB as Load Balancer
+    participant Pool1 as Payment Server Pool<br/>(4 dedicated servers)
+    participant Pool2 as Checkout Server Pool<br/>(6 dedicated servers)
+    participant Pool3 as Recommendations Pool<br/>(2 dedicated servers)
+    participant Orchestrator as Infrastructure Orchestrator
 
-    style Start fill:#e1f5e1
-    style End fill:#e1f5e1`,
+    Note over Orchestrator: Provision isolated server pools<br/>with resource guarantees
+
+    Orchestrator->>Pool1: Allocate 4 servers<br/>16GB RAM, 8 CPU each
+    Orchestrator->>Pool2: Allocate 6 servers<br/>32GB RAM, 16 CPU each
+    Orchestrator->>Pool3: Allocate 2 servers<br/>8GB RAM, 4 CPU each
+
+    Note over LB: Route traffic to isolated pools<br/>based on service
+
+    LB->>Pool2: Checkout request
+    Pool2->>Pool2: Process with dedicated<br/>32GB RAM, 16 CPU
+    Pool2-->>LB: Response
+
+    par Other pools isolated
+        LB->>Pool1: Payment request
+        Pool1->>Pool1: Process with dedicated<br/>16GB RAM, 8 CPU
+        Pool1-->>LB: Response
+    and
+        LB->>Pool3: Recommendation request
+        Pool3->>Pool3: Process with dedicated<br/>8GB RAM, 4 CPU
+    end
+
+    Note over Pool3: ❌ Recommendation service<br/>memory leak (7GB used)
+
+    Pool3->>Pool3: Consume all allocated RAM
+    Note over Pool3: OOM on Pool3 servers only
+
+    Note over Pool1,Pool2: ✓ Payment and Checkout pools<br/>unaffected by recommendations leak
+
+    LB->>Pool2: Checkout request (still works)
+    Pool2->>Pool2: Full resources available<br/>(32GB RAM, 16 CPU)
+    Pool2-->>LB: Success`,
     flow: [
       {
         step: 1,
-        actor: "TODO: Actor name",
-        action: "TODO: Action",
-        description: "TODO: Description",
+        actor: "Infrastructure Orchestrator",
+        action: "Provision isolated server pools",
+        description:
+          "Orchestrator allocates dedicated server pools for each critical or resource-intensive service. Payment service gets 4 servers with 16GB RAM and 8 CPUs each. Checkout service gets 6 servers with 32GB RAM and 16 CPUs each. Recommendations service gets 2 servers with 8GB RAM and 4 CPUs. Pools are physically or virtually isolated with no resource sharing.",
+      },
+      {
+        step: 2,
+        actor: "Infrastructure Orchestrator",
+        action: "Configure resource reservations",
+        description:
+          "Orchestrator configures hard resource limits and reservations for each pool. In Kubernetes, this means ResourceQuotas and LimitRanges per namespace. In cloud VMs, this means dedicated instance allocation. Resources are reserved—even if idle, they cannot be borrowed by other pools, ensuring guaranteed capacity.",
+      },
+      {
+        step: 3,
+        actor: "Load Balancer",
+        action: "Route traffic to appropriate pool",
+        description:
+          "Load balancer receives incoming requests and routes them to the correct isolated pool based on service endpoint. Requests to /api/checkout go to checkout pool, /api/payment to payment pool, /api/recommendations to recommendations pool. No cross-pool routing occurs—pools are dedicated to their services.",
+      },
+      {
+        step: 4,
+        actor: "Service Instance",
+        action: "Execute workload with dedicated resources",
+        description:
+          "Service instances running on isolated servers execute requests using their dedicated CPU, memory, and network bandwidth. A checkout request uses the 32GB RAM and 16 CPUs guaranteed to checkout pool. No competition for resources with payment or recommendations services which run on separate pools.",
+      },
+      {
+        step: 5,
+        actor: "Isolated Server Pool",
+        action: "Contain resource exhaustion",
+        description:
+          "If a service experiences resource leak or traffic spike exhausting its pool, the impact is contained to that pool only. Recommendations service consuming all 8GB RAM in its 2-server pool triggers OOM only on those 2 servers. Payment and checkout pools continue operating with full resources available, unaffected by recommendations failure.",
+      },
+      {
+        step: 6,
+        actor: "Infrastructure Orchestrator",
+        action: "Monitor and enforce isolation",
+        description:
+          "Orchestrator monitors each pool's resource utilization and health. If a pool is consistently saturated (high CPU, memory near limit), orchestrator may scale the pool by adding servers or trigger alerts for capacity planning. Orchestrator enforces that pools remain isolated—no automatic resource borrowing or failover that would break isolation guarantees.",
+      },
+      {
+        step: 7,
+        actor: "Load Balancer",
+        action: "Handle pool failures (optional)",
+        description:
+          "If entire server pool becomes unhealthy, load balancer can route traffic to backup pool or return errors. Critically, it does NOT route failed pool's traffic to other isolated pools, which would violate isolation and potentially overwhelm them. Isolation is maintained even during failures.",
       },
     ],
-    invariants: ["TODO: List pattern invariants and constraints"],
+    invariants: [
+      "Each critical service or workload MUST have its own dedicated server pool with no co-location of other services",
+      "Server pools MUST have hard resource reservations (CPU, memory, network) that cannot be borrowed by other pools even when idle",
+      "Traffic routing MUST be deterministic—requests for Service A always route to Service A's pool, never cross-pool",
+      "Resource exhaustion or failures in one server pool MUST NOT affect other server pools' resource availability or performance",
+      "Total allocated resources across all pools SHOULD NOT exceed available infrastructure capacity to ensure all reservations can be honored",
+      "Pools SHOULD be sized based on peak capacity requirements plus buffer, accepting some idle capacity to guarantee resources",
+      "During pool failures, traffic SHOULD NOT be automatically routed to other pools, maintaining isolation even during degraded states",
+    ],
   },
 
   codeExamples: [
@@ -473,4 +591,562 @@ demonstrateServerIsolation().catch(console.error);`,
       ],
     },
   ],
+
+  systemContext: {
+    typicalPlacement: [
+      "Payment Processing Infrastructure - Payment processors isolate payment transaction servers from other workloads to meet PCI DSS compliance and ensure reliable payment processing. Stripe runs payment API servers on dedicated infrastructure separate from webhook delivery, dashboard UI, and analytics services. The payment servers get guaranteed 32GB RAM and 16 CPUs with sub-10ms P99 latency targets. When webhook delivery experiences a spike (customer webhook endpoints timing out causing retries), the isolated payment servers remain unaffected with consistent latency. This placement provides both compliance isolation (payment data stays on dedicated infrastructure) and performance isolation (payment latency unaffected by other Stripe services). The isolation typically uses dedicated AWS EC2 instances or Kubernetes node pools with taints preventing non-payment pods from scheduling.",
+      "E-Commerce Checkout Flow Isolation - Online retailers isolate checkout and order processing on dedicated servers separate from product browsing, search, and recommendations. During Black Friday traffic spikes, product browsing may saturate shared infrastructure, but checkout servers maintain guaranteed capacity for converting browsing into purchases. Amazon isolates checkout infrastructure ensuring that even if product recommendation algorithms consume excessive resources, the checkout flow (add to cart, payment, order placement) remains responsive with <100ms latency. This placement is critical for revenue protection—checkout degradation directly impacts revenue while browsing degradation is more tolerable.",
+      "Database Primary/Replica Isolation - Databases use server isolation to separate primary (write) instances from read replicas, preventing read-heavy workloads from affecting write performance. A social media platform runs PostgreSQL primary on dedicated c5.4xlarge instances handling writes, while read replicas run on separate r5.2xlarge instances handling analytics queries. When data science team runs expensive aggregation queries saturating replica CPU, the primary database continues accepting writes with no performance impact. Kubernetes deployments achieve this with separate StatefulSets and node selectors ensuring primary pods only schedule on designated primary nodes.",
+      "Multi-Tenant SaaS Tier Isolation - SaaS platforms isolate premium/enterprise customers on dedicated infrastructure separate from standard/free tier customers. Salesforce enterprise customers get dedicated pod infrastructure while standard customers share multi-tenant infrastructure. When standard tier experiences noisy neighbor issues (one customer running expensive queries), enterprise customers remain unaffected on isolated infrastructure. This placement enables SLA differentiation: enterprise gets 99.95% uptime guarantee on dedicated servers, standard gets 99.5% on shared servers. Isolation implemented via separate AWS accounts or Kubernetes clusters per tier.",
+      "Regulatory Compliance Data Isolation - Services handling sensitive data (healthcare PHI, financial PII) run on isolated servers meeting compliance requirements, separate from non-sensitive workloads. A healthcare platform runs HIPAA-compliant services (patient records, medical imaging) on dedicated HIPAA-certified infrastructure while non-PHI services (marketing site, documentation) run on standard shared infrastructure. The isolation satisfies compliance audits requiring physical separation of sensitive data. Implementation uses separate cloud accounts with dedicated networking, encryption, and access controls meeting regulatory standards.",
+    ],
+    architecturalBoundaries: [
+      "Physical Resource Boundary - Server isolation creates physical resource boundaries where dedicated servers' CPU, memory, disk, and network are exclusively allocated to specific workloads. Unlike soft limits or quotas that can be exceeded under load, dedicated servers provide hard guarantees enforced by hardware. Payment servers with 32GB RAM have that memory physically available—no other service can consume it. This boundary is enforced at hypervisor or container orchestrator level: Kubernetes node affinity ensures payment pods only schedule on payment nodes, AWS dedicated instances ensure no co-tenant VMs. The boundary prevents noisy neighbor effects entirely but reduces flexibility and increases cost.",
+      "Network Isolation Boundary - Isolated server pools often have separate network segments, VLANs, or VPCs preventing network-level interference. Payment servers might run on 10.0.1.0/24 subnet with 10Gbps dedicated bandwidth, while recommendations run on 10.0.2.0/24 with 1Gbps shared bandwidth. Network isolation prevents one service's traffic spike from saturating another service's bandwidth. Security groups and network ACLs enforce this boundary, allowing only specific cross-pool communication patterns (e.g., API gateway can call all pools, but services cannot directly call each other across pools).",
+      "Failure Domain Boundary - Server isolation creates failure domain boundaries where infrastructure failures affect only isolated pools. Payment servers in AWS us-east-1a availability zone fail independently from checkout servers in us-east-1b. A datacenter power outage affecting payment zone doesn't impact checkout. This boundary extends to shared services: isolated pools have dedicated load balancers, monitoring agents, and control planes preventing shared infrastructure failures from cascading. The tradeoff is increased operational complexity managing multiple independent infrastructure stacks.",
+      "Operational Boundary - Isolated server pools have independent operational workflows (deployments, scaling, maintenance). Payment servers can be updated without affecting checkout servers. This boundary enables different release cadences: critical payment servers updated conservatively (monthly), experimental recommendation servers updated continuously (hourly). Kubernetes achieves this with separate Deployments and HorizontalPodAutoscalers per pool. The boundary prevents deployment bugs in one service from affecting others but increases operational burden maintaining multiple deployment pipelines.",
+    ],
+    interactsWith: [
+      "bulkhead",
+      "process-isolation",
+      "thread-pool-isolation",
+      "connection-pool-isolation",
+      "circuit-breaker",
+      "health-check",
+      "active-active",
+      "active-passive",
+    ],
+  },
+
+  implementations: [
+    {
+      id: "kubernetes-node-pools",
+      name: "Kubernetes Node Pools with Taints",
+      type: "platform",
+      languages: ["yaml"],
+      description:
+        "Kubernetes node pools with taints and tolerations to isolate critical workloads on dedicated nodes. Nodes labeled and tainted per workload, pods use node selectors and tolerations.",
+      links: {
+        docs: "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      },
+      codeSnippet: `# 1. Create dedicated node pool for payment service
+# AWS EKS node group with specific instance type
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+metadata:
+  name: production-cluster
+nodeGroups:
+  - name: payment-nodes
+    instanceType: c5.4xlarge  # 16 CPU, 32GB RAM
+    desiredCapacity: 4
+    labels:
+      workload: payment
+    taints:
+      - key: workload
+        value: payment
+        effect: NoSchedule  # Only payment pods can schedule here
+
+  - name: checkout-nodes
+    instanceType: c5.2xlarge  # 8 CPU, 16GB RAM
+    desiredCapacity: 6
+    labels:
+      workload: checkout
+    taints:
+      - key: workload
+        value: checkout
+        effect: NoSchedule
+
+---
+# 2. Payment service deployment with node affinity and toleration
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+spec:
+  replicas: 8
+  template:
+    spec:
+      # Node selector: only schedule on payment nodes
+      nodeSelector:
+        workload: payment
+
+      # Toleration: allow scheduling on tainted payment nodes
+      tolerations:
+      - key: workload
+        operator: Equal
+        value: payment
+        effect: NoSchedule
+
+      # Resource guarantees on dedicated nodes
+      containers:
+      - name: payment-api
+        resources:
+          requests:
+            cpu: "2"
+            memory: "4Gi"
+          limits:
+            cpu: "4"
+            memory: "8Gi"
+
+---
+# 3. Checkout service deployment (separate isolated pool)
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout-service
+spec:
+  replicas: 12
+  template:
+    spec:
+      nodeSelector:
+        workload: checkout
+      tolerations:
+      - key: workload
+        value: checkout
+        effect: NoSchedule
+      containers:
+      - name: checkout-api
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"`,
+    },
+    {
+      id: "aws-dedicated-instances",
+      name: "AWS Dedicated Instances",
+      type: "platform",
+      languages: ["typescript"],
+      description:
+        "AWS EC2 Dedicated Instances providing hardware-level isolation with dedicated physical servers per workload. No co-tenancy with other AWS customers.",
+      links: {
+        docs: "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-instance.html",
+      },
+      codeSnippet: `import * as aws from '@pulumi/aws';
+
+// Create dedicated instances for payment processing
+// These run on dedicated hardware with no multi-tenancy
+const paymentInstances = [];
+for (let i = 0; i < 4; i++) {
+  const instance = new aws.ec2.Instance(\`payment-server-\${i}\`, {
+    ami: 'ami-0c55b159cbfafe1f0',  // Amazon Linux 2
+    instanceType: 'c5.4xlarge',    // 16 vCPU, 32GB RAM
+
+    // Dedicated tenancy - runs on dedicated hardware
+    tenancy: 'dedicated',
+
+    // Place in payment subnet
+    subnetId: paymentSubnet.id,
+    vpcSecurityGroupIds: [paymentSecurityGroup.id],
+
+    tags: {
+      Name: \`payment-server-\${i}\`,
+      Workload: 'payment',
+      Isolation: 'dedicated'
+    },
+
+    // User data to configure payment service
+    userData: \`#!/bin/bash
+      yum update -y
+      yum install -y docker
+      systemctl start docker
+      docker run -d -p 8080:8080 \\
+        --memory="28g" --cpus="14" \\
+        payment-service:latest
+    \`
+  });
+
+  paymentInstances.push(instance);
+}
+
+// Create separate dedicated instances for checkout
+const checkoutInstances = [];
+for (let i = 0; i < 6; i++) {
+  const instance = new aws.ec2.Instance(\`checkout-server-\${i}\`, {
+    instanceType: 'c5.2xlarge',    // 8 vCPU, 16GB RAM
+    tenancy: 'dedicated',
+    // ... similar config for checkout workload
+  });
+
+  checkoutInstances.push(instance);
+}
+
+// Load balancer routing to isolated instance pools
+const paymentLb = new aws.lb.LoadBalancer('payment-lb', {
+  internal: false,
+  loadBalancerType: 'application',
+  subnets: [paymentSubnet.id],
+});
+
+const paymentTargetGroup = new aws.lb.TargetGroup('payment-tg', {
+  port: 8080,
+  protocol: 'HTTP',
+  vpcId: vpc.id,
+  targetType: 'instance',
+});
+
+// Attach only payment instances to payment target group
+paymentInstances.forEach((instance, i) => {
+  new aws.lb.TargetGroupAttachment(\`payment-tg-attach-\${i}\`, {
+    targetGroupArn: paymentTargetGroup.arn,
+    targetId: instance.id,
+    port: 8080,
+  });
+});`,
+    },
+    {
+      id: "docker-swarm-placement",
+      name: "Docker Swarm Placement Constraints",
+      type: "platform",
+      languages: ["yaml"],
+      description:
+        "Docker Swarm service placement constraints to pin services to specific node labels, creating isolated server pools per workload.",
+      links: {
+        docs: "https://docs.docker.com/engine/swarm/services/#placement-constraints",
+      },
+      codeSnippet: `# docker-compose.yml for isolated server pools in Docker Swarm
+
+version: "3.8"
+
+services:
+  payment-api:
+    image: payment-service:latest
+    deploy:
+      replicas: 8
+      # Placement constraint: only run on payment nodes
+      placement:
+        constraints:
+          - node.labels.workload == payment
+      resources:
+        limits:
+          cpus: '4'
+          memory: 8G
+        reservations:
+          cpus: '2'
+          memory: 4G
+    networks:
+      - payment-network
+
+  checkout-api:
+    image: checkout-service:latest
+    deploy:
+      replicas: 12
+      # Placement constraint: only run on checkout nodes
+      placement:
+        constraints:
+          - node.labels.workload == checkout
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+        reservations:
+          cpus: '1'
+          memory: 2G
+    networks:
+      - checkout-network
+
+  recommendations-api:
+    image: recommendations-service:latest
+    deploy:
+      replicas: 4
+      # Placement constraint: only run on recommendations nodes
+      placement:
+        constraints:
+          - node.labels.workload == recommendations
+      resources:
+        limits:
+          cpus: '2'
+          memory: 4G
+    networks:
+      - recommendations-network
+
+# Initialize Swarm nodes with labels:
+# docker node update --label-add workload=payment worker-node-1
+# docker node update --label-add workload=payment worker-node-2
+# docker node update --label-add workload=checkout worker-node-3
+# docker node update --label-add workload=checkout worker-node-4
+# docker node update --label-add workload=recommendations worker-node-5`,
+    },
+    {
+      id: "gcp-sole-tenant-nodes",
+      name: "Google Cloud Sole-Tenant Nodes",
+      type: "platform",
+      languages: ["typescript"],
+      description:
+        "GCP sole-tenant nodes providing dedicated physical servers for specific workloads with hardware-level isolation from other tenants.",
+      links: {
+        docs: "https://cloud.google.com/compute/docs/nodes/sole-tenant-nodes",
+      },
+      codeSnippet: `import * as gcp from '@pulumi/gcp';
+
+// Create sole-tenant node group for payment workload
+const paymentNodeGroup = new gcp.compute.NodeGroup('payment-node-group', {
+  nodeTemplate: paymentNodeTemplate.id,
+  zone: 'us-central1-a',
+  size: 4,  // 4 dedicated physical servers
+  description: 'Dedicated nodes for payment processing',
+});
+
+const paymentNodeTemplate = new gcp.compute.NodeTemplate('payment-template', {
+  region: 'us-central1',
+  nodeType: 'c2-node-60-240',  // 60 vCPU, 240GB RAM per node
+  nodeAffinityLabels: {
+    workload: 'payment'
+  },
+});
+
+// Create VMs that MUST run on dedicated payment nodes
+const paymentVms = [];
+for (let i = 0; i < 8; i++) {
+  const vm = new gcp.compute.Instance(\`payment-vm-\${i}\`, {
+    machineType: 'c2-standard-16',  // 16 vCPU, 64GB RAM
+    zone: 'us-central1-a',
+
+    // Scheduling: require sole-tenant node with payment label
+    scheduling: {
+      nodeAffinities: [{
+        key: 'workload',
+        operator: 'IN',
+        values: ['payment'],
+      }],
+    },
+
+    bootDisk: {
+      initializeParams: {
+        image: 'debian-cloud/debian-11'
+      }
+    },
+
+    networkInterfaces: [{
+      network: 'default',
+      accessConfigs: [{}],
+    }],
+  });
+
+  paymentVms.push(vm);
+}
+
+// Separate sole-tenant nodes for checkout workload
+const checkoutNodeGroup = new gcp.compute.NodeGroup('checkout-node-group', {
+  // Similar config for checkout isolation
+  size: 6,
+});`,
+    },
+    {
+      id: "nomad-constraint-placement",
+      name: "HashiCorp Nomad Node Pool Constraints",
+      type: "platform",
+      languages: ["hcl"],
+      description:
+        "Nomad job constraints and node pools to isolate workloads on dedicated infrastructure with resource guarantees.",
+      links: {
+        docs: "https://www.nomadproject.io/docs/job-specification/constraint",
+      },
+      codeSnippet: `# payment-service.nomad - Isolated payment workload
+job "payment-service" {
+  datacenters = ["dc1"]
+  type = "service"
+
+  # Constraint: only run on nodes labeled for payment workload
+  constraint {
+    attribute = "\${node.meta.workload}"
+    value     = "payment"
+  }
+
+  group "payment-api" {
+    count = 8
+
+    # Resource reservations on dedicated nodes
+    task "payment-app" {
+      driver = "docker"
+
+      resources {
+        cpu    = 4000   # 4 CPU cores reserved
+        memory = 8192   # 8GB RAM reserved
+        network {
+          mbits = 1000
+        }
+      }
+
+      config {
+        image = "payment-service:latest"
+        port_map {
+          http = 8080
+        }
+      }
+    }
+  }
+}
+
+# checkout-service.nomad - Separate isolated pool
+job "checkout-service" {
+  constraint {
+    attribute = "\${node.meta.workload}"
+    value     = "checkout"
+  }
+
+  group "checkout-api" {
+    count = 12
+    # ... checkout-specific config
+  }
+}
+
+# Nomad client configuration for dedicated nodes:
+# Node 1-4: payment nodes
+# nomad agent -client -meta workload=payment
+
+# Node 5-10: checkout nodes
+# nomad agent -client -meta workload=checkout`,
+    },
+  ],
+
+  usedInSystems: [
+    {
+      systemId: "amazon-checkout-isolation",
+      systemName: "Amazon Checkout Infrastructure Isolation",
+      howUsed:
+        "Amazon isolates checkout and order placement infrastructure on dedicated servers separate from product browsing, search, and recommendations. During peak shopping events (Prime Day, Black Friday), product browsing traffic spikes 10x overwhelming shared infrastructure, but checkout servers maintain guaranteed capacity with <100ms P99 latency. The checkout pool consists of dedicated EC2 c5.4xlarge instances (16 vCPU, 32GB RAM) in all availability zones, with network isolation on separate VPC subnets and dedicated Application Load Balancers. When product recommendation algorithms experience bugs causing excessive memory consumption, only the recommendation server pool is affected—checkout continues processing orders with full resource availability. Amazon's architecture explicitly prevents automatic failover between pools: if the checkout pool becomes saturated, requests are queued or shed rather than routed to other pools, maintaining strict isolation. Pattern composition: Server Isolation (dedicated instances) + Multi-AZ (checkout pool spans 3 AZs) + Reserved Capacity (capacity reserved for peak + 20% buffer) + Queue-Based Load Shedding (queue requests when pool saturated instead of cross-pool routing). Impact: Achieved 99.99% checkout availability during peak events despite 5x traffic; prevented $500M revenue loss from Black Friday 2019 when browsing infrastructure saturated but checkout remained responsive; reduced P99 checkout latency from 800ms (shared infrastructure) to 95ms (isolated infrastructure).",
+      source: "https://aws.amazon.com/solutions/case-studies/amazon-prime-day/",
+    },
+    {
+      systemId: "stripe-payment-isolation",
+      systemName: "Stripe Payment API Server Isolation",
+      howUsed:
+        "Stripe isolates payment transaction processing on PCI DSS-compliant dedicated infrastructure separate from webhooks, dashboard UI, analytics, and billing services. The payment API servers run on dedicated AWS EC2 instances in isolated VPCs meeting PCI Level 1 compliance requirements. When Stripe's webhook delivery system experiences load spike (customers' webhook endpoints timing out causing exponential retry storms), payment API servers remain completely unaffected maintaining sub-10ms P99 latency. The isolation is multi-layered: dedicated compute (payment pods only schedule on payment node pool), dedicated networking (payment VPC with strict security groups), dedicated data stores (payment database isolated from analytics database). Stripe enforces strict capacity reservations: payment infrastructure is provisioned for 3x peak traffic permanently allocated, never shared with other Stripe services even when idle. During incident where analytics query accidentally scanned entire payments table causing database CPU spike, read replicas for analytics saturated but payment primary database (on separate dedicated hardware) continued processing transactions at normal speed. Pattern composition: Server Isolation (dedicated EC2 instances) + Network Isolation (separate VPC) + Database Isolation (dedicated RDS instances) + Overprovisioning (3x peak capacity permanently reserved). Impact: Maintained 99.995% payment API availability (22 minutes downtime per year) despite operating 100+ other Stripe services; passed PCI Level 1 audit requirements through physical infrastructure separation; prevented cross-service resource contention incidents from affecting payment processing (0 payment outages caused by other Stripe services in 3 years).",
+      source: "https://stripe.com/blog/payment-api-design",
+    },
+    {
+      systemId: "netflix-critical-path",
+      systemName: "Netflix Critical Path Service Isolation",
+      howUsed:
+        "Netflix isolates critical path services (user authentication, subscription validation, playback initialization) on dedicated AWS infrastructure separate from non-critical services (recommendations, search, personalization). The critical path infrastructure is deployed with 'singleton' status ensuring no co-location with other services: dedicated Auto Scaling Groups, dedicated ELBs, dedicated RDS instances. When Netflix's recommendation engine experienced cascading failure consuming all available connection pool capacity and saturating shared infrastructure, users could still authenticate, validate subscriptions, and start video playback using isolated critical path infrastructure. The critical path servers are provisioned at 5x peak concurrent users (500M users = 2.5B capacity) to handle flash traffic events (new season drops, service outages at competitors). Netflix's chaos engineering (Simian Army) explicitly validates critical path isolation: FIT (Failure Injection Testing) kills 100% of recommendation instances while verifying critical path maintains 100% availability. The isolation extends to data stores: critical path uses DynamoDB with provisioned throughput (guaranteed IOPS), while recommendations use best-effort EC2-hosted Cassandra. Pattern composition: Server Isolation (dedicated ASGs) + Database Isolation (DynamoDB vs Cassandra) + Overprovisioning (5x capacity) + Chaos Engineering (continuous validation). Impact: Achieved 99.99% critical path availability despite operating 700+ microservices with varying reliability; enabled graceful degradation where users can always watch video even when personalization fails; survived competitor outage causing 10x traffic spike (millions migrating to Netflix) by having isolated critical path capacity.",
+      source: "https://netflixtechblog.com/tagged/chaos-engineering",
+    },
+  ],
+
+  references: [
+    {
+      title: "Kubernetes Taints and Tolerations",
+      url: "https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/",
+      type: "documentation",
+      author: "Kubernetes",
+    },
+    {
+      title: "AWS Dedicated Instances",
+      url: "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-instance.html",
+      type: "documentation",
+      author: "Amazon Web Services",
+    },
+    {
+      title: "Google Cloud Sole-Tenant Nodes",
+      url: "https://cloud.google.com/compute/docs/nodes/sole-tenant-nodes",
+      type: "documentation",
+      author: "Google Cloud",
+    },
+    {
+      title: "HashiCorp Nomad Constraints",
+      url: "https://www.nomadproject.io/docs/job-specification/constraint",
+      type: "documentation",
+      author: "HashiCorp",
+    },
+    {
+      title: "Netflix - Chaos Engineering",
+      url: "https://netflixtechblog.com/tagged/chaos-engineering",
+      type: "article",
+      author: "Netflix Technology Blog",
+    },
+  ],
+
+  philosophy: {
+    coreProblem:
+      "Shared infrastructure allows resource-intensive or failing services to starve critical services of CPU, memory, or network bandwidth, causing cascading failures and SLA violations even when overall capacity is sufficient",
+    designPrinciple:
+      "Dedicate separate server pools to critical workloads with guaranteed resource reservations, accepting reduced utilization efficiency to ensure critical services always have resources available regardless of other services' behavior",
+    historicalContext:
+      "Server isolation became critical with cloud computing and multi-tenancy (AWS 2006, noisy neighbor problems). Financial services and e-commerce pioneered dedicated infrastructure for payment processing (Stripe, PayPal 2010s). Kubernetes node pools and taints (2016) made server isolation practical for microservices.",
+    alternativesRejected: [
+      "Shared infrastructure with quotas - soft limits can be exceeded, no hard guarantees",
+      "Dynamic resource allocation - too slow to respond to sudden spikes, allows temporary starvation",
+      "Process/thread isolation only - doesn't prevent CPU/memory exhaustion at host level",
+      "Overprovisioning shared infrastructure - expensive and doesn't prevent noisy neighbors",
+    ],
+    mentalModel:
+      "Server isolation is like reserved seating at a stadium: VIP ticket holders have guaranteed seats in a dedicated section—even if general admission is oversold and standing-room-only, VIP section seats remain available and comfortable",
+  },
+
+  visualization: {
+    staticDiagram: `graph TB
+    subgraph Infrastructure["Cloud Infrastructure"]
+        subgraph PaymentPool["Payment Server Pool<br/>(Dedicated)"]
+            P1[Server 1<br/>16GB, 8 CPU]
+            P2[Server 2<br/>16GB, 8 CPU]
+            P3[Server 3<br/>16GB, 8 CPU]
+            P4[Server 4<br/>16GB, 8 CPU]
+        end
+
+        subgraph CheckoutPool["Checkout Server Pool<br/>(Dedicated)"]
+            C1[Server 1<br/>32GB, 16 CPU]
+            C2[Server 2<br/>32GB, 16 CPU]
+            C3[Server 3<br/>32GB, 16 CPU]
+        end
+
+        subgraph RecommendPool["Recommendations Pool<br/>(Dedicated)"]
+            R1[Server 1<br/>8GB, 4 CPU]
+            R2[Server 2<br/>8GB, 4 CPU]
+        end
+    end
+
+    LB[Load Balancer]
+    LB -->|Payment traffic| PaymentPool
+    LB -->|Checkout traffic| CheckoutPool
+    LB -->|Recommendations| RecommendPool
+
+    R1 -.->|❌ Memory leak<br/>7GB used| R1
+    R2 -.->|❌ OOM Kill| R2
+
+    P1 -.->|✓ Full resources<br/>available| PaymentPool
+    C1 -.->|✓ Full resources<br/>available| CheckoutPool
+
+    style RecommendPool fill:#ffcccc
+    style PaymentPool fill:#ccffcc
+    style CheckoutPool fill:#ccffcc`,
+    realWorldAnalogy:
+      "Server isolation is like having separate kitchens for different restaurant sections: the fine dining kitchen has dedicated stoves, ovens, and prep space that casual dining cannot use—even if casual dining is slammed on Friday night, fine dining always has its full kitchen capacity available to maintain food quality",
+    useCases: [
+      {
+        domain: "E-Commerce Checkout",
+        scenario:
+          "Amazon isolates checkout infrastructure on dedicated servers ensuring order processing works even when browsing saturates shared infrastructure",
+        patternRole:
+          "Guarantees checkout availability and performance during traffic spikes preventing revenue loss",
+        companies: ["Amazon", "Walmart", "Target", "eBay"],
+      },
+      {
+        domain: "Payment Processing",
+        scenario:
+          "Stripe runs payment API on PCI-compliant dedicated infrastructure isolated from webhooks, dashboard, and analytics",
+        patternRole:
+          "Provides compliance isolation and performance guarantees for revenue-critical transactions",
+        companies: ["Stripe", "Square", "PayPal", "Adyen"],
+      },
+      {
+        domain: "Video Streaming Critical Path",
+        scenario:
+          "Netflix isolates authentication and playback initialization on dedicated infrastructure separate from recommendations",
+        patternRole:
+          "Ensures users can always watch video even when personalization services fail",
+        companies: ["Netflix", "YouTube", "Disney+", "Hulu"],
+      },
+    ],
+  },
+
+  tags: [
+    "reliability",
+    "fault-tolerance",
+    "isolation",
+    "bulkhead",
+    "infrastructure",
+    "resource-allocation",
+    "capacity-planning",
+  ],
+  difficulty: "advanced",
 };

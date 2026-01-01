@@ -1305,10 +1305,11 @@ async function exampleUsage() {
 
   systemContext: {
     typicalPlacement: [
-      "Service Layer",
-      "Data Access Layer",
-      "API Handlers",
-      "Read Replicas",
+      "Data Access Layer (Repository Pattern) - Cache-Aside is most commonly implemented in repository or DAO classes that abstract database access; the repository checks an in-memory cache (Redis, Memcached) before querying the database, populating the cache on miss; this keeps caching logic centralized and separated from business logic, making it easy to test and maintain",
+      "Service Layer (Business Logic) - For read-heavy services that aggregate data from multiple sources, cache-aside can be implemented directly in service classes; when a service method is called, it checks the cache for pre-computed results (e.g., user profiles, product catalogs) and falls back to data fetching + cache population on miss; useful when business logic determines cache keys and TTLs",
+      "API Gateway / Backend-for-Frontend (BFF) - Modern API architectures implement cache-aside at the gateway level to cache entire HTTP responses or GraphQL query results; the gateway checks a distributed cache for response bodies keyed by request fingerprints (URL + headers + query params), serving cached responses instantly and bypassing downstream microservices entirely; reduces load on backend services and provides sub-millisecond response times for popular endpoints",
+      "Read Replicas / CQRS Query Side - In CQRS architectures, the query side often uses cache-aside to optimize read operations; materialized views or denormalized data are cached in Redis/Memcached with the query handler checking cache before querying read-optimized databases (Elasticsearch, read replicas); on writes to the command side, caches are invalidated via event handlers to maintain eventual consistency",
+      "Serverless Functions (AWS Lambda, Azure Functions) - Stateless serverless functions use external caches (ElastiCache, Azure Redis) in cache-aside pattern since function instances have no persistent memory; cold starts fetch from cache to avoid database round-trips, dramatically improving function response times; particularly effective for frequently invoked functions serving static or semi-static data like configuration, feature flags, or reference data",
     ],
     interactsWith: [
       "write-through",
@@ -1317,9 +1318,10 @@ async function exampleUsage() {
       "database-connection-pool",
     ],
     architecturalBoundaries: [
-      "Between application and database",
-      "Between services and external APIs",
-      "At API gateway for response caching",
+      "Application-to-Database Boundary - Cache-Aside is primarily deployed between application code and persistent datastores (PostgreSQL, MySQL, MongoDB); the cache acts as a transparent optimization layer that applications explicitly manage, with the database remaining the authoritative source of truth; this boundary is critical because cache failures degrade gracefully to database queries rather than causing outages",
+      "Service-to-Service Communication (Microservices) - When services call other services via REST/gRPC, the calling service can implement cache-aside to cache responses from downstream dependencies; this reduces inter-service latency and protects downstream services from excessive load; however, cross-service caching introduces consistency challenges when cached data changes in the source service, requiring cache invalidation strategies or time-based TTLs",
+      "API Gateway to Upstream Services - Modern architectures place cache-aside at the API gateway to cache aggregated responses before they reach end users; the gateway caches full HTTP responses or GraphQL results, eliminating the need to invoke backend services for popular requests; this boundary is effective for read-heavy public APIs but requires careful cache key design to handle authenticated requests and avoid serving stale data",
+      "Not Recommended for Write-Heavy Paths - Cache-Aside is unsuitable for write-dominant workflows (e.g., logging, event ingestion, real-time messaging) where data changes faster than it's read; caching writes provides no performance benefit and complicates consistency; for write-heavy systems, use write-through, write-behind, or skip caching entirely and optimize the database instead",
     ],
   },
 
@@ -1991,6 +1993,45 @@ az redis create \\
       },
     ],
   },
+
+  references: [
+    {
+      title: "Cache-Aside Pattern - Azure Architecture Center",
+      url: "https://learn.microsoft.com/en-us/azure/architecture/patterns/cache-aside",
+      type: "documentation",
+      author: "Microsoft",
+    },
+    {
+      title: "Lazy Load - Martin Fowler's Enterprise Architecture Catalog",
+      url: "https://martinfowler.com/eaaCatalog/lazyLoad.html",
+      type: "article",
+      author: "Martin Fowler",
+    },
+    {
+      title: "ElastiCache Best Practices and Caching Strategies",
+      url: "https://docs.aws.amazon.com/AmazonElastiCache/latest/dg/BestPractices.html",
+      type: "documentation",
+      author: "AWS",
+    },
+    {
+      title: "Caching Best Practices - Amazon Web Services",
+      url: "https://aws.amazon.com/caching/best-practices/",
+      type: "documentation",
+      author: "AWS",
+    },
+    {
+      title: "Database Caching Strategies Using Redis",
+      url: "https://d1.awsstatic.com/whitepapers/Database/database-caching-strategies-using-redis.pdf",
+      type: "documentation",
+      author: "AWS",
+    },
+    {
+      title: "Scaling Memcache at Facebook",
+      url: "https://engineering.fb.com/2013/06/25/core-data/scaling-memcache-at-facebook/",
+      type: "article",
+      author: "Facebook Engineering",
+    },
+  ],
 
   tags: [
     "performance",
