@@ -2091,5 +2091,83 @@
       "family": "Testability",
       "level": 4
     }
+  },
+  {
+    "name": "Normalization",
+    "emoji": "🧬",
+    "tagline": "One fact, one place",
+    "corpusPath": "🔗 CONSISTENCY → 🗄️ Data Modeling → 🧬 Normalization",
+    "lineNumber": 9999,
+    "hierarchy": {
+      "quality": "consistency",
+      "strategy": "Data Modeling",
+      "family": "Normalization",
+      "level": 4
+    }
+  },
+  {
+    "name": "Transaction Isolation",
+    "emoji": "🪜",
+    "tagline": "The isolation ladder from fast-and-wrong to slow-and-correct",
+    "corpusPath": "🔗 CONSISTENCY → 🔒 Transactions → 🪜 Transaction Isolation",
+    "lineNumber": 9999,
+    "hierarchy": {
+      "quality": "consistency",
+      "strategy": "Transactions",
+      "family": "Isolation",
+      "level": 4
+    }
+  },
+  {
+    "name": "Fencing Tokens",
+    "emoji": "🔑",
+    "tagline": "A monotonic token that stops a stale leader from writing",
+    "corpusPath": "🔗 CONSISTENCY → 🛡️ Coordination → 🔑 Fencing Tokens",
+    "lineNumber": 9999,
+    "hierarchy": {
+      "quality": "consistency",
+      "strategy": "Distributed Coordination",
+      "family": "Coordination",
+      "level": 5
+    }
+  },
+  {
+    "name": "Schema Evolution",
+    "emoji": "🔀",
+    "tagline": "Change the data's shape without breaking either side",
+    "corpusPath": "🔗 CONSISTENCY → 🧭 Evolvability → 🔀 Schema Evolution",
+    "lineNumber": 9999,
+    "hierarchy": {
+      "quality": "consistency",
+      "strategy": "Evolvability",
+      "family": "Evolvability",
+      "level": 4
+    }
+  },
+  {
+    "name": "Document Model",
+    "emoji": "📄",
+    "tagline": "Store related data together as one self-contained document",
+    "corpusPath": "🔗 CONSISTENCY → 🗄️ Data Modeling → 📄 Document Model",
+    "lineNumber": 9999,
+    "hierarchy": {
+      "quality": "consistency",
+      "strategy": "Data Modeling",
+      "family": "Data Modeling",
+      "level": 4
+    }
+  },
+  {
+    "name": "Graph Model",
+    "emoji": "🕸️",
+    "tagline": "When the relationships ARE the data",
+    "corpusPath": "🔗 CONSISTENCY → 🗄️ Data Modeling → 🕸️ Graph Model",
+    "lineNumber": 9999,
+    "hierarchy": {
+      "quality": "consistency",
+      "strategy": "Data Modeling",
+      "family": "Data Modeling",
+      "level": 5
+    }
   }
 ]

@@ -18,6 +18,7 @@
 - **🔒 SECURITY** — _Is it protected from threats?_
 - **👁️ OBSERVABILITY** — _Can we see what's happening inside?_
 - **🔧 MAINTAINABILITY** — _Can we change it safely over time?_
+- **🔗 CONSISTENCY** — _Does every reader see a correct, agreed-upon truth?_
 
 ---
 
@@ -533,6 +534,26 @@
 - **🔗 Contract Testing** — _Pact, Spring Cloud Contract_
 - **🎬 Test Fixtures** — _Reusable test data_
 - **📊 Property-Based Testing** — _Generate test cases_
+
+---
+
+## 🔗 CONSISTENCY → 🗄️ Data Modeling Patterns
+
+- **🧬 Normalization** — _One fact, one place_
+- **📄 Document Model** — _Store related data together as one self-contained document_
+- **🕸️ Graph Model** — _When the relationships ARE the data_
+
+## 🔗 CONSISTENCY → 🔒 Transactions Patterns
+
+- **🪜 Transaction Isolation** — _The isolation ladder from fast-and-wrong to slow-and-correct_
+
+## 🔗 CONSISTENCY → 🛡️ Coordination Patterns
+
+- **🔑 Fencing Tokens** — _A monotonic token that stops a stale leader from writing_
+
+## 🔗 CONSISTENCY → 🧭 Evolvability Patterns
+
+- **🔀 Schema Evolution** — _Change the data's shape without breaking either side_
 
 ---
 

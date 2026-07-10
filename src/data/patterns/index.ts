@@ -179,6 +179,12 @@ import { writeThrough } from "./write-through";
 import { writeTimeout } from "./write-timeout";
 import { xRay } from "./x-ray";
 import { zipkin } from "./zipkin";
+import { normalization } from "./normalization";
+import { transactionIsolation } from "./transaction-isolation";
+import { fencingTokens } from "./fencing-tokens";
+import { schemaEvolution } from "./schema-evolution";
+import { documentModel } from "./document-model";
+import { graphModel } from "./graph-model";
 
 export { activeActive };
 export { activePassive };
@@ -355,6 +361,12 @@ export { writeThrough };
 export { writeTimeout };
 export { xRay };
 export { zipkin };
+export { normalization };
+export { transactionIsolation };
+export { fencingTokens };
+export { schemaEvolution };
+export { documentModel };
+export { graphModel };
 
 export const patterns: Record<string, Pattern> = {
   "active-active": activeActive,
@@ -532,6 +544,12 @@ export const patterns: Record<string, Pattern> = {
   "write-timeout": writeTimeout,
   "x-ray": xRay,
   zipkin: zipkin,
+  normalization: normalization,
+  "transaction-isolation": transactionIsolation,
+  "fencing-tokens": fencingTokens,
+  "schema-evolution": schemaEvolution,
+  "document-model": documentModel,
+  "graph-model": graphModel,
 };
 
 export const patternList: Pattern[] = Object.values(patterns);
